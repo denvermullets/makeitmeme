@@ -14,6 +14,7 @@ Rails.application.routes.draw do
   # PROTOTYPE (MEME-6), throwaway: Admin Text Box editor variants, dev only.
   get 'prototype/admin_text_boxes' => 'prototype_admin_text_boxes#show' if Rails.env.development?
 
-  # Defines the root path route ("/")
-  # root "posts#index"
+  root 'rooms#new'
+  resources :rooms, only: :create
+  get 'rooms/:code' => 'rooms#show', as: :room
 end
