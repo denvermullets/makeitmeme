@@ -1,8 +1,13 @@
-# Development uses the postgresql adapter, which is shared across processes, so broadcasts sent
-# from jobs (a separate Solid Queue process, or Puma plugin) reach browsers. The async adapter
-# only delivers within a single process.
+# Development uses Solid Cable (like production), which is shared across processes, so broadcasts
+# sent from jobs (a separate Solid Queue process, or Puma plugin) reach browsers. Not the postgresql
+# adapter: its NOTIFY payloads cap at 8000 bytes, and a per-Player Captioning screen is larger.
 development:
-  adapter: postgresql
+  adapter: solid_cable
+  connects_to:
+    database:
+      writing: cable
+  polling_interval: 0.1.seconds
+  message_retention: 5.minutes
 
 # System tests (test/application_system_test_case.rb) set SYSTEM_TESTS so broadcasts reach real browsers.
 test:
