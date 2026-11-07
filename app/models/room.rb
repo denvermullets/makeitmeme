@@ -17,6 +17,8 @@ class Room < ApplicationRecord
   belongs_to :host, class_name: 'Player', foreign_key: :host_player_id, optional: true, inverse_of: false
 
   scope :live, -> { where(expired_at: nil) }
+  # Live Rooms whose phase deadline has passed: what the crash sweep advances.
+  scope :overdue, -> { live.where(phase_deadline_at: ..Time.current) }
 
   # Every phase change reaches phones only after commit, and before any content for that phase.
   after_update_commit :phase_changed, if: :saved_change_to_phase_seq?
@@ -82,11 +84,11 @@ class Room < ApplicationRecord
   # follow the commit (see `phase_changed`). New phases add a `when` branch here and an `enter_*!` step.
   def advance!(from_seq: nil, only_if_due: false)
     with_lock do
-      next false if from_seq && phase_seq != from_seq
-      next false if only_if_due && (phase_deadline_at.nil? || phase_deadline_at > Time.current)
+      next false unless advance_wanted?(from_seq, only_if_due)
 
       case phase
       when 'captioning' then finish_captioning!
+      when 'scoreboard' then enter_waiting!
       else next false
       end
       true
@@ -103,6 +105,24 @@ class Room < ApplicationRecord
   def enter_scoreboard!
     current_game.update!(status: :finished, finished_at: Time.current)
     enter_phase!(:scoreboard)
+  end
+
+  # Entry step: back to Waiting with the same code and Players. The finished Game stays as it was;
+  # the Room just stops pointing at it. No deadline.
+  def enter_waiting!
+    enter_phase!(:waiting, current_game: nil, current_round_number: nil)
+  end
+
+  # Room game operation: the Host sends the Room from the Scoreboard back to Waiting.
+  # Raises ActiveRecord::RecordInvalid unless the caller is the Host and the Room is on the Scoreboard.
+  def play_again(by:)
+    with_lock do
+      reject!('Only the Host can play again') unless host?(by)
+      reject!('The Game is not over yet') unless scoreboard?
+
+      advance!(from_seq: phase_seq)
+    end
+    self
   end
 
   # The Player's own Hand for the current Round, or nil (not dealt in, or no Round under way).
@@ -145,6 +165,13 @@ class Room < ApplicationRecord
 
   private
 
+  # The caller's phase_seq still matches, and when it asked for a due-only advance, the deadline has passed.
+  def advance_wanted?(from_seq, only_if_due)
+    return false if from_seq && phase_seq != from_seq
+
+    !only_if_due || (phase_deadline_at.present? && phase_deadline_at <= Time.current)
+  end
+
   # Every entry step ends here: new phase, bumped phase_seq, and the deadline when the phase has a duration.
   def enter_phase!(phase, **attrs)
     seconds = self.class.phase_seconds[phase.to_sym]
@@ -170,6 +197,10 @@ class Room < ApplicationRecord
   def broadcast_phase
     broadcast_replace_to self, target: 'screen', partial: 'rooms/screen', locals: { room: self, player: nil }
     players.each do |player|
+      # The shared screen has no Player, so Host-only buttons (Start, Play again) come on the private stream.
+      if waiting? || scoreboard?
+        broadcast_replace_to self, player, target: 'screen', partial: 'rooms/screen', locals: { room: self, player: }
+      end
       broadcast_replace_to self, player, target: 'hand', partial: 'hands/hand',
                                          locals: { hand: hand_for(player), room: self }
     end

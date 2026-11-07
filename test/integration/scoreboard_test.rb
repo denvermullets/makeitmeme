@@ -41,4 +41,28 @@ class ScoreboardTest < ActionDispatch::IntegrationTest
 
     @bob.assert_select '#scoreboard li', text: /^\s*1\b/, count: 3
   end
+
+  test 'only the Host sees Play again on the Scoreboard' do
+    3.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
+
+    @host.get room_path(@room.code)
+    @host.assert_select 'form[action=?]', play_again_room_path(@room.code)
+    @bob.get room_path(@room.code)
+    @bob.assert_select 'form[action=?]', play_again_room_path(@room.code), false
+  end
+
+  test 'the Host presses Play again and the Room is Waiting with the same Players' do
+    3.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
+
+    @bob.post play_again_room_path(@room.code)
+    @bob.assert_response :unprocessable_content
+    assert @room.reload.scoreboard?
+
+    @host.post play_again_room_path(@room.code)
+
+    assert @room.reload.waiting?
+    @host.get room_path(@room.code)
+    @host.assert_select '#players li', 3
+    @host.assert_select 'form[action=?]', start_room_path(@room.code)
+  end
 end
