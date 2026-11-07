@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_07_010200) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_08_002101) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -49,6 +49,39 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_07_010200) do
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
   end
 
+  create_table "game_players", force: :cascade do |t|
+    t.bigint "game_id", null: false
+    t.bigint "player_id"
+    t.string "nickname", null: false
+    t.integer "total", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["game_id"], name: "index_game_players_on_game_id"
+    t.index ["player_id"], name: "index_game_players_on_player_id"
+  end
+
+  create_table "games", force: :cascade do |t|
+    t.bigint "room_id", null: false
+    t.string "recap_token", null: false
+    t.string "status", default: "in_progress", null: false
+    t.datetime "finished_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["recap_token"], name: "index_games_on_recap_token", unique: true
+    t.index ["room_id"], name: "index_games_on_room_id"
+  end
+
+  create_table "hands", force: :cascade do |t|
+    t.bigint "round_id", null: false
+    t.bigint "game_player_id", null: false
+    t.integer "template_ids", default: [], null: false, array: true
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["game_player_id"], name: "index_hands_on_game_player_id"
+    t.index ["round_id", "game_player_id"], name: "index_hands_on_round_id_and_game_player_id", unique: true
+    t.index ["round_id"], name: "index_hands_on_round_id"
+  end
+
   create_table "players", force: :cascade do |t|
     t.bigint "room_id", null: false
     t.string "browser_token", null: false
@@ -71,7 +104,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_07_010200) do
     t.datetime "expired_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "current_game_id"
+    t.integer "current_round_number"
     t.index ["code"], name: "index_rooms_on_code_live", unique: true, where: "(expired_at IS NULL)"
+    t.index ["current_game_id"], name: "index_rooms_on_current_game_id"
+  end
+
+  create_table "rounds", force: :cascade do |t|
+    t.bigint "game_id", null: false
+    t.integer "number", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["game_id", "number"], name: "index_rounds_on_game_id_and_number", unique: true
+    t.index ["game_id"], name: "index_rounds_on_game_id"
   end
 
   create_table "templates", force: :cascade do |t|
@@ -86,6 +131,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_07_010200) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "game_players", "games"
+  add_foreign_key "game_players", "players", on_delete: :nullify
+  add_foreign_key "games", "rooms"
+  add_foreign_key "hands", "game_players"
+  add_foreign_key "hands", "rounds"
   add_foreign_key "players", "rooms"
+  add_foreign_key "rooms", "games", column: "current_game_id"
   add_foreign_key "rooms", "players", column: "host_player_id"
+  add_foreign_key "rounds", "games"
 end

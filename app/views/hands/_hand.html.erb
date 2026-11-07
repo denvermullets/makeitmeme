@@ -1,0 +1,13 @@
+<%# One Player's Hand. Rendered only for that Player (page load, or their private stream). %>
+<div id="hand">
+  <% if hand %>
+    <ul class="grid grid-cols-2 gap-2">
+      <% hand.templates.each do |template| %>
+        <li id="<%= dom_id(template) %>">
+          <%= image_tag rails_storage_proxy_path(template.image), alt: template.name, class: 'w-full' %>
+          <span><%= template.name %></span>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+</div>

@@ -20,4 +20,5 @@ Rails.application.routes.draw do
   resources :rooms, only: :create
   resources :joins, only: :create
   get 'rooms/:code' => 'rooms#show', as: :room
+  post 'rooms/:code/start' => 'starts#create', as: :start_room
 end

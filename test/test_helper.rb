@@ -11,5 +11,24 @@ module ActiveSupport
     fixtures :all
 
     # Add more helper methods to be used by all tests here...
+
+    # Fill the Template Library with `count` Templates, each with an attached image.
+    def seed_templates(count = Hand::SIZE)
+      Array.new(count) do |i|
+        Template.create!(memegen_id: "t#{i}-#{SecureRandom.hex(3)}", name: "Template #{i}",
+                         text_boxes: []).tap do |template|
+          template.image.attach(io: File.open(file_fixture('drake.png')), filename: 'drake.png',
+                                content_type: 'image/png')
+        end
+      end
+    end
+
+    # A Room whose Host (Ada) is joined by Bob and Cy.
+    def room_with_players
+      room = Room.create_with_host(nickname: 'Ada', browser_token: 'ada')
+      Room.join(code: room.code, nickname: 'Bob', browser_token: 'bob')
+      Room.join(code: room.code, nickname: 'Cy', browser_token: 'cy')
+      room
+    end
   end
 end
