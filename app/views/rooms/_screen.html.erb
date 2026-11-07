@@ -2,6 +2,8 @@
 <div id="screen">
   <% if room.captioning? %>
     <%= render 'rooms/captioning', room: room, player: player %>
+  <% elsif room.scoreboard? %>
+    <%= render 'rooms/scoreboard', room: room %>
   <% else %>
     <%= render 'rooms/waiting', room: room, player: player, errors: local_assigns[:errors] %>
   <% end %>

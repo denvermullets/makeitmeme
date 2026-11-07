@@ -1,7 +1,7 @@
 <%# Captioning screen. MEME-24 swaps the `hands/hand` partial for the Meme editor. %>
-<div id="captioning" data-round="<%= room.current_round_number %>"
-     data-deadline="<%= room.phase_deadline_at.iso8601(3) %>" data-server-now="<%= Time.current.iso8601(3) %>">
+<div id="captioning" data-round="<%= room.current_round_number %>">
   <h2 class="mt-4 font-bold">Round <%= room.current_round_number %>: caption a Template</h2>
+  <%= render 'shared/countdown', deadline: room.phase_deadline_at %>
   <%# Broadcasts leave the Hand empty; the Player's own stream fills it in. %>
   <%= render 'hands/hand', hand: player && room.hand_for(player), room: room %>
 </div>

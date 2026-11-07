@@ -4,9 +4,12 @@ class Room < ApplicationRecord
   CODE_ATTEMPTS = 10
   MAX_PLAYERS = 10
   MIN_PLAYERS = 3
-  CAPTIONING_SECONDS = 90
+  ROUNDS_PER_GAME = 3
 
-  enum :phase, { waiting: 'waiting', captioning: 'captioning' }, default: :waiting
+  # Seconds each timed phase lasts. One place to change them; tests shorten them.
+  class_attribute :phase_seconds, default: { captioning: 90, vote: 15, reveal: 4 }
+
+  enum :phase, { waiting: 'waiting', captioning: 'captioning', scoreboard: 'scoreboard' }, default: :waiting
 
   has_many :players, dependent: :destroy
   has_many :games, dependent: :destroy
@@ -16,7 +19,7 @@ class Room < ApplicationRecord
   scope :live, -> { where(expired_at: nil) }
 
   # Every phase change reaches phones only after commit, and before any content for that phase.
-  after_update_commit :broadcast_phase, if: :saved_change_to_phase_seq?
+  after_update_commit :phase_changed, if: :saved_change_to_phase_seq?
 
   # Room game operation: create a Room and its Host Player.
   # Raises ActiveRecord::RecordInvalid when the nickname is not acceptable.
@@ -72,12 +75,34 @@ class Room < ApplicationRecord
     self
   end
 
-  # A phase transition's shape: call under the Room row lock (MEME-23's `advance!` folds this in).
-  # Deals this Round's Hands, bumps `phase_seq`, sets the deadline; the broadcast follows the commit.
+  # The one way a Room changes phase. Locks the Room row, then moves to the next phase and runs its entry work.
+  # Returns false (and does nothing) when the Room is no longer in the phase the caller meant:
+  # `from_seq` is the phase_seq the caller saw, `only_if_due` also requires the deadline to have passed
+  # (deadline job and crash sweep). Early finishes call it plain. The deadline job and the broadcast
+  # follow the commit (see `phase_changed`). New phases add a `when` branch here and an `enter_*!` step.
+  def advance!(from_seq: nil, only_if_due: false)
+    with_lock do
+      next false if from_seq && phase_seq != from_seq
+      next false if only_if_due && (phase_deadline_at.nil? || phase_deadline_at > Time.current)
+
+      case phase
+      when 'captioning' then finish_captioning!
+      else next false
+      end
+      true
+    end
+  end
+
+  # Entry step: deal this Round's Hands and start its Captioning. Call under the Room row lock.
   def enter_captioning!(game:, number:)
     game.rounds.create!(number:).deal_hands!
-    update!(phase: :captioning, phase_seq: phase_seq + 1, phase_deadline_at: CAPTIONING_SECONDS.seconds.from_now,
-            current_game: game, current_round_number: number, last_activity_at: Time.current)
+    enter_phase!(:captioning, current_game: game, current_round_number: number)
+  end
+
+  # Entry step: the Game is over. No deadline.
+  def enter_scoreboard!
+    current_game.update!(status: :finished, finished_at: Time.current)
+    enter_phase!(:scoreboard)
   end
 
   # The Player's own Hand for the current Round, or nil (not dealt in, or no Round under way).
@@ -119,6 +144,28 @@ class Room < ApplicationRecord
   end
 
   private
+
+  # Every entry step ends here: new phase, bumped phase_seq, and the deadline when the phase has a duration.
+  def enter_phase!(phase, **attrs)
+    seconds = self.class.phase_seconds[phase.to_sym]
+    update!(phase:, phase_seq: phase_seq + 1, phase_deadline_at: seconds&.seconds&.from_now,
+            last_activity_at: Time.current, **attrs)
+  end
+
+  # With no Memes yet, Captioning moves straight on: the next Round, or the Scoreboard after the last.
+  def finish_captioning!
+    if current_round_number < ROUNDS_PER_GAME
+      enter_captioning!(game: current_game, number: current_round_number + 1)
+    else
+      enter_scoreboard!
+    end
+  end
+
+  # After commit: schedule the phase's deadline job, then tell the phones.
+  def phase_changed
+    PhaseDeadlineJob.set(wait_until: phase_deadline_at).perform_later(id, phase_seq) if phase_deadline_at
+    broadcast_phase
+  end
 
   def broadcast_phase
     broadcast_replace_to self, target: 'screen', partial: 'rooms/screen', locals: { room: self, player: nil }
