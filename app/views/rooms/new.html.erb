@@ -1,0 +1,15 @@
+<main class="p-4 max-w-sm mx-auto">
+  <h1 class="text-2xl font-bold mb-4">Make it meme</h1>
+
+  <% if @errors&.any? %>
+    <ul class="text-red-600 mb-2">
+      <% @errors.each do |message| %><li><%= message %></li><% end %>
+    </ul>
+  <% end %>
+
+  <%= form_with url: rooms_path, class: "flex flex-col gap-2" do |f| %>
+    <%= f.label :nickname, "Nickname" %>
+    <%= f.text_field :nickname, value: @nickname, maxlength: Player::NICKNAME_MAX, required: true, autofocus: true, class: "border p-2" %>
+    <%= f.submit "Create a Room", class: "border p-2 font-bold" %>
+  <% end %>
+</main>
