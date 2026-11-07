@@ -1,6 +1,14 @@
-<%# Reveal screen. Bare placeholder: just the Meme. MEME-28 (Reveal and scoring) fills this in. %>
+<%# Reveal screen: the Meme, who made it, and its cached score. Same for every phone. %>
+<% meme = room.current_meme %>
 <div id="reveal" data-round="<%= room.current_round_number %>">
   <h2 class="mt-4 font-bold">Round <%= room.current_round_number %>: reveal</h2>
   <%= render 'shared/countdown', deadline: room.phase_deadline_at %>
-  <%= image_tag rails_storage_proxy_path(room.current_meme.image), alt: 'The Meme', class: 'w-full mt-2' %>
+  <%= image_tag rails_storage_proxy_path(meme.image), alt: 'The Meme', class: 'w-full mt-2' %>
+  <p class="mt-2">Made by <strong><%= meme.game_player.nickname %></strong></p>
+  <p id="reveal_points" class="text-3xl font-bold"><%= meme.points.positive? ? "+#{meme.points}" : meme.points %></p>
+  <p id="reveal_counts">
+    <span><%= meme.up_count %> up</span>
+    <span><%= meme.meh_count %> meh</span>
+    <span><%= meme.down_count %> down</span>
+  </p>
 </div>

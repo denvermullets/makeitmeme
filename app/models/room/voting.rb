@@ -45,9 +45,11 @@ module Room::Voting
     enter_phase!(:vote, current_meme: meme)
   end
 
-  # Entry step: the Meme is shown again after its vote. HOOK for "Reveal and scoring" (MEME-28): fill
-  # the reveal screen and score the Meme here (the Room row is locked, the Meme is `current_meme`).
+  # Entry step: the Meme is shown again after its vote, with its score. Caches the Meme's up/meh/down counts
+  # and points from its Vote rows and adds the points to the maker's total. Call under the Room row lock,
+  # inside the phase_seq-guarded advance, so a Meme is never scored twice.
   def enter_reveal!
+    score!(current_meme)
     enter_phase!(:reveal)
   end
 
@@ -58,6 +60,18 @@ module Room::Voting
   end
 
   private
+
+  # Scoring (MEME-7): up +1, meh 0, down -1. A missing Vote is a meh: eligible voters are the Game's
+  # game-players minus the maker.
+  def score!(meme)
+    tally = meme.votes.group(:kind).count
+    up = tally.fetch('up', 0)
+    down = tally.fetch('down', 0)
+    eligible = current_game.game_players.count - 1
+    points = up - down
+    meme.update!(up_count: up, down_count: down, meh_count: eligible - up - down, points:)
+    meme.game_player.increment!(:total, points)
+  end
 
   def current_round = current_game.rounds.find_by!(number: current_round_number)
 end
