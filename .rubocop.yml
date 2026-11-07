@@ -76,3 +76,8 @@ Layout/ExtraSpacing:
 
 Style/FrozenStringLiteralComment:
   Enabled: false
+
+# System tests loop over each phone in turn on purpose: every phone must reach a state before any moves on.
+Style/CombinableLoops:
+  Exclude:
+    - "test/system/**/*"

@@ -25,3 +25,7 @@ local:
 #   service: Mirror
 #   primary: local
 #   mirrors: [ amazon, google, microsoft ]
+
+# Images live in Postgres via the active_storage_db gem; moving to S3 later is a config switch.
+db:
+  service: DB

@@ -1,25 +1,27 @@
 source "https://rubygems.org"
 
-gem "rails", "~> 8.1.4", ">= 8.1.4.1"
-gem "propshaft"
-gem "pg", "~> 1.7.0"
-gem "puma", ">= 8.0.2"
+gem "active_storage_db"
+gem "bootsnap", require: false
+gem "image_processing", "~> 2.2.0"
 gem "importmap-rails"
-gem "turbo-rails"
-gem "stimulus-rails"
-gem "tzinfo-data", platforms: %i[ windows jruby ]
+gem "pg", "~> 1.7.0"
+gem "propshaft"
+gem "puma", ">= 8.0.2"
+gem "rails", "~> 8.1.4", ">= 8.1.4.1"
+gem "solid_cable"
 gem "solid_cache"
 gem "solid_queue"
-gem "solid_cable"
-gem "bootsnap", require: false
+gem "stimulus-rails"
+gem "tailwindcss-rails", "~> 4.7"
 gem "thruster", require: false
-gem "image_processing", "~> 2.2.0"
+gem "turbo-rails"
+gem "tzinfo-data", platforms: %i[windows jruby]
 
 group :development, :test do
-  gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
-  gem "bundler-audit", require: false
-  gem "rubocop"
   gem "brakeman", require: false
+  gem "bundler-audit", require: false
+  gem "debug", platforms: %i[mri windows], require: "debug/prelude"
+  gem "rubocop"
 end
 
 group :development do

@@ -1,0 +1,43 @@
+<%# One Player's Hand, as the Meme editor, or their submitted Meme once it is in. Rendered only for that Player
+    (page load, or their private stream). The Hand's Templates go to the Stimulus controller as JSON
+    (Text Box fractions + same-origin image URLs). %>
+<div id="hand">
+  <% if hand && (meme = hand.meme) %>
+    <div class="meme-submitted">
+      <p class="meme-submitted-title">Meme submitted</p>
+      <%= image_tag rails_storage_proxy_path(meme.image), alt: 'Your submitted Meme', class: 'meme-submitted-image' %>
+      <p class="meme-submitted-note">It's in and final. Waiting for the others.</p>
+    </div>
+  <% elsif hand %>
+    <% templates = hand.templates.map do |template|
+         { id: template.id, name: template.name, url: rails_storage_proxy_path(template.image),
+           boxes: template.text_boxes }
+       end %>
+    <div class="meme-editor" data-controller="meme-editor"
+         data-meme-editor-hand-value="<%= templates.to_json %>"
+         data-meme-editor-submit-url-value="<%= room_memes_path(room.code) %>"
+         data-meme-editor-direct-upload-url-value="<%= rails_direct_uploads_path %>"
+         data-meme-editor-deadline-value="<%= room.phase_deadline_at&.iso8601(3) %>"
+         data-meme-editor-server-now-value="<%= Time.current.iso8601(3) %>">
+      <p class="meme-editor-loading" data-meme-editor-target="loading">Loading your Hand...</p>
+      <div class="meme-editor-body" data-meme-editor-target="body" hidden>
+        <canvas class="meme-editor-canvas" data-meme-editor-target="canvas"></canvas>
+        <nav class="meme-editor-nav">
+          <button type="button" data-action="meme-editor#previous" data-meme-editor-target="previousButton">&lsaquo; Back</button>
+          <span data-meme-editor-target="position"></span>
+          <button type="button" data-action="meme-editor#next" data-meme-editor-target="nextButton">Next &rsaquo;</button>
+        </nav>
+        <p class="meme-editor-name" data-meme-editor-target="name"></p>
+        <div class="meme-editor-fields" data-meme-editor-target="fields"></div>
+        <p class="meme-editor-error" data-meme-editor-target="error" role="alert" hidden></p>
+        <button type="button" class="meme-editor-submit" data-action="meme-editor#submit"
+                data-meme-editor-target="submitButton">Submit Meme</button>
+      </div>
+      <div class="meme-submitted" data-meme-editor-target="submitted" hidden>
+        <p class="meme-submitted-title">Meme submitted</p>
+        <img class="meme-submitted-image" data-meme-editor-target="submittedImage" alt="Your submitted Meme">
+        <p class="meme-submitted-note">It's in and final. Waiting for the others.</p>
+      </div>
+    </div>
+  <% end %>
+</div>

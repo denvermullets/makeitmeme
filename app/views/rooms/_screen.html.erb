@@ -1,0 +1,14 @@
+<%# The phase-specific screen. Broadcasts replace #screen as a whole; `player` is nil there. %>
+<div id="screen">
+  <% if room.captioning? %>
+    <%= render 'rooms/captioning', room: room, player: player %>
+  <% elsif room.vote? %>
+    <%= render 'rooms/vote', room: room, player: player %>
+  <% elsif room.reveal? %>
+    <%= render 'rooms/reveal', room: room %>
+  <% elsif room.scoreboard? %>
+    <%= render 'rooms/scoreboard', room: room, player: player %>
+  <% else %>
+    <%= render 'rooms/waiting', room: room, player: player, errors: local_assigns[:errors] %>
+  <% end %>
+</div>

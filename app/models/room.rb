@@ -1,0 +1,134 @@
+class Room < ApplicationRecord
+  CODE_LETTERS = ('A'..'Z').to_a.freeze
+  CODE_LENGTH = 4
+  CODE_ATTEMPTS = 10
+  MAX_PLAYERS = 10
+  MIN_PLAYERS = 3
+  ROUNDS_PER_GAME = 3
+
+  enum :phase, { waiting: 'waiting', captioning: 'captioning', vote: 'vote', reveal: 'reveal',
+                 scoreboard: 'scoreboard' }, default: :waiting
+
+  include Rejectable
+  include PhaseEngine
+  include Voting
+
+  has_many :players, dependent: :destroy
+  has_many :games, dependent: :destroy
+  belongs_to :current_game, class_name: 'Game', optional: true, inverse_of: false
+  belongs_to :host, class_name: 'Player', foreign_key: :host_player_id, optional: true, inverse_of: false
+
+  scope :live, -> { where(expired_at: nil) }
+  # Live Rooms whose phase deadline has passed: what the crash sweep advances.
+  scope :overdue, -> { live.where(phase_deadline_at: ..Time.current) }
+
+  # Room game operation: create a Room and its Host Player.
+  # Raises ActiveRecord::RecordInvalid when the nickname is not acceptable.
+  def self.create_with_host(nickname:, browser_token:, codes: nil)
+    transaction do
+      room = insert_with_unique_code(codes || random_codes)
+      host = room.players.create!(nickname:, browser_token:, joined_at: Time.current)
+      room.update!(host:)
+      room
+    end
+  end
+
+  # The live Room with this code (any letter case), or nil.
+  def self.live_by_code(code)
+    live.find_by(code: code.to_s.upcase)
+  end
+
+  # Room game operation: join a live Room by code. A browser that already has a Player in the
+  # Room gets that Player back. Raises ActiveRecord::RecordInvalid with a clear message otherwise.
+  def self.join(code:, nickname:, browser_token:)
+    room = live_by_code(code) || new.reject!('No live Room with that code')
+
+    room.with_lock do
+      room.player_for(browser_token) || begin
+        room.reject!("Room is full (#{MAX_PLAYERS} Players)") if room.players.count >= MAX_PLAYERS
+
+        room.players.create!(nickname:, browser_token:, joined_at: Time.current)
+      end
+    end
+  end
+
+  # Room game operation: the Host starts a Game. Everyone in the Room is dealt in and Round 1 begins.
+  # Raises ActiveRecord::RecordInvalid unless the caller is the Host, the Room is waiting, there are
+  # enough Players and the Template Library can fill a Hand.
+  def start(by:)
+    with_lock do
+      reject!('Only the Host can start the Game') unless host?(by)
+      reject!('A Game is already under way') unless waiting?
+      reject!("Need at least #{MIN_PLAYERS} Players to start") if players.count < MIN_PLAYERS
+      reject!("Need at least #{Hand::SIZE} Templates in the Library to start") if Template.count < Hand::SIZE
+
+      game = games.create!
+      players.each { |player| game.game_players.create!(player:, nickname: player.nickname) }
+      enter_captioning!(game:, number: 1)
+    end
+    self
+  end
+
+  # Room game operation: the Host sends the Room from the Scoreboard back to Waiting.
+  # Raises ActiveRecord::RecordInvalid unless the caller is the Host and the Room is on the Scoreboard.
+  def play_again(by:)
+    with_lock do
+      reject!('Only the Host can play again') unless host?(by)
+      reject!('The Game is not over yet') unless scoreboard?
+
+      advance!(from_seq: phase_seq)
+    end
+    self
+  end
+
+  # Room game operation: a Player submits their baked Meme for the current Round. `signed_id` is the
+  # direct-uploaded PNG's blob, `captions` the texts by Text Box. Returns the Meme; raises
+  # ActiveRecord::RecordInvalid (wrong phase, too late, not in the Hand, already submitted, bad file).
+  def submit_meme(by:, signed_id:, template_id:, captions:)
+    with_lock do
+      reject!('Memes can only be submitted during Captioning') unless captioning?
+      reject!('Time is up') if closed?
+
+      hand = hand_for(by) || reject!('You are not in this Game')
+      Meme.submit(hand:, template_id:, signed_id:, captions:)
+    end
+  end
+
+  # The Player's own Hand for the current Round, or nil (not dealt in, or no Round under way).
+  def hand_for(player)
+    return unless current_game && current_round_number
+
+    Hand.joins(:round, :game_player).find_by(rounds: { game_id: current_game_id, number: current_round_number },
+                                             game_players: { player_id: player.id })
+  end
+
+  # An endless stream of candidate codes. Tests pass their own `codes:` to force a clash.
+  def self.random_codes
+    Enumerator.produce { Array.new(CODE_LENGTH) { CODE_LETTERS.sample }.join }
+  end
+
+  # A clash on the partial unique index is retried with a fresh code. The savepoint
+  # keeps the outer transaction usable after the failed insert.
+  def self.insert_with_unique_code(codes)
+    attempts = 0
+    begin
+      transaction(requires_new: true) { create!(code: codes.next, last_activity_at: Time.current) }
+    rescue ActiveRecord::RecordNotUnique
+      attempts += 1
+      raise if attempts >= CODE_ATTEMPTS
+
+      retry
+    end
+  end
+  private_class_method :insert_with_unique_code
+
+  def host?(player)
+    player.present? && player.id == host_player_id
+  end
+
+  def player_for(browser_token)
+    return if browser_token.blank?
+
+    players.find_by(browser_token:)
+  end
+end

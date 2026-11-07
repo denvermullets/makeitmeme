@@ -1,0 +1,10 @@
+<main class="p-4 max-w-sm mx-auto">
+  <p>Room code</p>
+  <p class="text-5xl font-bold tracking-widest" data-room-code><%= current_room.code %></p>
+
+  <%# Shared state for everyone in the Room, and a private stream that only this Player is given. %>
+  <%= turbo_stream_from current_room %>
+  <%= turbo_stream_from current_room, current_player %>
+
+  <%= render 'rooms/screen', room: current_room, player: current_player, errors: @errors %>
+</main>

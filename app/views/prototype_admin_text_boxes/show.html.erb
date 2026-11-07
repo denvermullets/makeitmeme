@@ -1,0 +1,26 @@
+<%# PROTOTYPE (MEME-6), throwaway. Three Admin Text Box editor variants, switchable via ?variant=A|B|C. %>
+<% content_for :title, "PROTOTYPE Admin Text Boxes #{@variant}" %>
+<% content_for :head do %>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Anton&display=block" rel="stylesheet">
+<% end %>
+
+<div class="pab pab-v<%= @variant %>"
+     data-controller="prototype-admin-text-boxes"
+     data-prototype-admin-text-boxes-templates-value="<%= @templates.to_json %>"
+     data-prototype-admin-text-boxes-variant-value="<%= @variant %>">
+  <div data-prototype-admin-text-boxes-target="root"></div>
+  <details class="pab-state">
+    <summary>state</summary>
+    <pre data-prototype-admin-text-boxes-target="state"></pre>
+  </details>
+</div>
+
+<div class="proto-switcher" data-controller="prototype-switcher"
+     data-prototype-switcher-variants-value='<%= { "A" => "Studio: drag handles, autosave", "B" => "Phone form: presets + sliders", "C" => "Review queue: draw + keyboard" }.to_json %>'
+     data-prototype-switcher-current-value="<%= @variant %>">
+  <button type="button" data-action="prototype-switcher#prev">&larr;</button>
+  <span data-prototype-switcher-target="label"></span>
+  <button type="button" data-action="prototype-switcher#next">&rarr;</button>
+</div>

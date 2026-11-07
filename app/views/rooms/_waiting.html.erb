@@ -1,0 +1,18 @@
+<div id="waiting">
+  <h2 class="mt-4 font-bold">Players</h2>
+  <ul id="players">
+    <%= render partial: 'players/player', collection: room.players.includes(:room).order(:joined_at, :id) %>
+  </ul>
+
+  <% if errors&.any? %>
+    <ul class="text-red-600 mt-2">
+      <% errors.each do |message| %><li><%= message %></li><% end %>
+    </ul>
+  <% end %>
+
+  <% if player && room.host?(player) %>
+    <%= button_to 'Start', start_room_path(room.code), class: 'border p-2 font-bold mt-4' %>
+  <% elsif player %>
+    <p class="mt-4">You are <%= player.nickname %>. Waiting for the Host to start.</p>
+  <% end %>
+</div>

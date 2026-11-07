@@ -1,0 +1,5 @@
+<% if player.room.host?(player) %>
+  <li id="<%= dom_id(player) %>" data-host><%= player.nickname %> (Host)</li>
+<% else %>
+  <li id="<%= dom_id(player) %>"><%= player.nickname %></li>
+<% end %>
