@@ -1,13 +1,24 @@
-<%# One Player's Hand. Rendered only for that Player (page load, or their private stream). %>
+<%# One Player's Hand, as the Meme editor. Rendered only for that Player (page load, or their private stream).
+    The Hand's Templates go to the Stimulus controller as JSON (Text Box fractions + same-origin image URLs). %>
 <div id="hand">
   <% if hand %>
-    <ul class="grid grid-cols-2 gap-2">
-      <% hand.templates.each do |template| %>
-        <li id="<%= dom_id(template) %>">
-          <%= image_tag rails_storage_proxy_path(template.image), alt: template.name, class: 'w-full' %>
-          <span><%= template.name %></span>
-        </li>
-      <% end %>
-    </ul>
+    <% templates = hand.templates.map do |template|
+         { id: template.id, name: template.name, url: rails_storage_proxy_path(template.image),
+           boxes: template.text_boxes }
+       end %>
+    <div class="meme-editor" data-controller="meme-editor"
+         data-meme-editor-hand-value="<%= templates.to_json %>">
+      <p class="meme-editor-loading" data-meme-editor-target="loading">Loading your Hand...</p>
+      <div class="meme-editor-body" data-meme-editor-target="body" hidden>
+        <canvas class="meme-editor-canvas" data-meme-editor-target="canvas"></canvas>
+        <nav class="meme-editor-nav">
+          <button type="button" data-action="meme-editor#previous" data-meme-editor-target="previousButton">&lsaquo; Back</button>
+          <span data-meme-editor-target="position"></span>
+          <button type="button" data-action="meme-editor#next" data-meme-editor-target="nextButton">Next &rsaquo;</button>
+        </nav>
+        <p class="meme-editor-name" data-meme-editor-target="name"></p>
+        <div class="meme-editor-fields" data-meme-editor-target="fields"></div>
+      </div>
+    </div>
   <% end %>
 </div>
