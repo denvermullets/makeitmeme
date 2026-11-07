@@ -11,8 +11,6 @@ Rails.application.routes.draw do
   # get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
   # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
 
-  # PROTOTYPE (MEME-5), throwaway: Meme editor variants, dev only.
-  get 'prototype/meme_editor' => 'prototype_meme_editor#show' if Rails.env.development?
   # PROTOTYPE (MEME-6), throwaway: Admin Text Box editor variants, dev only.
   get 'prototype/admin_text_boxes' => 'prototype_admin_text_boxes#show' if Rails.env.development?
 
@@ -21,5 +19,6 @@ Rails.application.routes.draw do
   resources :joins, only: :create
   get 'rooms/:code' => 'rooms#show', as: :room
   post 'rooms/:code/start' => 'starts#create', as: :start_room
+  post 'rooms/:code/memes' => 'memes#create', as: :room_memes
   post 'rooms/:code/play_again' => 'play_agains#create', as: :play_again_room
 end

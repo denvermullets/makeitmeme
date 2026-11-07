@@ -5,6 +5,8 @@ class Room < ApplicationRecord
   MAX_PLAYERS = 10
   MIN_PLAYERS = 3
   ROUNDS_PER_GAME = 3
+  # Captioning stays open this long past its deadline, so a Meme auto-submitted at the client's zero still lands.
+  SUBMISSION_GRACE = 1.second
 
   # Seconds each timed phase lasts. One place to change them; tests shorten them.
   class_attribute :phase_seconds, default: { captioning: 90, vote: 15, reveal: 4 }
@@ -125,6 +127,19 @@ class Room < ApplicationRecord
     self
   end
 
+  # Room game operation: a Player submits their baked Meme for the current Round. `signed_id` is the
+  # direct-uploaded PNG's blob, `captions` the texts by Text Box. Returns the Meme; raises
+  # ActiveRecord::RecordInvalid (wrong phase, too late, not in the Hand, already submitted, bad file).
+  def submit_meme(by:, signed_id:, template_id:, captions:)
+    with_lock do
+      reject!('Memes can only be submitted during Captioning') unless captioning?
+      reject!('Time is up') if Time.current > due_at
+
+      hand = hand_for(by) || reject!('You are not in this Game')
+      Meme.submit(hand:, template_id:, signed_id:, captions:)
+    end
+  end
+
   # The Player's own Hand for the current Round, or nil (not dealt in, or no Round under way).
   def hand_for(player)
     return unless current_game && current_round_number
@@ -169,8 +184,11 @@ class Room < ApplicationRecord
   def advance_wanted?(from_seq, only_if_due)
     return false if from_seq && phase_seq != from_seq
 
-    !only_if_due || (phase_deadline_at.present? && phase_deadline_at <= Time.current)
+    !only_if_due || (due_at.present? && due_at <= Time.current)
   end
+
+  # When the phase may be closed: its deadline, plus the submission grace for Captioning.
+  def due_at = phase_deadline_at&.then { |at| captioning? ? at + SUBMISSION_GRACE : at }
 
   # Every entry step ends here: new phase, bumped phase_seq, and the deadline when the phase has a duration.
   def enter_phase!(phase, **attrs)
@@ -190,7 +208,7 @@ class Room < ApplicationRecord
 
   # After commit: schedule the phase's deadline job, then tell the phones.
   def phase_changed
-    PhaseDeadlineJob.set(wait_until: phase_deadline_at).perform_later(id, phase_seq) if phase_deadline_at
+    PhaseDeadlineJob.set(wait_until: due_at).perform_later(id, phase_seq) if phase_deadline_at
     broadcast_phase
   end
 

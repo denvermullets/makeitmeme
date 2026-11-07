@@ -12,7 +12,7 @@ class SweepOverdueRoomsJobTest < ActiveSupport::TestCase
   end
 
   test 'advances a Room whose deadline passed and whose job never ran' do
-    travel_to(91.seconds.from_now) { SweepOverdueRoomsJob.perform_now }
+    travel_to(93.seconds.from_now) { SweepOverdueRoomsJob.perform_now }
 
     assert_equal 2, @room.reload.current_round_number
   end
@@ -24,7 +24,7 @@ class SweepOverdueRoomsJobTest < ActiveSupport::TestCase
   end
 
   test 'cannot double-advance with the deadline job' do
-    travel_to(91.seconds.from_now) do
+    travel_to(93.seconds.from_now) do
       SweepOverdueRoomsJob.perform_now
       PhaseDeadlineJob.perform_now(@room.id, 1)
       SweepOverdueRoomsJob.perform_now
@@ -39,7 +39,7 @@ class SweepOverdueRoomsJobTest < ActiveSupport::TestCase
     expired.start(by: expired.player_for('ada'))
     expired.update!(expired_at: Time.current)
 
-    travel_to(91.seconds.from_now) { SweepOverdueRoomsJob.perform_now }
+    travel_to(93.seconds.from_now) { SweepOverdueRoomsJob.perform_now }
 
     assert waiting.reload.waiting?
     assert_equal 1, expired.reload.phase_seq

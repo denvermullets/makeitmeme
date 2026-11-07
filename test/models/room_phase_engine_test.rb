@@ -33,7 +33,7 @@ class RoomPhaseEngineTest < ActiveSupport::TestCase
   test 'a Captioning deadline in Round 1 deals Round 2 with fresh Hands and a new 90s deadline' do
     bob = @room.player_for('bob')
     old_hand = @room.hand_for(bob)
-    travel_to(91.seconds.from_now) do
+    travel_to(93.seconds.from_now) do
       run_deadline_job
 
       @room.reload
@@ -49,7 +49,7 @@ class RoomPhaseEngineTest < ActiveSupport::TestCase
 
   test 'after Round 3 the Room goes to the Scoreboard with no deadline and the Game is finished' do
     3.times do
-      travel_to(@room.reload.phase_deadline_at + 1.second) { run_deadline_job }
+      travel_to(@room.reload.phase_deadline_at + 3.seconds) { run_deadline_job }
     end
 
     @room.reload
@@ -60,9 +60,9 @@ class RoomPhaseEngineTest < ActiveSupport::TestCase
   end
 
   test 'the Scoreboard schedules no further job' do
-    2.times { travel_to(@room.reload.phase_deadline_at + 1.second) { run_deadline_job } }
+    2.times { travel_to(@room.reload.phase_deadline_at + 3.seconds) { run_deadline_job } }
     clear_enqueued_jobs
-    travel_to(@room.reload.phase_deadline_at + 1.second) { run_deadline_job }
+    travel_to(@room.reload.phase_deadline_at + 3.seconds) { run_deadline_job }
 
     assert_no_enqueued_jobs only: PhaseDeadlineJob
   end
@@ -73,7 +73,7 @@ class RoomPhaseEngineTest < ActiveSupport::TestCase
   end
 
   test 'a job carrying an old phase_seq does nothing' do
-    travel_to(91.seconds.from_now) do
+    travel_to(93.seconds.from_now) do
       run_deadline_job
       PhaseDeadlineJob.perform_now(@room.id, 1)
       assert_equal 2, @room.reload.phase_seq
@@ -90,7 +90,7 @@ class RoomPhaseEngineTest < ActiveSupport::TestCase
 
   test 'a due-only advance (the sweep path) skips a Room whose deadline has not passed' do
     assert_not @room.advance!(from_seq: 1, only_if_due: true)
-    travel_to(91.seconds.from_now) { assert @room.advance!(from_seq: 1, only_if_due: true) }
+    travel_to(93.seconds.from_now) { assert @room.advance!(from_seq: 1, only_if_due: true) }
   end
 
   test 'each transition enqueues one deadline job for the new phase_seq' do
@@ -120,7 +120,7 @@ class RoomPhaseEngineTest < ActiveSupport::TestCase
     room = room_with_players
     room.start(by: room.player_for('ada'))
     3.times do
-      travel 2.seconds
+      travel 4.seconds
       perform_enqueued_jobs(only: PhaseDeadlineJob)
     end
 

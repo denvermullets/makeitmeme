@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_08_002101) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_08_002601) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -82,6 +82,24 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_08_002101) do
     t.index ["round_id"], name: "index_hands_on_round_id"
   end
 
+  create_table "memes", force: :cascade do |t|
+    t.bigint "round_id", null: false
+    t.bigint "game_player_id", null: false
+    t.bigint "template_id"
+    t.jsonb "caption_texts", default: [], null: false
+    t.integer "position"
+    t.integer "points", default: 0, null: false
+    t.integer "up_count", default: 0, null: false
+    t.integer "meh_count", default: 0, null: false
+    t.integer "down_count", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["game_player_id"], name: "index_memes_on_game_player_id"
+    t.index ["round_id", "game_player_id"], name: "index_memes_on_round_id_and_game_player_id", unique: true
+    t.index ["round_id"], name: "index_memes_on_round_id"
+    t.index ["template_id"], name: "index_memes_on_template_id"
+  end
+
   create_table "players", force: :cascade do |t|
     t.bigint "room_id", null: false
     t.string "browser_token", null: false
@@ -136,6 +154,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_08_002101) do
   add_foreign_key "games", "rooms"
   add_foreign_key "hands", "game_players"
   add_foreign_key "hands", "rounds"
+  add_foreign_key "memes", "game_players"
+  add_foreign_key "memes", "rounds"
+  add_foreign_key "memes", "templates", on_delete: :nullify
   add_foreign_key "players", "rooms"
   add_foreign_key "rooms", "games", column: "current_game_id"
   add_foreign_key "rooms", "players", column: "host_player_id"

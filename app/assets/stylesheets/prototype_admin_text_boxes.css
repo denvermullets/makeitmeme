@@ -1,4 +1,4 @@
-/* PROTOTYPE (MEME-6), throwaway. Scoped to .pab. The floating switcher styles live in prototype_meme_editor.css. */
+/* PROTOTYPE (MEME-6), throwaway. Scoped to .pab. Includes the floating switcher styles. */
 .pab { --bg: #14121a; --panel: #1c1924; --line: #34303f; --fg: #f3f1f7; --muted: #9a95a8; --accent: #ffe14d; --danger: #ff4d5e;
   --box: #4dd2ff; font-family: system-ui, sans-serif; background: var(--bg); color: var(--fg); min-height: 100dvh; box-sizing: border-box; }
 body:has(.pab) { margin: 0; background: #08070b; }
@@ -131,3 +131,10 @@ kbd { font: 600 .7rem ui-monospace, monospace; background: #000; border: 1px sol
 .pab-state { position: fixed; top: 8px; right: 8px; z-index: 20; font: 11px ui-monospace, monospace; color: #9f9; }
 .pab-state summary { background: #000c; padding: 2px 8px; border-radius: 6px; cursor: pointer; text-align: right; }
 .pab-state pre { background: #000e; padding: 8px; width: 340px; max-width: 80vw; max-height: 70vh; overflow: auto; margin: 4px 0 0; }
+
+/* floating variant switcher (prototype chrome, not part of the design) */
+.proto-switcher { position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%); z-index: 30; display: flex; gap: 10px;
+  align-items: center; background: #fff; color: #000; border-radius: 999px; padding: 6px 10px; box-shadow: 0 4px 18px #0008;
+  font: 600 13px system-ui; white-space: nowrap; }
+.proto-switcher button { border: 0; background: #000; color: #fff; border-radius: 50%; width: 30px; height: 30px; font-size: 15px; }
+
