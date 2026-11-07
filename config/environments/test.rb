@@ -25,6 +25,9 @@ Rails.application.configure do
   # Render exception templates for rescuable exceptions and raise for other exceptions.
   config.action_dispatch.show_exceptions = :rescuable
 
+  # Browsers in system tests open their cable connection from the Capybara server's origin.
+  config.action_cable.disable_request_forgery_protection = true
+
   # Disable request forgery protection in test environment.
   config.action_controller.allow_forgery_protection = false
 

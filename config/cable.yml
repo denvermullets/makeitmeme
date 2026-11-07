@@ -4,8 +4,9 @@
 development:
   adapter: postgresql
 
+# System tests (test/application_system_test_case.rb) set SYSTEM_TESTS so broadcasts reach real browsers.
 test:
-  adapter: test
+  adapter: <%= ENV['SYSTEM_TESTS'] ? 'async' : 'test' %>
 
 production:
   adapter: solid_cable
