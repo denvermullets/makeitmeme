@@ -2,6 +2,7 @@ class Room < ApplicationRecord
   CODE_LETTERS = ('A'..'Z').to_a.freeze
   CODE_LENGTH = 4
   CODE_ATTEMPTS = 10
+  MAX_PLAYERS = 10
 
   enum :phase, { waiting: 'waiting' }, default: :waiting
 
@@ -20,6 +21,28 @@ class Room < ApplicationRecord
       room
     end
   end
+
+  # Room game operation: join a live Room by code. A browser that already has a Player in the
+  # Room gets that Player back. Raises ActiveRecord::RecordInvalid with a clear message otherwise.
+  def self.join(code:, nickname:, browser_token:)
+    room = live.find_by(code: code.to_s.upcase)
+    raise_rejected('No live Room with that code') unless room
+
+    room.with_lock do
+      room.player_for(browser_token) || begin
+        raise_rejected("Room is full (#{MAX_PLAYERS} Players)") if room.players.count >= MAX_PLAYERS
+
+        room.players.create!(nickname:, browser_token:, joined_at: Time.current)
+      end
+    end
+  end
+
+  def self.raise_rejected(message)
+    rejected = new
+    rejected.errors.add(:base, message)
+    raise ActiveRecord::RecordInvalid, rejected
+  end
+  private_class_method :raise_rejected
 
   # An endless stream of candidate codes. Tests pass their own `codes:` to force a clash.
   def self.random_codes

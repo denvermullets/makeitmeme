@@ -18,5 +18,6 @@ Rails.application.routes.draw do
 
   root 'rooms#new'
   resources :rooms, only: :create
+  resources :joins, only: :create
   get 'rooms/:code' => 'rooms#show', as: :room
 end

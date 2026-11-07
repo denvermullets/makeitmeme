@@ -3,14 +3,9 @@
   <p class="text-5xl font-bold tracking-widest" data-room-code><%= @room.code %></p>
 
   <h2 class="mt-4 font-bold">Players</h2>
-  <ul>
-    <% @room.players.order(:joined_at).each do |player| %>
-      <% if @room.host?(player) %>
-        <li data-host><%= player.nickname %> (Host)</li>
-      <% else %>
-        <li><%= player.nickname %></li>
-      <% end %>
-    <% end %>
+  <%= turbo_stream_from @room %>
+  <ul id="players">
+    <%= render partial: 'players/player', collection: @room.players.includes(:room).order(:joined_at, :id) %>
   </ul>
 
   <p class="mt-4">You are <%= @player.nickname %>. Waiting for the Host to start.</p>

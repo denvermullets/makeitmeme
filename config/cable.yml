@@ -1,9 +1,8 @@
-# Async adapter only works within the same process, so for manually triggering cable updates from a console,
-# and seeing results in the browser, you must do so from the web console (running inside the dev process),
-# not a terminal started via bin/rails console! Add "console" to any action or any ERB template view
-# to make the web console appear.
+# Development uses the postgresql adapter, which is shared across processes, so broadcasts sent
+# from jobs (a separate Solid Queue process, or Puma plugin) reach browsers. The async adapter
+# only delivers within a single process.
 development:
-  adapter: async
+  adapter: postgresql
 
 test:
   adapter: test
@@ -14,6 +13,6 @@ production:
     database:
       writing: cable
   polling_interval: 0.1.seconds
-  message_retention: 1.day
+  message_retention: 5.minutes
   writer_batch_size: 4
   writer_batch_delay: 0.001.seconds

@@ -12,4 +12,13 @@
     <%= f.text_field :nickname, value: @nickname, maxlength: Player::NICKNAME_MAX, required: true, autofocus: true, class: "border p-2" %>
     <%= f.submit "Create a Room", class: "border p-2 font-bold" %>
   <% end %>
+
+  <h2 class="text-xl font-bold mt-6 mb-2">Join a Room</h2>
+  <%= form_with url: joins_path, class: "flex flex-col gap-2" do |f| %>
+    <%= f.label :code, "Join code" %>
+    <%= f.text_field :code, value: @code, maxlength: Room::CODE_LENGTH, required: true, autocapitalize: "characters", autocomplete: "off", class: "border p-2 uppercase" %>
+    <%= f.label :nickname, "Nickname", for: "join_nickname" %>
+    <%= f.text_field :nickname, id: "join_nickname", value: @nickname, maxlength: Player::NICKNAME_MAX, required: true, class: "border p-2" %>
+    <%= f.submit "Join", class: "border p-2 font-bold" %>
+  <% end %>
 </main>
