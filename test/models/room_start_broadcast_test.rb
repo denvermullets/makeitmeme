@@ -11,8 +11,8 @@ class RoomStartBroadcastTest < ActiveSupport::TestCase
     ActionCable.server.pubsub.clear
   end
 
-  test 'starting switches the Room stream to Captioning' do
-    assert_turbo_stream_broadcasts @room, count: 1 do
+  test 'starting leaves the shared Room stream silent: Captioning is Player-specific' do
+    assert_no_turbo_stream_broadcasts @room do
       @room.start(by: @host)
     end
   end

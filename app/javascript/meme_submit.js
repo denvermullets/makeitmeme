@@ -11,7 +11,7 @@ export function msUntilZero(deadline, serverNow, deviceAtConnect, deviceNow) {
 }
 
 // The JSON the submit Meme operation takes: one caption per Text Box, blanks allowed.
-export function submissionBody(signedId, templateId, captions, boxCount) {
+export function memeBody(signedId, templateId, captions, boxCount) {
   return {
     signed_id: signedId,
     template_id: templateId,

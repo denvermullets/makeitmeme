@@ -11,11 +11,11 @@ module Room::Voting
   # is the current Meme, it is not their own, they have not voted yet and `kind` is up, meh or down.
   def cast_vote(by:, meme_id:, kind:)
     with_lock do
-      reject!('Voting is closed') unless vote?
+      reject!('Voting is closed') if !vote? || closed?
       voter = game_player_for(by) || reject!('You are not in this Game')
       reject!('That is not the Meme being voted on') unless meme_id.to_i == current_meme_id
       reject!('You cannot vote on your own Meme') if current_meme.game_player_id == voter.id
-      reject!('You already voted') if current_meme.votes.exists?(game_player: voter)
+      reject!('You already voted') if current_meme.vote_by(voter)
 
       current_meme.votes.create!(game_player: voter, kind:)
     end
@@ -23,13 +23,12 @@ module Room::Voting
 
   # The Player's seat in the current Game, or nil (not dealt in, or no Game under way).
   def game_player_for(player)
-    current_game&.game_players&.find_by(player_id: player&.id)
+    current_game&.game_player_for(player)
   end
 
   # The Player's own Vote on the Meme under vote, or nil.
   def vote_by(player)
-    game_player = game_player_for(player)
-    current_meme&.votes&.find_by(game_player:) if game_player
+    current_meme&.vote_by(game_player_for(player))
   end
 
   # Entry step: the Round's Memes are in. Shuffle them into an order and vote on the first;
@@ -49,7 +48,7 @@ module Room::Voting
   # and points from its Vote rows and adds the points to the maker's total. Call under the Room row lock,
   # inside the phase_seq-guarded advance, so a Meme is never scored twice.
   def enter_reveal!
-    score!(current_meme)
+    current_meme.score!(eligible_voters: current_game.game_players.count - 1)
     enter_phase!(:reveal)
   end
 
@@ -60,18 +59,6 @@ module Room::Voting
   end
 
   private
-
-  # Scoring (MEME-7): up +1, meh 0, down -1. A missing Vote is a meh: eligible voters are the Game's
-  # game-players minus the maker.
-  def score!(meme)
-    tally = meme.votes.group(:kind).count
-    up = tally.fetch('up', 0)
-    down = tally.fetch('down', 0)
-    eligible = current_game.game_players.count - 1
-    points = up - down
-    meme.update!(up_count: up, down_count: down, meh_count: eligible - up - down, points:)
-    meme.game_player.increment!(:total, points)
-  end
 
   def current_round = current_game.rounds.find_by!(number: current_round_number)
 end

@@ -105,7 +105,7 @@ class RoomVotingTest < ActiveSupport::TestCase
     submit_memes(@room, 'ada', 'bob')
     end_phase
     assert_enqueued_with(job: PhaseDeadlineJob, args: [@room.id, 2])
-    travel_to(@room.phase_deadline_at + 1.second) { PhaseDeadlineJob.perform_now(@room.id, 2) }
+    travel_to(@room.phase_deadline_at + 2.seconds) { PhaseDeadlineJob.perform_now(@room.id, 2) }
 
     assert @room.reload.reveal?
   end
@@ -120,6 +120,20 @@ class RoomVotingTest < ActiveSupport::TestCase
     end
     assert_equal 'meh', @room.vote_by(@room.player_for(voter))&.kind
     assert_nil @room.vote_by(@room.player_for(maker_token(current_meme)))
+  end
+
+  test 'a Vote arriving after the vote deadline and its grace is rejected, one within the grace is taken' do
+    submit_memes(@room, 'ada', 'bob', 'cy')
+    end_phase
+    meme = current_meme
+    deadline = @room.phase_deadline_at
+    late, slightly_late = (%w[ada bob cy] - [maker_token(meme)])
+
+    travel_to(deadline + (Room::VOTE_GRACE / 2)) { assert vote(slightly_late) }
+    travel_to(deadline + Room::VOTE_GRACE + 1.second) do
+      rejected_with('Voting is closed') { vote(late) }
+    end
+    assert_equal 1, meme.votes.count
   end
 
   test 'a Vote is rejected outside the vote phase' do

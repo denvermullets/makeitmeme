@@ -1,8 +1,10 @@
 class JoinsController < ApplicationController
+  include RoomSession
+
   def create
-    token = cookies.signed[:browser_token] || Player.new_browser_token
+    token = browser_token || Player.new_browser_token
     player = Room.join(code: param(:code), nickname: param(:nickname), browser_token: token)
-    cookies.permanent.signed[:browser_token] = token
+    remember_browser_token(token)
     redirect_to room_path(player.room.code)
   rescue ActiveRecord::RecordInvalid => e
     render_rejection(e.record.errors.full_messages)

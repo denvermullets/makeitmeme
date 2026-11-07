@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { msUntilZero, submissionBody, failureMessage } from '../../app/javascript/meme_submit.js'
+import { msUntilZero, memeBody, failureMessage } from '../../app/javascript/meme_submit.js'
 
 test('msUntilZero corrects for the gap between the server clock and the device clock', () => {
   const serverNow = '2026-11-08T10:00:00.000Z'
@@ -17,10 +17,10 @@ test('msUntilZero never goes negative and is null without a deadline', () => {
   assert.equal(msUntilZero('', serverNow, deviceNow, deviceNow), null)
 })
 
-test('submissionBody sends the blob, the Template and one caption per Text Box (blank allowed)', () => {
-  assert.deepEqual(submissionBody('sid', 7, ['top'], 2), { signed_id: 'sid', template_id: 7, captions: ['top', ''] })
-  assert.deepEqual(submissionBody('sid', 7, [], 1), { signed_id: 'sid', template_id: 7, captions: [''] })
-  assert.deepEqual(submissionBody('sid', 7, [undefined, 'b'], 2).captions, ['', 'b'])
+test('memeBody sends the blob, the Template and one caption per Text Box (blank allowed)', () => {
+  assert.deepEqual(memeBody('sid', 7, ['top'], 2), { signed_id: 'sid', template_id: 7, captions: ['top', ''] })
+  assert.deepEqual(memeBody('sid', 7, [], 1), { signed_id: 'sid', template_id: 7, captions: [''] })
+  assert.deepEqual(memeBody('sid', 7, [undefined, 'b'], 2).captions, ['', 'b'])
 })
 
 test('failureMessage names the failure in words a Player can act on', () => {

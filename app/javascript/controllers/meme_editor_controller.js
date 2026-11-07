@@ -1,7 +1,7 @@
 import { Controller } from '@hotwired/stimulus'
 import { DirectUpload } from '@rails/activestorage'
 import { drawMeme, FONT_FAMILY } from 'meme_render'
-import { msUntilZero, submissionBody, failureMessage } from 'meme_submit'
+import { msUntilZero, memeBody, failureMessage } from 'meme_submit'
 
 const MAX_CHARS = 80
 const images = {}
@@ -115,7 +115,7 @@ export default class extends Controller {
       this.redraw({ outlines: false })
       blob = await this.bake()
       const signedId = await this.upload(blob)
-      await this.post(submissionBody(signedId, templateId, captions, boxCount))
+      await this.post(memeBody(signedId, templateId, captions, boxCount))
       this.showSubmitted(blob)
     } catch (error) {
       console.error('Meme submit failed', error)

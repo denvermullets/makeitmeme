@@ -53,7 +53,7 @@ class SubmitMemeTest < ActionDispatch::IntegrationTest
     @bob.assert_select '#hand', text: /Meme submitted/
   end
 
-  test 'a rejected submission answers 422 with the reason' do
+  test 'a rejected Meme answers 422 with the reason' do
     submit
     submit
 

@@ -109,10 +109,13 @@ class RoomPhaseEngineTest < ActiveSupport::TestCase
     end
   end
 
-  test 'a transition broadcasts the new screen on the Room stream' do
-    assert_turbo_stream_broadcasts @room, count: 1 do
-      @room.advance!
-    end
+  test 'a transition broadcasts the new screen once to each Player, on their own stream' do
+    players = @room.players.to_a
+    ActionCable.server.pubsub.clear
+    @room.advance!
+
+    players.each { |player| assert_equal 1, capture_turbo_stream_broadcasts([@room, player]).size }
+    assert_empty capture_turbo_stream_broadcasts(@room)
   end
 
   test 'a whole empty Game plays from Start to the Scoreboard through performed jobs' do

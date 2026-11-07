@@ -1,5 +1,7 @@
 # One Player's captioned Template for one Round: the baked PNG plus the texts it was made from.
 class Meme < ApplicationRecord
+  include Rejectable
+
   CAPTION_MAX = 80
   MAX_BYTES = 5.megabytes
   PNG_SIGNATURE = "\x89PNG\r\n\x1a\n".b.freeze
@@ -29,10 +31,20 @@ class Meme < ApplicationRecord
     texts + Array.new(box_count - texts.length, '')
   end
 
-  # Raises RecordInvalid carrying `message` as a base error.
-  def reject!(message)
-    errors.add(:base, message)
-    raise ActiveRecord::RecordInvalid, self
+  # The maker's total moves by these points. Scoring (MEME-7): up +1, meh 0, down -1; a missing Vote is a meh,
+  # so `eligible_voters` (the Game's game-players minus the maker) fills the meh count. Caches the counts and
+  # points here. Call once, under the Room row lock, inside the phase_seq-guarded advance.
+  def score!(eligible_voters:)
+    tally = votes.group(:kind).count
+    up = tally.fetch('up', 0)
+    down = tally.fetch('down', 0)
+    update!(up_count: up, down_count: down, meh_count: eligible_voters - up - down, points: up - down)
+    game_player.increment!(:total, points)
+  end
+
+  # The Vote this game-player cast on the Meme, or nil.
+  def vote_by(voter)
+    votes.find_by(game_player: voter) if voter
   end
 
   # The uploaded blob, once it is shown to be a PNG within the size limit.

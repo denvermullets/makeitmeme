@@ -1,11 +1,11 @@
 # A Player submits their baked Meme (already direct-uploaded; we get the blob's signed_id).
 class MemesController < ApplicationController
-  def create
-    room = Room.live.find_by(code: params[:code].to_s.upcase)
-    player = room&.player_for(cookies.signed[:browser_token])
-    return head(room ? :unauthorized : :not_found) unless player
+  include RoomSession
 
-    meme = room.submit_meme(by: player, **submission)
+  before_action :require_room, :require_player
+
+  def create
+    meme = current_room.submit_meme(by: current_player, **meme_params)
     render json: { image_url: rails_storage_proxy_path(meme.image) }, status: :created
   rescue ActiveRecord::RecordInvalid => e
     render json: { errors: e.record.errors.full_messages }, status: :unprocessable_content
@@ -13,7 +13,7 @@ class MemesController < ApplicationController
 
   private
 
-  def submission
+  def meme_params
     { signed_id: params[:signed_id], template_id: params[:template_id], captions: Array(params[:captions]) }
   end
 end

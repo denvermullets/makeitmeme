@@ -58,7 +58,7 @@ class RoomSubmitMemeTest < ActiveSupport::TestCase
     rejected_with('That Template is not in your Hand') { submit(template_id: other.id) }
   end
 
-  test 'rejects a second submission' do
+  test 'rejects a second Meme' do
     submit
     rejected_with('You already submitted a Meme this Round') { submit }
     assert_equal 1, Meme.count
@@ -84,11 +84,11 @@ class RoomSubmitMemeTest < ActiveSupport::TestCase
     rejected_with('You are not in this Game') { submit(player: stranger, template_id: 1) }
   end
 
-  test 'a submission just after the deadline is taken within the grace, and rejected beyond it' do
+  test 'a Meme just after the deadline is taken within the grace, and rejected beyond it' do
     deadline = @room.reload.phase_deadline_at
     travel_to(deadline + 0.5.seconds) { assert submit }
 
-    travel_to(deadline + Room::SUBMISSION_GRACE + 1.second) do
+    travel_to(deadline + Room::UPLOAD_GRACE + 1.second) do
       rejected_with('Time is up') { submit(player: @room.player_for('cy')) }
     end
   end
@@ -99,7 +99,7 @@ class RoomSubmitMemeTest < ActiveSupport::TestCase
       assert_not @room.advance!(from_seq: @room.phase_seq, only_if_due: true)
       assert @room.reload.captioning?
     end
-    travel_to(deadline + Room::SUBMISSION_GRACE + 1.second) do
+    travel_to(deadline + Room::UPLOAD_GRACE + 1.second) do
       assert @room.advance!(from_seq: @room.phase_seq, only_if_due: true)
       assert_equal 2, @room.reload.current_round_number
     end

@@ -5,12 +5,11 @@ class Room < ApplicationRecord
   MAX_PLAYERS = 10
   MIN_PLAYERS = 3
   ROUNDS_PER_GAME = 3
-  # Captioning stays open this long past its deadline, so a Meme auto-submitted at the client's zero still lands.
-  SUBMISSION_GRACE = 1.second
 
   enum :phase, { waiting: 'waiting', captioning: 'captioning', vote: 'vote', reveal: 'reveal',
                  scoreboard: 'scoreboard' }, default: :waiting
 
+  include Rejectable
   include PhaseEngine
   include Voting
 
@@ -34,30 +33,23 @@ class Room < ApplicationRecord
     end
   end
 
+  # The live Room with this code (any letter case), or nil.
+  def self.live_by_code(code)
+    live.find_by(code: code.to_s.upcase)
+  end
+
   # Room game operation: join a live Room by code. A browser that already has a Player in the
   # Room gets that Player back. Raises ActiveRecord::RecordInvalid with a clear message otherwise.
   def self.join(code:, nickname:, browser_token:)
-    room = live.find_by(code: code.to_s.upcase)
-    raise_rejected('No live Room with that code') unless room
+    room = live_by_code(code) || new.reject!('No live Room with that code')
 
     room.with_lock do
       room.player_for(browser_token) || begin
-        raise_rejected("Room is full (#{MAX_PLAYERS} Players)") if room.players.count >= MAX_PLAYERS
+        room.reject!("Room is full (#{MAX_PLAYERS} Players)") if room.players.count >= MAX_PLAYERS
 
         room.players.create!(nickname:, browser_token:, joined_at: Time.current)
       end
     end
-  end
-
-  def self.raise_rejected(message)
-    new.reject!(message)
-  end
-  private_class_method :raise_rejected
-
-  # Raises RecordInvalid carrying `message` as a base error.
-  def reject!(message)
-    errors.add(:base, message)
-    raise ActiveRecord::RecordInvalid, self
   end
 
   # Room game operation: the Host starts a Game. Everyone in the Room is dealt in and Round 1 begins.
@@ -95,7 +87,7 @@ class Room < ApplicationRecord
   def submit_meme(by:, signed_id:, template_id:, captions:)
     with_lock do
       reject!('Memes can only be submitted during Captioning') unless captioning?
-      reject!('Time is up') if Time.current > due_at
+      reject!('Time is up') if closed?
 
       hand = hand_for(by) || reject!('You are not in this Game')
       Meme.submit(hand:, template_id:, signed_id:, captions:)

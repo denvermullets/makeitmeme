@@ -7,4 +7,9 @@ class Game < ApplicationRecord
   has_secure_token :recap_token
 
   enum :status, { in_progress: 'in_progress', finished: 'finished' }, default: :in_progress
+
+  # The Player's seat in this Game, or nil.
+  def game_player_for(player)
+    game_players.find_by(player_id: player.id) if player
+  end
 end
