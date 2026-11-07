@@ -23,10 +23,9 @@ class RoomStartBroadcastTest < ActiveSupport::TestCase
     @room.players.each do |player|
       streams = capture_turbo_stream_broadcasts([@room, player])
       assert_equal 1, streams.size
-      html = streams.first.to_html
-      own = @room.hand_for(player).template_ids
-      own.each { |id| assert_includes html, "template_#{id}\"" }
-      (Template.pluck(:id) - own).each { |id| assert_not_includes html, "template_#{id}\"" }
+      editor = Nokogiri::HTML.fragment(streams.first.to_html).at_css('[data-controller="meme-editor"]')
+      dealt = JSON.parse(editor['data-meme-editor-hand-value']).map { |template| template['id'] }
+      assert_equal @room.hand_for(player).template_ids, dealt
     end
   end
 

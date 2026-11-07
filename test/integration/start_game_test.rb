@@ -32,12 +32,12 @@ class StartGameTest < ActionDispatch::IntegrationTest
     [[@host, 'Ada'], [@bob, 'Bob'], [@cy, 'Cy']].each do |session, nickname|
       session.get room_path(@room.code)
       session.assert_select '#captioning'
-      session.assert_select '#hand li', count: 10
       session.assert_select 'turbo-cable-stream-source', count: 2
 
       mine = @room.hand_for(@room.players.find_by(nickname:)).template_ids
-      mine.each { |id| session.assert_select "#hand #template_#{id}" }
-      (Template.pluck(:id) - mine).each { |id| session.assert_select "#template_#{id}", count: 0 }
+      editor = session.css_select('#hand [data-controller~="meme-editor"]').first
+      dealt = JSON.parse(editor['data-meme-editor-hand-value']).pluck('id')
+      assert_equal mine, dealt
     end
   end
 
