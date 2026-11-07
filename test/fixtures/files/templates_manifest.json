@@ -1,0 +1,23 @@
+[
+  {
+    "id": "drake",
+    "name": "Drake Hotline Bling",
+    "source": "https://knowyourmeme.com/memes/drakeposting",
+    "image_url": "https://api.memegen.link/images/drake.png",
+    "text_boxes": [
+      { "x": 0.0, "y": 0.0, "w": 1.0, "h": 0.2, "angle": 0, "color": "white", "font": "thin" },
+      { "x": 0.0, "y": 0.8, "w": 1.0, "h": 0.2, "angle": 0, "color": "white", "font": "thin" }
+    ]
+  },
+  {
+    "id": "3hd",
+    "name": "Three-Headed Dragon",
+    "source": "https://knowyourmeme.com/memes/three-headed-dragon",
+    "image_url": "https://api.memegen.link/images/3hd.png",
+    "text_boxes": [
+      { "x": 0.0, "y": 0.0, "w": 0.33, "h": 0.2, "angle": 0, "color": "white", "font": "thick" },
+      { "x": 0.33, "y": 0.0, "w": 0.33, "h": 0.2, "angle": 0, "color": "white", "font": "thick" },
+      { "x": 0.66, "y": 0.0, "w": 0.34, "h": 0.2, "angle": 0, "color": "white", "font": "thick" }
+    ]
+  }
+]
