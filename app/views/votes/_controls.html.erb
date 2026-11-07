@@ -1,0 +1,19 @@
+<%# One Player's vote controls for the Meme under vote. Rendered only on their own stream or page load, so
+    nobody learns who voted what. `player` is nil on the shared stream: nothing to show. %>
+<div id="vote_controls" class="mt-4">
+  <% game_player = player && room.game_player_for(player) %>
+  <% if game_player.nil? || room.current_meme.nil? %>
+  <% elsif room.current_meme.game_player_id == game_player.id %>
+    <p class="font-bold">This one's yours.</p>
+  <% else %>
+    <% cast = room.vote_by(player) %>
+    <%= form_with url: room_votes_path(room.code), class: 'flex gap-2' do %>
+      <%= hidden_field_tag :meme_id, room.current_meme.id %>
+      <% %w[up meh down].each do |kind| %>
+        <%= button_tag kind.capitalize, type: 'submit', name: 'kind', value: kind, disabled: cast.present?,
+                       'aria-pressed': (cast&.kind == kind).to_s,
+                       class: "border p-2 font-bold flex-1#{' bg-blue-600 text-white' if cast&.kind == kind}" %>
+      <% end %>
+    <% end %>
+  <% end %>
+</div>

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_08_002601) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_08_002701) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -124,8 +124,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_08_002601) do
     t.datetime "updated_at", null: false
     t.bigint "current_game_id"
     t.integer "current_round_number"
+    t.bigint "current_meme_id"
     t.index ["code"], name: "index_rooms_on_code_live", unique: true, where: "(expired_at IS NULL)"
     t.index ["current_game_id"], name: "index_rooms_on_current_game_id"
+    t.index ["current_meme_id"], name: "index_rooms_on_current_meme_id"
   end
 
   create_table "rounds", force: :cascade do |t|
@@ -147,6 +149,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_08_002601) do
     t.index ["memegen_id"], name: "index_templates_on_memegen_id", unique: true
   end
 
+  create_table "votes", force: :cascade do |t|
+    t.bigint "meme_id", null: false
+    t.bigint "game_player_id", null: false
+    t.string "kind", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["game_player_id"], name: "index_votes_on_game_player_id"
+    t.index ["meme_id", "game_player_id"], name: "index_votes_on_meme_id_and_game_player_id", unique: true
+    t.index ["meme_id"], name: "index_votes_on_meme_id"
+  end
+
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "game_players", "games"
@@ -159,6 +172,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_08_002601) do
   add_foreign_key "memes", "templates", on_delete: :nullify
   add_foreign_key "players", "rooms"
   add_foreign_key "rooms", "games", column: "current_game_id"
+  add_foreign_key "rooms", "memes", column: "current_meme_id", on_delete: :nullify
   add_foreign_key "rooms", "players", column: "host_player_id"
   add_foreign_key "rounds", "games"
+  add_foreign_key "votes", "game_players"
+  add_foreign_key "votes", "memes"
 end

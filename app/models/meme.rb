@@ -8,6 +8,8 @@ class Meme < ApplicationRecord
   belongs_to :game_player
   belongs_to :template, optional: true
 
+  has_many :votes, dependent: :destroy
+
   has_one_attached :image
 
   # Enter the Player's Meme into the Hand's Round. Raises RecordInvalid when the Template is not in the

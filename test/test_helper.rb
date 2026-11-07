@@ -30,5 +30,16 @@ module ActiveSupport
       Room.join(code: room.code, nickname: 'Cy', browser_token: 'cy')
       room
     end
+
+    # Each named Player (browser token) submits a Meme from their first dealt Template this Round.
+    def submit_memes(room, *tokens)
+      tokens.map do |token|
+        player = room.player_for(token)
+        blob = ActiveStorage::Blob.create_and_upload!(io: File.open(file_fixture('drake.png')),
+                                                      filename: 'drake.png', content_type: 'image/png')
+        room.submit_meme(by: player, signed_id: blob.signed_id,
+                         template_id: room.hand_for(player).template_ids.first, captions: [])
+      end
+    end
   end
 end
