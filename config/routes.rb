@@ -18,7 +18,7 @@ Rails.application.routes.draw do
     get 'sign_in' => 'sessions#new'
     post 'sign_in' => 'sessions#create'
     delete 'sign_out' => 'sessions#destroy'
-    resources :packs, only: :index
+    resources :packs, only: %i[index create update destroy]
     root 'homes#show'
     resources :templates, only: :destroy
   end

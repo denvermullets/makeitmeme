@@ -1,12 +1,34 @@
 <% content_for :title, 'Packs' %>
 <h1>Packs</h1>
+<% if notice %><p class="notice"><%= notice %></p><% end %>
+<% if @errors.present? %>
+  <ul class="errors">
+    <% @errors.each do |message| %><li><%= message %></li><% end %>
+  </ul>
+<% end %>
+<%= form_with url: admin_packs_path, scope: :pack, class: 'new-pack' do |f| %>
+  <%= f.text_field :name, value: @new_name, placeholder: 'New Pack name', required: true, 'aria-label': 'New Pack name' %>
+  <%= f.submit 'Create Pack' %>
+<% end %>
 <table class="packs">
-  <thead><tr><th>Pack</th><th>Templates</th></tr></thead>
+  <thead><tr><th>Pack</th><th>Templates</th><th></th></tr></thead>
   <tbody>
     <% @packs.each do |pack| %>
       <tr data-pack="<%= pack.name %>">
-        <td class="pack-name"><%= pack.name %></td>
+        <td class="pack-name">
+          <%= form_with url: admin_pack_path(pack), scope: :pack, method: :patch, class: 'rename-pack' do |f| %>
+            <%= f.text_field :name, value: (pack.id == @renamed_id ? @renamed_name : pack.name), required: true, 'aria-label': "Name of #{pack.name}" %>
+            <%= f.submit 'Rename' %>
+          <% end %>
+        </td>
         <td class="pack-count"><%= pack.templates_count %></td>
+        <td>
+          <% if pack.custom? %>
+            <span class="pack-protected">Always kept</span>
+          <% else %>
+            <%= button_to 'Delete', admin_pack_path(pack), method: :delete, class: 'delete-pack', form: { data: { turbo_confirm: "Delete #{pack.name}?" } } %>
+          <% end %>
+        </td>
       </tr>
     <% end %>
   </tbody>

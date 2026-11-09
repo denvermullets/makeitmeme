@@ -24,7 +24,7 @@ class AdminPacksTest < ActionDispatch::IntegrationTest
     assert_select '[data-pack]', 3
     { 'Classics' => '2', 'Movies' => '1', 'Custom' => '0' }.each do |name, count|
       assert_select "[data-pack='#{name}']" do
-        assert_select '.pack-name', name
+        assert_select '.pack-name input[value=?]', name
         assert_select '.pack-count', count
       end
     end
