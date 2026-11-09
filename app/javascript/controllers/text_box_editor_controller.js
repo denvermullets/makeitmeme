@@ -3,15 +3,16 @@ import { Autosaver } from "autosaver"
 import { render, canvasSize, FONT_FAMILY } from "meme_render"
 import { sampleCaptions, fitSummary } from "sample_preview"
 import { HANDLE_DIRS, toPx, fromPx, dragBox } from "text_box_geometry"
+import { addBox, duplicateBox, removeBox, reorderBox, resetBoxes, canRemove, canMove, applyStyle, styleKey } from "text_box_list"
 
 // Text Box editor. State is `this.boxes` (the ordered array, same shape the server stores); every change goes
 // through `changed()`, which schedules an autosave. The stage, handles, add/duplicate/remove and preview extend
 // this controller by mutating `this.boxes`, then calling `changed()` (and `syncFields()` while dragging).
-const STYLES = { white: { color: "white", font: "thick" }, black: { color: "black", font: "thin" } }
 const LABELS = { saving: "Saving…", saved: "Saved", error: "Couldn't save" }
 
 export default class extends Controller {
-  static targets = ["row", "status", "retry", "errors", "stage", "image", "overlay", "preview", "fits"]
+  static targets = ["row", "status", "retry", "errors", "stage", "image", "overlay", "preview", "fits",
+    "rows", "rowTemplate", "needsSelection", "removeButton", "earlierButton", "laterButton"]
   static values = { url: String, boxes: Array, image: String }
 
   connect() {
@@ -20,6 +21,7 @@ export default class extends Controller {
     this.drag = null
     this.saver = new Autosaver({ send: () => this.save(), onStatus: (status) => this.showStatus(status) })
     this.loadImage()
+    this.renderRows()
     this.renderStage()
     this.startPreview()
   }
@@ -65,6 +67,7 @@ export default class extends Controller {
       })
     })
     this.rowTargets.forEach((row, index) => row.classList.toggle("selected", index === this.selected))
+    this.renderActions()
     this.schedulePreview()
   }
 
@@ -156,9 +159,55 @@ export default class extends Controller {
 
   style(event) {
     const index = Number(event.target.closest("[data-index]").dataset.index)
-    Object.assign(this.boxes[index], STYLES[event.target.value])
+    this.boxes[index] = applyStyle(this.boxes[index], event.target.value)
     this.renderStage()
     this.changed()
+  }
+
+  // ---- Rows (MEME-39) ----
+  // Rows are built here from this.boxes, never by the server. Call after the box count or order changes (not while
+  // dragging; use syncFields for that).
+  renderRows() {
+    if (!this.hasRowsTarget) return
+    this.rowsTarget.replaceChildren(...this.boxes.map((box, index) => {
+      const row = this.rowTemplateTarget.content.firstElementChild.cloneNode(true)
+      row.dataset.index = index
+      row.querySelector("legend").textContent = `Box ${index + 1}`
+      row.querySelector("select[data-field=style]").value = styleKey(box)
+      return row
+    }))
+    this.syncFields()
+  }
+
+  // ---- Box actions (MEME-39) ----
+  // Each applies a pure list operation (text_box_list.js), redraws rows and stage, and autosaves.
+  addBox() { this.applyList(addBox(this.boxes)) }
+  duplicateBox() { if (this.selected !== null) this.applyList(duplicateBox(this.boxes, this.selected)) }
+  removeBox() { if (this.selected !== null && canRemove(this.boxes)) this.applyList(removeBox(this.boxes, this.selected)) }
+  moveEarlier() { this.reorder(-1) }
+  moveLater() { this.reorder(1) }
+  resetBoxes() { this.applyList(resetBoxes()) }
+
+  reorder(delta) {
+    if (this.selected !== null && canMove(this.boxes, this.selected, delta)) {
+      this.applyList(reorderBox(this.boxes, this.selected, delta))
+    }
+  }
+
+  applyList({ boxes, selected }) {
+    this.boxes = boxes.map((box) => ({ ...box }))
+    this.selected = selected
+    this.renderRows()
+    this.renderStage()
+    this.changed()
+  }
+
+  renderActions() {
+    const has = this.selected !== null && this.selected !== undefined
+    if (this.hasNeedsSelectionTarget) this.needsSelectionTargets.forEach((b) => (b.disabled = !has))
+    if (this.hasRemoveButtonTarget) this.removeButtonTarget.disabled = !has || !canRemove(this.boxes)
+    if (this.hasEarlierButtonTarget) this.earlierButtonTarget.disabled = !has || !canMove(this.boxes, this.selected, -1)
+    if (this.hasLaterButtonTarget) this.laterButtonTarget.disabled = !has || !canMove(this.boxes, this.selected, 1)
   }
 
   changed() {

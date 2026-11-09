@@ -96,17 +96,16 @@ class AdminTextBoxAutosaveTest < ActionDispatch::IntegrationTest
     assert_equal @original, @template.reload.text_boxes
   end
 
-  test 'the panel renders numeric fields from the stored boxes' do
+  test 'the panel hands the stored boxes to the editor, which builds the numeric rows in JS' do
     first = @original.first.merge('x' => 0.25, 'angle' => -15.0, 'color' => 'black', 'font' => 'thin')
     @template.update!(text_boxes: [first, VALID])
     get admin_root_path(selected: @template.id)
 
-    assert_select 'turbo-frame#template_panel [data-text-box-editor]' do
-      assert_select '[data-index]', 2
-      assert_select '[data-index="0"] input[data-field=x][value=?]', '25.0'
-      assert_select '[data-index="0"] input[data-field=angle][value=?]', '-15.0'
-      assert_select '[data-index="0"] option[selected][value=black]'
-      assert_select '[data-index="1"] input[data-field=w][value=?]', '40.0'
+    assert_select 'turbo-frame#template_panel [data-text-box-editor]' do |editor|
+      assert_equal [first, VALID], JSON.parse(editor.first['data-text-box-editor-boxes-value'])
+      assert_select 'template input[data-field=x][data-unit=percent]'
+      assert_select 'template input[data-field=angle][data-unit=degrees]'
+      assert_select 'template option[value=black]'
       assert_select '[data-text-box-editor-target=status]'
     end
   end
