@@ -21,7 +21,7 @@ module Admin
 
     def redirect_back_to_library
       filter = Template::FILTERS.include?(params[:filter]) && params[:filter] != 'all' ? params[:filter] : nil
-      redirect_to admin_root_path(q: params[:q].presence, selected: params[:selected].presence, filter:),
+      redirect_to admin_root_path(q: params[:q].presence, selected: params[:selected].presence, filter:, pack: params[:pack].presence),
                   status: :see_other
     end
   end
