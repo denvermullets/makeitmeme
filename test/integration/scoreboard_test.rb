@@ -103,6 +103,28 @@ class ScoreboardTest < ActionDispatch::IntegrationTest
     @bob.assert_select "#{badge('Bob')} [data-count]", false
   end
 
+  test 'the Scoreboard shows points per Round in Round order, none for a missing Meme, signed, summing to the total' do
+    5.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
+    game = @room.reload.current_game
+    ada = game.game_players.find_by!(nickname: 'Ada')
+    bob = game.game_players.find_by!(nickname: 'Bob')
+    rounds = game.rounds.order(:number).to_a
+    Meme.create!(round: rounds[0], game_player: ada, points: 3)
+    Meme.create!(round: rounds[2], game_player: ada, points: -1)
+    Meme.create!(round: rounds[1], game_player: bob, points: 0)
+    ada.update!(total: 2)
+
+    @bob.get room_path(@room.code)
+
+    @bob.assert_select "#scoreboard li[data-nickname='Ada'] [data-round-points]", 3
+    @bob.assert_select "#scoreboard li[data-nickname='Ada'] [data-round-points='1']", text: '3'
+    @bob.assert_select "#scoreboard li[data-nickname='Ada'] [data-round-points='2']", text: 'none'
+    @bob.assert_select "#scoreboard li[data-nickname='Ada'] [data-round-points='3']", text: '-1'
+    @bob.assert_select "#scoreboard li[data-nickname='Bob'] [data-round-points='1']", text: 'none'
+    @bob.assert_select "#scoreboard li[data-nickname='Bob'] [data-round-points='2']", text: '0'
+    @bob.assert_select "#scoreboard li[data-nickname='Cy'] [data-round-points]", text: 'none', count: 3
+  end
+
   test 'tied totals share a place' do
     5.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
 
