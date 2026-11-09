@@ -83,6 +83,58 @@ class RoomCaptioningPresetTest < ActiveSupport::TestCase
     assert @room.reload.normal?
   end
 
+  test 'the Host can change it on the Scoreboard, and it carries through Play again into the next Captioning' do
+    @room.start(by: @host)
+    3.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
+    assert @room.reload.scoreboard?
+
+    @room.choose_captioning_preset(preset: :quick, by: @host)
+    @room.play_again(by: @host)
+    assert @room.reload.waiting?
+    assert @room.quick?
+
+    freeze_time do
+      @room.start(by: @host)
+      assert_equal 60.seconds.from_now, @room.reload.phase_deadline_at
+    end
+  end
+
+  test 'a preset kept through Play again is not reset' do
+    @room.choose_captioning_preset(preset: :chill, by: @host)
+    @room.start(by: @host)
+    3.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
+    @room.play_again(by: @host)
+    assert @room.reload.chill?
+  end
+
+  test 'only the Host can change it on the Scoreboard' do
+    @room.start(by: @host)
+    3.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
+    assert_raises(ActiveRecord::RecordInvalid) do
+      @room.choose_captioning_preset(preset: :quick, by: @room.player_for('bob'))
+    end
+    assert @room.reload.normal?
+  end
+
+  test 'a change is refused in every phase of a Game, with a clear message' do
+    @room.start(by: @host)
+    submit_memes(@room, 'ada')
+    seen = []
+    12.times do
+      @room.reload
+      break if @room.scoreboard?
+
+      seen << @room.phase
+      error = assert_raises(ActiveRecord::RecordInvalid) { @room.choose_captioning_preset(preset: :quick, by: @host) }
+      assert_match(/between Games/, error.message)
+      travel_to(@room.phase_deadline_at + 10.seconds) { @room.advance! }
+    end
+    assert_includes seen, 'captioning'
+    assert_includes seen, 'vote'
+    assert_includes seen, 'reveal'
+    assert @room.normal?
+  end
+
   test 'a change touches activity' do
     travel_to(1.hour.from_now) do
       @room.choose_captioning_preset(preset: :quick, by: @host)
