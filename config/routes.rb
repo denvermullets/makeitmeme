@@ -19,6 +19,7 @@ Rails.application.routes.draw do
     post 'sign_in' => 'sessions#create'
     delete 'sign_out' => 'sessions#destroy'
     root 'homes#show'
+    resources :templates, only: :destroy
   end
 
   root 'rooms#new'
