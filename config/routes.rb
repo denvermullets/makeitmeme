@@ -11,9 +11,6 @@ Rails.application.routes.draw do
   # get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
   # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
 
-  # PROTOTYPE (MEME-6), throwaway: Admin Text Box editor variants, dev only.
-  get 'prototype/admin_text_boxes' => 'prototype_admin_text_boxes#show' if Rails.env.development?
-
   namespace :admin do
     get 'sign_in' => 'sessions#new'
     post 'sign_in' => 'sessions#create'
