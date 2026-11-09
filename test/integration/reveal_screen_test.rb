@@ -12,7 +12,6 @@ class RevealScreenTest < ActionDispatch::IntegrationTest
     @sessions['Ada'].post start_room_path(@room.code)
     @room.reload
     submit_memes(@room, *@room.players.pluck(:browser_token))
-    travel_to(@room.phase_deadline_at + 2.seconds) { @room.advance! }
     @meme = @room.reload.current_meme
     @maker = @meme.game_player.nickname
     @voters = (@sessions.keys - [@maker])

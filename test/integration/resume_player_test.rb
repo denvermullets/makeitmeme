@@ -56,7 +56,6 @@ class ResumePlayerTest < ActionDispatch::IntegrationTest
   test "Vote: the resumed page shows the Meme, the countdown and the Player's own Vote" do
     start_game
     submit_memes(@room, *tokens_by_nickname.values)
-    travel_to(@room.phase_deadline_at + 2.seconds) { @room.advance! }
     meme = @room.reload.current_meme
     voter = (@sessions.keys - [meme.game_player.nickname]).first
     @sessions[voter].post room_votes_path(@room.code), params: { meme_id: meme.id, kind: 'down' }
@@ -70,7 +69,6 @@ class ResumePlayerTest < ActionDispatch::IntegrationTest
   test 'Reveal: the resumed page shows the Meme and its score' do
     start_game
     submit_memes(@room, *tokens_by_nickname.values)
-    travel_to(@room.phase_deadline_at + 2.seconds) { @room.advance! }
     travel_to(@room.reload.phase_deadline_at + 2.seconds) { @room.advance! }
     assert @room.reload.reveal?
     resume('Cy').assert_select '#reveal #reveal_points'

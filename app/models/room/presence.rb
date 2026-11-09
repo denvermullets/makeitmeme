@@ -8,6 +8,7 @@ module Room::Presence
   def player_went_away!(player)
     hand_off_host!(from: player)
     broadcast_start_gate!
+    finish_early_if_done!
   end
 
   def present_players_count = players.present.count
