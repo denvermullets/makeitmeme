@@ -1,6 +1,6 @@
 // Pure maths for rendering a Meme: export size, Text Box geometry, text fitting.
 // No DOM here so it can be unit tested under node (see test/javascript). The canvas drawing lives in
-// `drawMeme` below, which takes a 2d context and is the single render path for preview and export.
+// `render` below, which takes a 2d context and is the single render path for preview and export.
 
 export const MAX_SIDE = 2048
 export const MIN_FONT = 8
@@ -61,18 +61,20 @@ export function fitText(measure, text, w, h, stroked, { minSize = MIN_FONT, maxS
   return best || { size: minSize, lines: wrapLines(measure, text, minSize, w), overflow: true }
 }
 
-// Draw the Template image and every non-empty caption onto `canvas`. `captions[i]` belongs to Text Box i.
+// Draw the Template image and every non-empty caption onto a 2d context. This is THE render path: the Meme
+// editor preview and export, the Admin sample-text preview and the Player uploads editor all call it.
+// template = { image, width, height } (width/height are the canvas pixel size); `captions[i]` belongs to boxes[i].
 // opts.outlines draws dashed numbered guides on empty boxes (preview only, never in the export).
-export function drawMeme(canvas, template, img, captions, { outlines = false } = {}) {
-  const { width, height } = canvasSize(img.naturalWidth, img.naturalHeight)
-  if (canvas.width !== width) canvas.width = width
-  if (canvas.height !== height) canvas.height = height
-  const ctx = canvas.getContext('2d')
-  ctx.drawImage(img, 0, 0, width, height)
+// Returns one entry per box: null when its caption is empty, else { size, overflow, atMinimum } where
+// atMinimum means the text was shrunk to MIN_FONT and overflow means it still doesn't fit.
+export function render(ctx, template, boxes, captions, { outlines = false } = {}) {
+  const { image, width, height } = template
+  ctx.drawImage(image, 0, 0, width, height)
 
-  template.boxes.forEach((box, i) => {
+  return boxes.map((box, i) => {
     const g = boxGeometry(box, width, height)
     const text = (captions[i] || '').trim().toUpperCase()
+    let fit = null
     ctx.save()
     ctx.translate(g.cx, g.cy)
     ctx.rotate(g.radians)
@@ -93,7 +95,8 @@ export function drawMeme(canvas, template, img, captions, { outlines = false } =
         ctx.font = `${size}px ${FONT_FAMILY}`
         return ctx.measureText(s).width
       }
-      const { size, lines } = fitText(measure, text, g.w, g.h, stroked)
+      const { size, lines, overflow = false } = fitText(measure, text, g.w, g.h, stroked)
+      fit = { size, overflow, atMinimum: size <= MIN_FONT }
       ctx.font = `${size}px ${FONT_FAMILY}`
       ctx.lineJoin = 'round'
       ctx.lineWidth = size / 8
@@ -107,5 +110,14 @@ export function drawMeme(canvas, template, img, captions, { outlines = false } =
       })
     }
     ctx.restore()
+    return fit
   })
+}
+
+// Size `canvas` to the image (capped at MAX_SIDE) and render onto it. Returns render()'s per-box fits.
+export function drawMeme(canvas, template, img, captions, opts = {}) {
+  const { width, height } = canvasSize(img.naturalWidth, img.naturalHeight)
+  if (canvas.width !== width) canvas.width = width
+  if (canvas.height !== height) canvas.height = height
+  return render(canvas.getContext('2d'), { image: img, width, height }, template.boxes, captions, opts)
 }
