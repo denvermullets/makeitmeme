@@ -31,6 +31,7 @@ Rails.application.routes.draw do
   resources :joins, only: :create
   get 'rooms/:code' => 'rooms#show', as: :room
   post 'rooms/:code/start' => 'starts#create', as: :start_room
+  post 'rooms/:code/packs/:pack_id/toggle' => 'pack_toggles#create', as: :toggle_room_pack
   post 'rooms/:code/memes' => 'memes#create', as: :room_memes
   post 'rooms/:code/votes' => 'votes#create', as: :room_votes
   post 'rooms/:code/play_again' => 'play_agains#create', as: :play_again_room

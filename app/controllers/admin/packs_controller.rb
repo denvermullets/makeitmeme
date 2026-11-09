@@ -23,7 +23,7 @@ module Admin
       end
     end
 
-    # Room off-list cleanup belongs to MEME-47 once Host Pack toggles exist.
+    # Pack#after_destroy removes the Pack from every Room's off list.
     def destroy
       if @pack.destroy
         redirect_to admin_packs_path, notice: "Deleted #{@pack.name}"
