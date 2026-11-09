@@ -24,9 +24,10 @@ class Template < ApplicationRecord
   end
 
   # The one seam for dealing: the Templates a Room may deal from. Must not reorder or weight results.
-  # Pack on/off narrows this per Room later (MEME-47); `room` is the argument it will use.
-  def self.dealable_for(_room)
-    where(hidden_at: nil)
+  # Narrowed to Templates whose Pack is on for the Room (Rooms store the Packs that are off).
+  def self.dealable_for(room)
+    scope = where(hidden_at: nil)
+    room.off_pack_ids.any? ? scope.where.not(pack_id: room.off_pack_ids) : scope
   end
 
   def hide!

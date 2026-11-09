@@ -76,6 +76,21 @@ class Room < ApplicationRecord
     Template.dealable_for(self).count >= MIN_DEALABLE_TEMPLATES
   end
 
+  # Room game operation: the Host turns a Pack on or off for the next Game (`on:` nil flips it).
+  # Raises ActiveRecord::RecordInvalid unless the caller is the Host and the Room is in Waiting or on the Scoreboard.
+  def toggle_pack(pack:, by:, on: nil)
+    with_lock do
+      reject!('Only the Host can choose Packs') unless host?(by)
+      reject!('Packs can only be changed between Games') unless waiting? || scoreboard?
+
+      on = pack_off?(pack) if on.nil?
+      update!(off_pack_ids: on ? off_pack_ids - [pack.id] : (off_pack_ids | [pack.id]))
+    end
+    self
+  end
+
+  def pack_off?(pack) = off_pack_ids.include?(pack.id)
+
   # Room game operation: the Host sends the Room from the Scoreboard back to Waiting.
   # Raises ActiveRecord::RecordInvalid unless the caller is the Host and the Room is on the Scoreboard.
   def play_again(by:)
