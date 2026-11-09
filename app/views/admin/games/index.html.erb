@@ -1,0 +1,18 @@
+<% content_for :title, 'Games' %>
+<h1>Games</h1>
+<table class="games">
+  <thead><tr><th>Finished</th><th>Players</th><th>Memes</th><th>Winner</th><th></th></tr></thead>
+  <tbody id="games">
+    <% @games.each do |game| %>
+      <% seats = game.game_players.sort_by(&:id) %>
+      <% top = seats.map(&:total).max %>
+      <tr data-game="<%= game.id %>">
+        <td class="game-finished-at"><%= l game.finished_at, format: :long %></td>
+        <td class="game-nicknames"><%= seats.map(&:nickname).join(', ') %></td>
+        <td class="game-meme-count"><%= @meme_counts.fetch(game.id, 0) %></td>
+        <td class="game-winners"><%= seats.select { |seat| seat.total == top }.map(&:nickname).join(', ') %></td>
+        <td><%= link_to 'Recap', recap_path(game.recap_token) %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
