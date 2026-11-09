@@ -15,5 +15,7 @@
   <% end %>
   <h2 class="mt-4 font-bold">Scoreboard</h2>
   <%= render 'games/scoreboard', scoreboard: @game.scoreboard %>
+  <h2 class="mt-4 font-bold">Memes</h2>
+  <%= render 'games/memes_by_round', memes_by_round: @game.memes_by_round %>
   <p class="mt-4"><%= link_to 'Start your own Room', root_path %></p>
 </main>
