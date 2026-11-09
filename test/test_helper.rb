@@ -4,9 +4,6 @@ require 'rails/test_help'
 
 module ActiveSupport
   class TestCase
-    # Run tests in parallel with specified workers
-    parallelize(workers: :number_of_processors)
-
     # Setup all fixtures in test/fixtures/*.yml for all tests in alphabetical order.
     fixtures :all
 
@@ -55,9 +52,11 @@ module ActiveSupport
   end
 end
 
-class ActionDispatch::IntegrationTest
-  # Sign this integration session in as the Admin through the real sign-in form.
-  def sign_in_as_admin(password = ActiveSupport::TestCase::ADMIN_PASSWORD)
-    with_admin_password(password) { post admin_sign_in_path, params: { password: password } }
+module ActionDispatch
+  class IntegrationTest
+    # Sign this integration session in as the Admin through the real sign-in form.
+    def sign_in_as_admin(password = ActiveSupport::TestCase::ADMIN_PASSWORD)
+      with_admin_password(password) { post admin_sign_in_path, params: { password: password } }
+    end
   end
 end

@@ -46,14 +46,15 @@ class AdminTemplatePackMoveTest < ActionDispatch::IntegrationTest
   end
 
   test 'a move keeps the search, filter and Pack in the redirect' do
-    patch admin_template_path(@drake, q: 'dra', filter: 'review', pack: @classics.id), params: { template: { pack_id: @fun.id } }
+    patch admin_template_path(@drake, q: 'dra', filter: 'review', pack: @classics.id),
+          params: { template: { pack_id: @fun.id } }
     assert_redirected_to admin_root_path(q: 'dra', filter: 'review', pack: @classics.id, selected: @drake.id)
   end
 
   test 'the Pack filter combines with search and chips, and chip counts respect it' do
     get admin_root_path(pack: @fun.id)
     assert_equal [@cat.id, @fun_upload.id].sort, shown
-    assert_equal [2, 2, 1, 0], %w[all review uploads hidden].map { |k| chip_count(k) }
+    assert_equal([2, 2, 1, 0], %w[all review uploads hidden].map { |k| chip_count(k) })
 
     get admin_root_path(pack: @fun.id, q: 'upload')
     assert_equal [@fun_upload.id], shown

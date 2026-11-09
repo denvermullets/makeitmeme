@@ -32,7 +32,7 @@ class AdminLibraryFiltersTest < ActionDispatch::IntegrationTest
   test 'All shows everything, with a count on every chip' do
     get admin_root_path
     assert_equal Template.pluck(:id).sort, shown
-    assert_equal [6, 2, 2, 2], %w[all review uploads hidden].map { |k| chip_count(k) }
+    assert_equal([6, 2, 2, 2], %w[all review uploads hidden].map { |k| chip_count(k) })
   end
 
   test 'Needs review is unreviewed and not hidden' do
@@ -59,7 +59,7 @@ class AdminLibraryFiltersTest < ActionDispatch::IntegrationTest
   test 'filters combine with search and counts follow the search' do
     get admin_root_path(filter: 'uploads', q: 'reviewed')
     assert_equal [@upload_reviewed.id], shown
-    assert_equal [3, 0, 1, 1], %w[all review uploads hidden].map { |k| chip_count(k) }
+    assert_equal([3, 0, 1, 1], %w[all review uploads hidden].map { |k| chip_count(k) })
     assert_select 'form input[name=filter][value=uploads]'
   end
 

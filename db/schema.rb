@@ -167,10 +167,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_10_084900) do
     t.jsonb "text_boxes", default: [], null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "pack_id", null: false
     t.string "source_kind", default: "memegen", null: false
     t.datetime "reviewed_at"
     t.datetime "hidden_at"
-    t.bigint "pack_id", null: false
     t.index ["memegen_id"], name: "index_templates_on_memegen_id", unique: true
     t.index ["pack_id"], name: "index_templates_on_pack_id"
   end
