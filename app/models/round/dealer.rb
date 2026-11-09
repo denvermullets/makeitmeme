@@ -17,9 +17,15 @@ class Round::Dealer
 
   private
 
-  # Smaller sorts first. Fields: [dealt to this game-player earlier this Game? (0 no, 1 yes), random tiebreak].
+  # Smaller sorts first. Fields: [dealt to this game-player earlier this Game? (0 no, 1 yes),
+  # dealt to any game-player earlier this Game? (0 no, 1 yes), random tiebreak].
   def sort_key(game_player, template_id)
-    [own_dealt(game_player).include?(template_id) ? 1 : 0, rand]
+    [own_dealt(game_player).include?(template_id) ? 1 : 0, game_dealt.include?(template_id) ? 1 : 0, rand]
+  end
+
+  def game_dealt
+    @game_dealt ||= Hand.joins(:round).where(rounds: { game_id: @game.id })
+                        .where.not(round_id: @round.id).pluck(:template_ids).flatten.to_set
   end
 
   def own_dealt(game_player)
