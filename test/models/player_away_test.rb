@@ -31,6 +31,14 @@ class PlayerAwayTest < ActiveSupport::TestCase
     end
   end
 
+  test 'the grace job is enqueued only once the surrounding transaction commits' do
+    Player.transaction do
+      @bob.disconnected!
+      assert_no_enqueued_jobs(only: PresenceGraceJob)
+    end
+    assert_enqueued_jobs 1, only: PresenceGraceJob
+  end
+
   test 'closing one of several tabs schedules nothing' do
     @bob.connected!
     assert_no_enqueued_jobs(only: PresenceGraceJob) { @bob.disconnected! }
@@ -42,10 +50,10 @@ class PlayerAwayTest < ActiveSupport::TestCase
     perform_enqueued_jobs(only: PresenceGraceJob)
 
     assert @bob.reload.away?
-    assert_not @bob.present?
+    assert_not @bob.here?
     assert_equal [@bob.id], AwayRecorder.calls
     assert_equal [@room.player_for('ada').id, @room.player_for('cy').id].sort,
-                 @room.players.present.pluck(:id).sort
+                 @room.players.here.pluck(:id).sort
   end
 
   test 'a stale job (the Player reconnected during the grace) does nothing' do
@@ -56,7 +64,7 @@ class PlayerAwayTest < ActiveSupport::TestCase
 
     PresenceGraceJob.perform_now(@bob.id, stale_token)
 
-    assert @bob.reload.present?
+    assert @bob.reload.here?
   end
 
   test 'a job whose Player still has a connection does nothing' do
@@ -64,7 +72,7 @@ class PlayerAwayTest < ActiveSupport::TestCase
     @bob.connected!
     PresenceGraceJob.perform_now(@bob.id, token)
 
-    assert @bob.reload.present?
+    assert @bob.reload.here?
   end
 
   test 'a job for a deleted Player does nothing' do
@@ -81,7 +89,7 @@ class PlayerAwayTest < ActiveSupport::TestCase
 
     @bob.connected!
 
-    assert @bob.reload.present?
+    assert @bob.reload.here?
     assert_nil @bob.away_at
   end
 

@@ -1,6 +1,6 @@
 <%# The Host's kick action for a Player in Waiting; an empty slot (filled by broadcast) for everyone else. %>
 <span id="kick_<%= dom_id(player) %>">
-  <% if viewer && player.room.waiting? && player.room.host?(viewer) && !player.room.host?(player) %>
-    <%= button_to 'Kick', kick_room_player_path(player.room.code, player), class: 'border px-2 ml-2', form: { class: 'inline' } %>
+  <% if viewer && room.waiting? && room.host?(viewer) && !room.host?(player) %>
+    <%= button_to 'Kick', kick_room_player_path(room.code, player), class: 'border px-2 ml-2', form: { class: 'inline' } %>
   <% end %>
 </span>

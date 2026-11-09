@@ -47,7 +47,7 @@ class PlayerBootResetTest < ActiveSupport::TestCase
 
     travel_to(Player::AWAY_GRACE.from_now + 1) { perform_enqueued_jobs(only: PresenceGraceJob) }
 
-    assert @bob.reload.present?
+    assert @bob.reload.here?
     assert @ada.reload.away?
   end
 end

@@ -1,7 +1,10 @@
 require 'test_helper'
+require 'turbo/broadcastable/test_helper'
 
 # Room game operation: joining with a nickname that already exists in the Room (trimmed, ignoring case).
 class RoomTakeoverTest < ActiveSupport::TestCase
+  include Turbo::Broadcastable::TestHelper
+
   setup do
     @room = room_with_players
     @bob = @room.player_for('bob')
@@ -14,7 +17,7 @@ class RoomTakeoverTest < ActiveSupport::TestCase
   test 'a present Players nickname is taken, ignoring case and surrounding spaces' do
     [' bob ', 'BOB', 'Bob'].each do |nickname|
       error = assert_raises(ActiveRecord::RecordInvalid) { join(nickname, 'new') }
-      assert_includes error.record.errors.full_messages, 'Nickname has already been taken'
+      assert_includes error.record.errors.full_messages, 'That nickname is taken'
     end
     assert_equal @bob, @room.player_for('bob')
     assert_nil @room.player_for('new')
@@ -29,6 +32,15 @@ class RoomTakeoverTest < ActiveSupport::TestCase
     assert_equal @bob, @room.player_for('phone-2')
     assert_equal 'Bob', player.reload.nickname
     assert_equal 3, @room.players.count
+  end
+
+  test 'a takeover tells the Players stream to reload, so the old browser lands on the join form' do
+    @bob.update!(away_at: Time.current)
+    ActionCable.server.pubsub.clear
+
+    assert_turbo_stream_broadcasts [@room, @bob], count: 1 do
+      join('Bob', 'phone-2')
+    end
   end
 
   test 'after a takeover the old browser matches no Player' do

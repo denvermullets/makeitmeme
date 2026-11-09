@@ -15,7 +15,7 @@ module Room::HostHandoff
       next unless host_player_id == from.id
 
       candidates = players.where.not(id: from.id).order(:joined_at, :id)
-      candidate = candidates.present.first || (candidates.first if fallback_to_away)
+      candidate = candidates.here.first || (candidates.first if fallback_to_away)
       changed = candidate.present? || fallback_to_away
       update!(host: candidate) if changed
       candidate

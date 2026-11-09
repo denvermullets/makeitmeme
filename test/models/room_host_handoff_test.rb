@@ -44,12 +44,21 @@ class RoomHostHandoffTest < ActiveSupport::TestCase
     go_away('ada')
     @room.player_for('ada').connected!
     assert_equal 'cy', host_token
-    assert @room.reload.player_for('ada').present?
+    assert @room.reload.player_for('ada').here?
   end
 
   test 'an Away non-Host leaves the Host alone' do
     go_away('bob')
     assert_equal 'ada', host_token
+  end
+
+  test 'an Away Host with nobody to hand off to is still the Host' do
+    go_away('cy')
+    go_away('bob')
+    go_away('ada')
+    ada = @room.reload.player_for('ada')
+    assert ada.away?
+    assert @room.host?(ada)
   end
 
   test 'with nobody else present the Host stays' do
