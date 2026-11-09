@@ -16,3 +16,9 @@
     <% end %>
   </tbody>
 </table>
+<% if @page > 1 || @next_page %>
+  <nav class="pagination">
+    <%= link_to 'Previous', admin_games_path(page: @page - 1), rel: 'prev' if @page > 1 %>
+    <%= link_to 'Next', admin_games_path(page: @next_page), rel: 'next' if @next_page %>
+  </nav>
+<% end %>
