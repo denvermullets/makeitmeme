@@ -59,8 +59,6 @@ Rails.application.configure do
 
   # Set host to be used by links generated in mailer templates.
   config.action_mailer.default_url_options = { host: 'example.com' }
-  # Broadcast renders have no request, so full URLs (the Recap link) take their host from here. Set APP_HOST.
-  Rails.application.routes.default_url_options = { host: ENV.fetch('APP_HOST', 'example.com'), protocol: 'https' }
 
   # Specify outgoing SMTP server. Remember to add smtp/* credentials via bin/rails credentials:edit.
   # config.action_mailer.smtp_settings = {

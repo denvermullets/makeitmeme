@@ -48,7 +48,7 @@ class AdminGamesTest < ActionDispatch::IntegrationTest
     assert_select '[data-game]:nth-child(2)[data-game=?]', older.id.to_s
   end
 
-  test 'each row shows the finished time, nicknames, Meme count, winners and a Recap link' do
+  test 'each row shows the finished time, nicknames, Meme count, 1st place and a Recap link' do
     game = make_game([['Ada', 9], ['Bob', 9], ['Cy', 2]], finished_at: Time.utc(2026, 11, 9, 18, 30))
     sign_in_as_admin
 
@@ -58,8 +58,8 @@ class AdminGamesTest < ActionDispatch::IntegrationTest
       assert_select '.game-finished-at', /2026/
       assert_select '.game-nicknames', /Ada.*Bob.*Cy/m
       assert_select '.game-meme-count', '3'
-      assert_select '.game-winners', /Ada.*Bob/m
-      assert_select '.game-winners', text: /Cy/, count: 0
+      assert_select '.game-first-place', /Ada.*Bob/m
+      assert_select '.game-first-place', text: /Cy/, count: 0
       assert_select 'a[href=?]', recap_path(game.recap_token)
     end
   end

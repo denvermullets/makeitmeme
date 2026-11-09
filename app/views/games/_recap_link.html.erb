@@ -1,8 +1,9 @@
-<%# The Recap URL of a Game with a share (or copy) control. Rendered in the Scoreboard screen, so it rides the existing phase broadcast. %>
-<% url = recap_url(game.recap_token) %>
-<div id="recap_link" data-controller="share" data-share-url-value="<%= url %>" data-share-title-value="Our Make It Meme game">
+<%# The Recap link of a Game with a share (or copy) control. Rendered in the Scoreboard screen, so it rides the existing
+    phase broadcast. Broadcast renders have no request host, so this carries the path; share_controller.js makes it absolute. %>
+<% path = recap_path(game.recap_token) %>
+<div id="recap_link" data-controller="share" data-share-url-value="<%= path %>" data-share-title-value="Our Make It Meme game">
   <h2 class="mt-4 font-bold">Recap</h2>
-  <a href="<%= url %>" data-recap-url><%= url %></a>
+  <a href="<%= path %>" data-recap-url data-share-target="link"><%= path %></a>
   <button type="button" data-action="share#share" data-share-target="button" class="border p-2">Share</button>
   <span data-share-target="status" role="status"></span>
 </div>

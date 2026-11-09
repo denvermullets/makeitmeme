@@ -31,6 +31,13 @@ class ScoreboardMemesTabTest < ActionDispatch::IntegrationTest
     @bob.assert_select "#scoreboard [data-tabs-target='panel']", 2
   end
 
+  test 'the Memes tab button is a reveal target, rendered visible so it shows without JavaScript' do
+    @bob.get room_path(@room.code)
+
+    @bob.assert_select "#scoreboard[data-controller~='reveal'] button[data-reveal-target='memesTab']", text: 'Memes'
+    @bob.assert_select "#scoreboard button[data-reveal-target='memesTab'][hidden]", false
+  end
+
   test 'the Memes tab groups Memes by Round in Round order and by voting position within a Round' do
     make_meme(@rounds[1], 'Cy', position: 0, points: 2)
     make_meme(@rounds[0], 'Bob', position: 1, points: 5)

@@ -73,6 +73,7 @@ class RecapTest < ActionDispatch::IntegrationTest
 
     get recap_path('nope')
     assert_response :not_found
+    assert_select 'title', /404/
 
     get recap_path('x' * 24)
     assert_response :not_found
