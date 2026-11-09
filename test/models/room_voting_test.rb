@@ -177,6 +177,30 @@ class RoomVotingTest < ActiveSupport::TestCase
     assert_equal 0, Vote.count
   end
 
+  test 'a Player spends a Buddy as their Vote on someone elses Meme' do
+    submit_memes(@room, 'ada', 'bob', 'cy')
+    voter = voter_other_than(current_meme)
+    vote(voter, 'buddy')
+
+    assert_equal 'buddy', @room.vote_by(@room.player_for(voter))&.kind
+    assert_equal 1, current_meme.votes.count
+  end
+
+  test 'a Buddy on your own Meme, after voting, or after the vote closed is refused and writes nothing' do
+    submit_memes(@room, 'ada', 'bob', 'cy')
+    meme = current_meme
+    rejected_with('You cannot vote on your own Meme') { vote(maker_token(meme), 'buddy', meme:) }
+    voter = voter_other_than(meme)
+    vote(voter, 'up')
+    rejected_with('You already voted') { vote(voter, 'buddy', meme:) }
+    assert_equal 1, meme.votes.count
+
+    end_phase
+    late = (%w[ada bob cy] - [maker_token(meme), voter]).first
+    rejected_with('Voting is closed') { vote(late, 'buddy', meme:) }
+    assert_equal 1, meme.votes.count
+  end
+
   test 'a Vote reaches only the voters own stream' do
     submit_memes(@room, 'ada', 'bob', 'cy')
     voter = @room.player_for(voter_other_than(current_meme))

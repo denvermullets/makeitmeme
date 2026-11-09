@@ -9,7 +9,7 @@
     <% cast = room.vote_by(player) %>
     <%= form_with url: room_votes_path(room.code), class: 'flex gap-2' do %>
       <%= hidden_field_tag :meme_id, room.current_meme.id %>
-      <% %w[up meh down].each do |kind| %>
+      <% %w[up meh down buddy].each do |kind| %>
         <%= button_tag kind.capitalize, type: 'submit', name: 'kind', value: kind, disabled: cast.present?,
                        'aria-pressed': (cast&.kind == kind).to_s,
                        class: "border p-2 font-bold flex-1#{' bg-blue-600 text-white' if cast&.kind == kind}" %>

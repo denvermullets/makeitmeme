@@ -40,6 +40,14 @@ class RoomVoteEarlyCloseTest < ActiveSupport::TestCase
     assert_equal [1, 0, 1], [first_meme.reload.up_count, first_meme.meh_count, first_meme.down_count]
   end
 
+  test 'a Buddy counts as a Vote toward the early close' do
+    vote(others.first, 'buddy')
+    assert @room.reload.vote?
+    vote(others.last)
+
+    assert @room.reload.reveal?
+  end
+
   test 'the Memes author is not waited for' do
     vote(others.first)
     vote(others.last)

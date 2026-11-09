@@ -34,6 +34,17 @@ class VoteScreenTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test 'a voter sees a Buddy button, spends it with one tap, and every button is then disabled' do
+    @sessions[@voter].get room_path(@room.code)
+    @sessions[@voter].assert_select "#vote_controls form button[value='buddy']"
+    @sessions[@voter].post room_votes_path(@room.code), params: { meme_id: @meme.id, kind: 'buddy' }
+    @sessions[@voter].assert_response :no_content
+
+    @sessions[@voter].get room_path(@room.code)
+    @sessions[@voter].assert_select '#vote_controls button[disabled]', 4
+    @sessions[@voter].assert_select "#vote_controls button[value='buddy'][aria-pressed='true']"
+  end
+
   test 'the maker sees this one is theirs and no buttons' do
     @sessions[@maker].get room_path(@room.code)
     @sessions[@maker].assert_select '#vote_controls', text: /this one's yours/i
@@ -45,7 +56,7 @@ class VoteScreenTest < ActionDispatch::IntegrationTest
     @sessions[@voter].assert_response :no_content
 
     @sessions[@voter].get room_path(@room.code)
-    @sessions[@voter].assert_select '#vote_controls button[disabled]', 3
+    @sessions[@voter].assert_select '#vote_controls button[disabled]', 4
     @sessions[@voter].assert_select "#vote_controls button[value='meh'][aria-pressed='true']"
     @sessions[@voter].assert_select '#vote img'
     @sessions[@voter].assert_select "[data-controller='countdown']"
