@@ -1,5 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 import { Autosaver } from "autosaver"
+import { render, canvasSize, FONT_FAMILY } from "meme_render"
+import { sampleCaptions, fitSummary } from "sample_preview"
 import { HANDLE_DIRS, toPx, fromPx, dragBox } from "text_box_geometry"
 
 // Text Box editor. State is `this.boxes` (the ordered array, same shape the server stores); every change goes
@@ -9,7 +11,7 @@ const STYLES = { white: { color: "white", font: "thick" }, black: { color: "blac
 const LABELS = { saving: "Saving…", saved: "Saved", error: "Couldn't save" }
 
 export default class extends Controller {
-  static targets = ["row", "status", "retry", "errors", "stage", "image", "overlay"]
+  static targets = ["row", "status", "retry", "errors", "stage", "image", "overlay", "preview", "fits"]
   static values = { url: String, boxes: Array, image: String }
 
   connect() {
@@ -19,9 +21,11 @@ export default class extends Controller {
     this.saver = new Autosaver({ send: () => this.save(), onStatus: (status) => this.showStatus(status) })
     this.loadImage()
     this.renderStage()
+    this.startPreview()
   }
 
   disconnect() {
+    this.stopPreview()
     this.saver?.flush()
   }
 
@@ -32,6 +36,7 @@ export default class extends Controller {
     this.imageTarget.addEventListener("load", () => {
       const { naturalWidth, naturalHeight } = this.imageTarget
       if (naturalWidth && naturalHeight) this.stageTarget.style.setProperty("--ar", `${naturalWidth} / ${naturalHeight}`)
+      this.schedulePreview()
     })
     this.imageTarget.src = this.imageValue
   }
@@ -60,6 +65,7 @@ export default class extends Controller {
       })
     })
     this.rowTargets.forEach((row, index) => row.classList.toggle("selected", index === this.selected))
+    this.schedulePreview()
   }
 
   buildBoxElement() {
@@ -169,6 +175,72 @@ export default class extends Controller {
         input.value = Math.round(value * 10) / 10
       })
     })
+  }
+
+  // ---- Sample-text preview (MEME-40) ----
+  // View-only: the level is never part of this.boxes, so it is never saved. Drawing goes through the shared render()
+  // (no local fitting). Redraws are coalesced to one per animation frame so drags stay smooth, and nothing draws
+  // until the self-hosted Anton font has loaded, so measurements never use a fallback font.
+  startPreview() {
+    this.sampleLevel = "off"
+    this.fontReady = false
+    this.previewFrame = null
+    if (!this.hasPreviewTarget) return
+    const ready = document.fonts?.load ? document.fonts.load(`40px ${FONT_FAMILY}`, "ABC") : Promise.resolve()
+    Promise.resolve(ready).catch((error) => console.warn("Anton failed to load, falling back", error)).then(() => {
+      this.fontReady = true
+      this.schedulePreview()
+    })
+  }
+
+  stopPreview() {
+    if (this.previewFrame) cancelAnimationFrame(this.previewFrame)
+    this.previewFrame = null
+    this.fontReady = false
+  }
+
+  setSample(event) {
+    this.sampleLevel = event.target.value
+    this.schedulePreview()
+  }
+
+  schedulePreview() {
+    if (!this.hasPreviewTarget || this.previewFrame) return
+    this.previewFrame = requestAnimationFrame(() => {
+      this.previewFrame = null
+      this.drawPreview()
+    })
+  }
+
+  drawPreview() {
+    const canvas = this.previewTarget
+    const img = this.imageTarget
+    const on = this.sampleLevel !== "off"
+    canvas.hidden = !on
+    this.fitsTarget.hidden = !on
+    if (!on) {
+      this.fitsTarget.replaceChildren()
+      return
+    }
+    if (!this.fontReady || !img.complete || !img.naturalWidth) return
+    const { width, height } = canvasSize(img.naturalWidth, img.naturalHeight)
+    if (canvas.width !== width) canvas.width = width
+    if (canvas.height !== height) canvas.height = height
+    const ctx = canvas.getContext("2d")
+    ctx.clearRect(0, 0, width, height)
+    // Boxes with non-numeric fields (mid-edit) get no caption; render() needs finite geometry.
+    const finite = (box) => ["x", "y", "w", "h", "angle"].every((key) => Number.isFinite(box[key]))
+    const captions = sampleCaptions(this.sampleLevel, this.boxes.length).map((text, i) => (finite(this.boxes[i]) ? text : ""))
+    this.showFits(render(ctx, { image: img, width, height }, this.boxes, captions))
+  }
+
+  showFits(fits) {
+    this.fitsTarget.replaceChildren(...fits.map((fit, index) => {
+      const { text, warning } = fitSummary(fit)
+      const li = Object.assign(document.createElement("li"), { textContent: `Box ${index + 1}: ${text || "n/a"}` })
+      li.classList.toggle("warning", warning)
+      return li
+    }))
   }
 
   retry() {
