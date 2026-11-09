@@ -15,6 +15,7 @@ class Room < ApplicationRecord
   include PhaseEngine
   include Voting
   include Activity
+  include Presence
 
   after_update_commit :broadcast_packs!, if: :saved_change_to_off_pack_ids?
 
