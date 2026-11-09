@@ -1,7 +1,7 @@
 class RoomsController < ApplicationController
   include RoomSession
 
-  before_action :require_room, :require_player, only: :show
+  before_action :render_ended, :require_room, :require_player, only: :show
 
   def new; end
 
@@ -19,6 +19,11 @@ class RoomsController < ApplicationController
   def show; end
 
   private
+
+  # No live Room holds the code but an expired one did: say so instead of a bare 404.
+  def render_ended
+    render :ended, status: :gone if !current_room && Room.expired_by_code(params[:code])
+  end
 
   def deny_player = deny_player_with_redirect
 end
