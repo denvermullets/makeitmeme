@@ -30,6 +30,7 @@ Rails.application.routes.draw do
   get 'rooms/:code' => 'rooms#show', as: :room
   post 'rooms/:code/start' => 'starts#create', as: :start_room
   post 'rooms/:code/packs/:pack_id/toggle' => 'pack_toggles#create', as: :toggle_room_pack
+  post 'rooms/:code/captioning_preset' => 'captioning_presets#create', as: :room_captioning_preset
   post 'rooms/:code/players/:player_id/kick' => 'kicks#create', as: :kick_room_player
   post 'rooms/:code/leave' => 'leaves#create', as: :leave_room
   post 'rooms/:code/memes' => 'memes#create', as: :room_memes

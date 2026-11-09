@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_10_084900) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_10_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -139,6 +139,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_10_084900) do
     t.bigint "current_meme_id"
     t.bigint "off_pack_ids", default: [], null: false, array: true
     t.boolean "upload_grace_used", default: false, null: false
+    t.string "captioning_preset", default: "normal", null: false
     t.index ["code"], name: "index_rooms_on_code_live", unique: true, where: "(expired_at IS NULL)"
     t.index ["current_game_id"], name: "index_rooms_on_current_game_id"
     t.index ["current_meme_id"], name: "index_rooms_on_current_meme_id"
