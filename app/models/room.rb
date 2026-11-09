@@ -17,6 +17,7 @@ class Room < ApplicationRecord
   include Activity
   include Membership
   include Presence
+  include EarlyFinish
 
   after_update_commit :broadcast_packs!, if: :saved_change_to_off_pack_ids?
 
@@ -137,7 +138,7 @@ class Room < ApplicationRecord
       reject!('Time is up') if closed?
 
       hand = hand_for(by) || reject!('You are not in this Game')
-      Meme.submit(hand:, template_id:, signed_id:, captions:)
+      Meme.submit(hand:, template_id:, signed_id:, captions:).tap { finish_early_if_done! }
     end
   end
 

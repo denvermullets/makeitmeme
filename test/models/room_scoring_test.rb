@@ -32,7 +32,6 @@ class RoomScoringTest < ActiveSupport::TestCase
   test 'a scripted three-Round Game caches each Meme, each total and the Scoreboard order' do
     SCRIPT.each_with_index do |round_votes, index|
       submit_memes(@room, 'ada', 'bob', 'cy')
-      end_phase
       3.times do
         meme = @room.current_meme
         maker = meme.game_player.player.browser_token
@@ -59,7 +58,6 @@ class RoomScoringTest < ActiveSupport::TestCase
 
   test 'a stale or repeated advance never double-counts a reveal' do
     submit_memes(@room, 'ada', 'bob', 'cy')
-    end_phase
     meme = @room.current_meme
     voter = @room.player_for((%w[ada bob cy] - [meme.game_player.player.browser_token]).first)
     @room.cast_vote(by: voter, meme_id: meme.id, kind: 'up')
@@ -115,7 +113,6 @@ class RoomScoringTest < ActiveSupport::TestCase
       end_phase
     end
     submit_memes(@room, 'ada', 'bob', 'cy')
-    end_phase
     3.times do
       meme = @room.current_meme
       voter = (%w[ada bob cy] - [meme.game_player.player.browser_token]).first
@@ -131,7 +128,6 @@ class RoomScoringTest < ActiveSupport::TestCase
 
   test 'a late Player can vote on the current and later Memes but not on one already revealed' do
     submit_memes(@room, 'ada', 'bob', 'cy')
-    end_phase
     first = @room.current_meme
     voter = (%w[ada bob cy] - [first.game_player.player.browser_token]).first
     end_phase
