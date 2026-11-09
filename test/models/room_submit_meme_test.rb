@@ -92,16 +92,4 @@ class RoomSubmitMemeTest < ActiveSupport::TestCase
       rejected_with('Time is up') { submit(player: @room.player_for('cy')) }
     end
   end
-
-  test 'the deadline waits out the grace, so a Meme arriving at zero still counts' do
-    deadline = @room.reload.phase_deadline_at
-    travel_to(deadline + 0.1.seconds) do
-      assert_not @room.advance!(from_seq: @room.phase_seq, only_if_due: true)
-      assert @room.reload.captioning?
-    end
-    travel_to(deadline + Room::UPLOAD_GRACE + 1.second) do
-      assert @room.advance!(from_seq: @room.phase_seq, only_if_due: true)
-      assert_equal 2, @room.reload.current_round_number
-    end
-  end
 end

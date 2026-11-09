@@ -3,8 +3,9 @@
 module Room::PhaseEngine
   extend ActiveSupport::Concern
 
-  # Captioning stays open this long past its deadline, so a Meme auto-submitted at the client's zero still lands.
-  UPLOAD_GRACE = 1.second
+  # At the Captioning deadline the phones bake and upload the Meme on screen, so the server extends the deadline
+  # once by this much (same phase, later deadline, new deadline job) instead of advancing. See `extend_deadline!`.
+  UPLOAD_GRACE = 5.seconds
   # Likewise a Vote tapped at the last moment.
   VOTE_GRACE = 1.second
 
@@ -14,7 +15,7 @@ module Room::PhaseEngine
   # Player-specific on it) or on each Player's own stream (`:per_player`), never both.
   PHASES = {
     waiting: { next_step: nil, grace: 0.seconds, screen: :per_player },
-    captioning: { next_step: :finish_captioning!, grace: UPLOAD_GRACE, screen: :per_player },
+    captioning: { next_step: :finish_captioning!, grace: 0.seconds, screen: :per_player },
     vote: { next_step: :enter_reveal!, grace: VOTE_GRACE, screen: :per_player },
     reveal: { next_step: :finish_reveal!, grace: 0.seconds, screen: :shared },
     scoreboard: { next_step: :enter_waiting!, grace: 0.seconds, screen: :per_player }
@@ -40,6 +41,7 @@ module Room::PhaseEngine
 
       step = phase_config[:next_step]
       next false unless step
+      next extend_deadline! if only_if_due && grace_due?
 
       send(step)
       true
@@ -64,8 +66,18 @@ module Room::PhaseEngine
     enter_phase!(:waiting, current_game: nil, current_round_number: nil, current_meme: nil)
   end
 
-  # Past the point where the phase takes input: its deadline plus its grace.
-  def closed? = due_at.present? && Time.current > due_at
+  # Past the point where the phase takes input: its deadline plus its grace. Captioning, until its deadline has been
+  # extended, still takes a Meme for the upload grace (the deadline job may not have run yet).
+  def closed?
+    return false unless due_at
+
+    Time.current > (captioning? && !upload_grace_used? ? due_at + UPLOAD_GRACE : due_at)
+  end
+
+  # The deadline the phones count down to: the Captioning deadline without its upload grace.
+  def countdown_deadline_at
+    upload_grace_used? ? phase_deadline_at - UPLOAD_GRACE : phase_deadline_at
+  end
 
   private
 
@@ -78,13 +90,22 @@ module Room::PhaseEngine
     !only_if_due || (due_at.present? && due_at <= Time.current)
   end
 
+  # Captioning's deadline has passed and its one upload grace has not been given yet.
+  def grace_due? = captioning? && !upload_grace_used?
+
+  # Gives Captioning its upload grace: the same phase with a later deadline. phase_seq is bumped so the new deadline
+  # job is the only live one; the phones are not re-sent the screen (see `phase_changed`).
+  def extend_deadline!
+    update!(phase_seq: phase_seq + 1, phase_deadline_at: phase_deadline_at + UPLOAD_GRACE, upload_grace_used: true)
+  end
+
   # When the phase may be closed: its deadline plus its grace.
   def due_at = phase_deadline_at&.then { |at| at + phase_config[:grace] }
 
   # Every entry step ends here: new phase, bumped phase_seq, and the deadline when the phase has a duration.
   def enter_phase!(phase, **attrs)
     seconds = self.class.phase_seconds[phase.to_sym]
-    update!(phase:, phase_seq: phase_seq + 1, phase_deadline_at: seconds&.seconds&.from_now,
+    update!(phase:, phase_seq: phase_seq + 1, phase_deadline_at: seconds&.seconds&.from_now, upload_grace_used: false,
             last_activity_at: Time.current, **attrs)
   end
 
@@ -100,8 +121,11 @@ module Room::PhaseEngine
   # After commit: schedule the phase's deadline job, then tell the phones.
   def phase_changed
     PhaseDeadlineJob.set(wait_until: due_at).perform_later(id, phase_seq) if phase_deadline_at
-    broadcast_phase
+    broadcast_phase unless grace_extension?
   end
+
+  # The upload grace changes no screen: a phone mid-upload must not have its editor replaced.
+  def grace_extension? = saved_change_to_upload_grace_used? && upload_grace_used?
 
   # The phase's screen goes out once per viewer, on one stream each, so what a phone shows never depends on
   # which stream's update arrives last. Per-Player screens carry the Player's own content (Hand, Host buttons,
