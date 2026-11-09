@@ -3,7 +3,13 @@ module Admin
   class GamesController < BaseController
     PER_PAGE = 20
 
-    def index
+    before_action :load_games
+
+    def index; end
+
+    private
+
+    def load_games
       @page = [params[:page].to_i, 1].max
       finished = Game.finished.includes(:game_players).order(finished_at: :desc, id: :desc)
       # One extra row tells us whether a next page exists without a COUNT.
