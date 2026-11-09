@@ -73,4 +73,40 @@ class RoomDealingTest < ActiveSupport::TestCase
     room.reload
     assert_equal before, room.hand_for(room.host).reload.template_ids
   end
+
+  test 'with 90 dealable Templates and 3 Players no Template appears in more than one Round' do
+    seed_templates(90)
+    room = room_with_players
+
+    per_round = play_three_rounds(room).map { |hands| hands.flat_map(&:template_ids).uniq }
+
+    assert_equal per_round.flatten.uniq.size, per_round.flatten.size
+  end
+
+  test 'with 30 dealable Templates later Rounds reuse Templates others had, never ones the Player had' do
+    seed_templates(30)
+    room = room_with_players
+
+    hands = play_three_rounds(room)
+
+    ids_by_player(hands).each_value do |player_hands|
+      assert_equal player_hands.flatten.uniq.size, player_hands.flatten.size
+    end
+    assert_operator hands.flatten.flat_map(&:template_ids).uniq.size, :<=, 30
+    assert_operator hands[1..].flatten.flat_map(&:template_ids).size, :>, 0
+  end
+
+  test 'a Template nobody was dealt earlier in the Game is dealt before one someone was' do
+    seed_templates(40)
+    room = room_with_players
+    room.start(by: room.host)
+    room.advance!
+    dealt_round_one = room.current_game.rounds.find_by(number: 1).hands.flat_map(&:template_ids).uniq
+    fresh_count = Template.dealable_for(room).count - dealt_round_one.size
+
+    round_two = room.current_game.rounds.find_by(number: 2).hands
+    round_two.each do |hand|
+      assert_equal [fresh_count, Hand::SIZE].min, (hand.template_ids - dealt_round_one).size
+    end
+  end
 end
