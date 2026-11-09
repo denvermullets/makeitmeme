@@ -1,7 +1,18 @@
 <%# Final standings of the finished Game. Ties share a place. %>
 <div id="scoreboard">
   <h2 class="mt-4 font-bold">Scoreboard</h2>
-  <%= render 'games/scoreboard', scoreboard: room.current_game.scoreboard %>
+  <div data-controller="tabs">
+    <div role="tablist" class="mt-2">
+      <button type="button" role="tab" data-tabs-target="tab" data-action="tabs#select" class="border p-2">Scoreboard</button>
+      <button type="button" role="tab" data-tabs-target="tab" data-action="tabs#select" class="border p-2">Memes</button>
+    </div>
+    <div data-tabs-target="panel">
+      <%= render 'games/scoreboard', scoreboard: room.current_game.scoreboard %>
+    </div>
+    <div data-tabs-target="panel">
+      <%= render 'games/memes_by_round', memes_by_round: room.current_game.memes_by_round %>
+    </div>
+  </div>
 
   <%= render 'rooms/captioning_preset', room:, player: %>
 
