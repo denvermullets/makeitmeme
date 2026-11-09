@@ -17,26 +17,37 @@
   </p>
   <ul class="errors" data-text-box-editor-target="errors"></ul>
 
+  <%# Box actions (MEME-39). Enabled/disabled by the controller's renderActions. %>
+  <div class="tbe-actions" role="toolbar" aria-label="Text Box actions">
+    <button type="button" data-action="text-box-editor#addBox">+ Text Box</button>
+    <button type="button" data-text-box-editor-target="needsSelection" data-action="text-box-editor#duplicateBox">Duplicate</button>
+    <button type="button" data-text-box-editor-target="removeButton" data-action="text-box-editor#removeBox">Remove</button>
+    <button type="button" data-text-box-editor-target="earlierButton" data-action="text-box-editor#moveEarlier">Move earlier</button>
+    <button type="button" data-text-box-editor-target="laterButton" data-action="text-box-editor#moveLater">Move later</button>
+    <button type="button" data-action="text-box-editor#resetBoxes">Reset to top &amp; bottom</button>
+  </div>
+
+  <%# Rows are built from the controller's boxes (renderRows) using this template. %>
   <% fields = [['x', 'X', 'percent'], ['y', 'Y', 'percent'], ['w', 'Width', 'percent'], ['h', 'Height', 'percent'], ['angle', 'Angle', 'degrees']] %>
-  <% template.text_boxes.each_with_index do |box, index| %>
-    <fieldset class="text-box-row" data-text-box-editor-target="row" data-index="<%= index %>"
-              data-action="focusin->text-box-editor#selectRow">
-      <legend>Box <%= index + 1 %></legend>
+  <template data-text-box-editor-target="rowTemplate">
+    <fieldset class="text-box-row" data-text-box-editor-target="row" data-action="focusin->text-box-editor#selectRow">
+      <legend>Box</legend>
       <% fields.each do |field, label, unit| %>
         <% percent = unit == 'percent' %>
         <label>
           <%= label %> <%= percent ? '(%)' : '(°)' %>
-          <input type="number" step="<%= percent ? '0.5' : '1' %>" value="<%= (box[field].to_f * (percent ? 100 : 1)).round(1) %>"
+          <input type="number" step="<%= percent ? '0.5' : '1' %>"
                  data-field="<%= field %>" data-unit="<%= unit %>" data-action="input->text-box-editor#edit">
         </label>
       <% end %>
       <label>
         Text style
         <select data-field="style" data-action="change->text-box-editor#style">
-          <option value="white" <%= 'selected' if box['color'] == 'white' %>>White with outline</option>
-          <option value="black" <%= 'selected' if box['color'] == 'black' %>>Black, no outline</option>
+          <option value="white">White with outline</option>
+          <option value="black">Black, no outline</option>
         </select>
       </label>
     </fieldset>
-  <% end %>
+  </template>
+  <div class="tbe-rows" data-text-box-editor-target="rows"></div>
 </section>

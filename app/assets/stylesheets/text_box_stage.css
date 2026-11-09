@@ -20,3 +20,4 @@
   background: #ffe14d; border: 2px solid #000; cursor: grab; }
 .tbe-rotate::after { content: ""; position: absolute; inset: -8px; }
 .text-box-row.selected { outline: 2px solid #ffe14d; }
+.tbe-actions { display: flex; flex-wrap: wrap; gap: .4rem; margin: .5rem 0; }
