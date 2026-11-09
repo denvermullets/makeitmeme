@@ -274,4 +274,19 @@ class RoomVotingTest < ActiveSupport::TestCase
       end
     end
   end
+
+  test 'spending a Buddy re-renders the voters own controls with one fewer Buddy, disabled' do
+    submit_memes(@room, 'ada', 'bob', 'cy')
+    voter = @room.player_for(voter_other_than(current_meme))
+    ActionCable.server.pubsub.clear
+
+    vote(voter.browser_token, 'buddy')
+
+    streams = capture_turbo_stream_broadcasts([@room, voter])
+    controls = Nokogiri::HTML.fragment(streams.find { |s| s['target'] == 'vote_controls' }.to_html)
+    buddy = controls.at_css("button[value='buddy']")
+    assert_includes buddy.text, 'Buddy ×1'
+    assert_equal 'true', buddy['aria-pressed']
+    assert controls.css('button').all? { |b| b['disabled'] }
+  end
 end
