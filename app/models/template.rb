@@ -6,6 +6,8 @@ class Template < ApplicationRecord
 
   validates :memegen_id, :name, presence: true
 
+  after_destroy { TemplateTombstone.bury(memegen_id) }
+
   # Case-insensitive partial match on name; LIKE wildcards in the term match literally.
   scope :named_like, lambda { |term|
     term.blank? ? all : where('name ILIKE ?', "%#{sanitize_sql_like(term.to_s.strip)}%")

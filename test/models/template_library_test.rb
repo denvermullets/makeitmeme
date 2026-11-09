@@ -58,15 +58,50 @@ class TemplateLibraryTest < ActiveSupport::TestCase
     assert_equal downloads_after_first, @downloads.size
   end
 
-  test 're-importing updates changed names and Text Boxes' do
+  test 're-seeding leaves Admin edits to boxes, name and Pack untouched' do
     TemplateLibrary.import(MANIFEST, fetcher: @fetcher)
-    Template.find_by!(memegen_id: 'drake').update!(name: 'Old', text_boxes: [])
+    mine = Pack.create!(name: 'Mine')
+    boxes = [{ 'x' => 0.1, 'y' => 0.1, 'w' => 0.5, 'h' => 0.1, 'angle' => 0, 'color' => 'black', 'font' => 'thin' }]
+    Template.find_by!(memegen_id: 'drake').update!(name: 'Old', text_boxes: boxes, pack: mine)
 
     TemplateLibrary.import(MANIFEST, fetcher: @fetcher)
 
     drake = Template.find_by!(memegen_id: 'drake')
-    assert_equal 'Drake Hotline Bling', drake.name
-    assert_equal 2, drake.text_boxes.size
+    assert_equal 'Old', drake.name
+    assert_equal boxes, drake.text_boxes
+    assert_equal mine, drake.pack
+  end
+
+  test 're-seeding does not touch existing rows at all (so any future hidden/reviewed state is safe)' do
+    TemplateLibrary.import(MANIFEST, fetcher: @fetcher)
+    before = Template.order(:id).map { |t| t.reload.attributes }
+
+    travel 1.hour do
+      TemplateLibrary.import(MANIFEST, fetcher: @fetcher)
+    end
+
+    assert_equal before, Template.order(:id).map { |t| t.reload.attributes }
+  end
+
+  test 'deleting a Template tombstones its memegen id and a re-seed does not recreate it' do
+    TemplateLibrary.import(MANIFEST, fetcher: @fetcher)
+    Template.find_by!(memegen_id: 'drake').destroy!
+
+    assert TemplateTombstone.buried?('drake')
+    TemplateLibrary.import(MANIFEST, fetcher: @fetcher)
+
+    assert_nil Template.find_by(memegen_id: 'drake')
+    assert_equal 1, Template.count
+  end
+
+  test 'new manifest entries are still added on re-seed' do
+    TemplateLibrary.import(MANIFEST, fetcher: @fetcher)
+    Template.find_by!(memegen_id: '3hd').delete
+    TemplateTombstone.delete_all
+
+    TemplateLibrary.import(MANIFEST, fetcher: @fetcher)
+
+    assert_equal 2, Template.count
   end
 end
 
