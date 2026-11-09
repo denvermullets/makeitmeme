@@ -3,4 +3,9 @@ class Template < ApplicationRecord
   has_one_attached :image
 
   validates :memegen_id, :name, presence: true
+
+  # Case-insensitive partial match on name; LIKE wildcards in the term match literally.
+  scope :named_like, lambda { |term|
+    term.blank? ? all : where('name ILIKE ?', "%#{sanitize_sql_like(term.to_s.strip)}%")
+  }
 end
