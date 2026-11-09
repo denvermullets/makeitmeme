@@ -66,4 +66,38 @@ class ScoreboardMemesTabTest < ActionDispatch::IntegrationTest
 
     @bob.assert_select '#memes_by_round li[data-nickname="Bob"] img'
   end
+
+  test 'each Meme has a save link to its PNG with a Round and nickname download file name' do
+    make_meme(@rounds[1], 'Ada', position: 0, points: 1)
+
+    @bob.get room_path(@room.code)
+
+    @bob.assert_select '#memes_by_round li[data-nickname="Ada"] a[data-meme-save][download="round-2-ada.png"][href*="/rails/active_storage/blobs/proxy/"]', text: /Save/
+  end
+
+  test 'the download file name uses a filename-safe nickname' do
+    @game.game_players.find_by!(nickname: 'Cy').update!(nickname: 'Cy / The "Ace"!')
+    make_meme(@rounds[0], 'Cy / The "Ace"!', position: 0, points: 1)
+
+    @bob.get room_path(@room.code)
+
+    @bob.assert_select '#memes_by_round a[data-meme-save][download="round-1-cy-the-ace.png"]'
+  end
+
+  test 'a nickname with no filename-safe characters falls back to player' do
+    @game.game_players.find_by!(nickname: 'Cy').update!(nickname: '🔥🔥')
+    make_meme(@rounds[0], '🔥🔥', position: 0, points: 1)
+
+    @bob.get room_path(@room.code)
+
+    @bob.assert_select '#memes_by_round a[data-meme-save][download="round-1-player.png"]'
+  end
+
+  test 'a Meme with no image has no save link' do
+    @game.game_players.find_by!(nickname: 'Ada').then { |seat| Meme.create!(round: @rounds[0], game_player: seat, position: 0, points: 0) }
+
+    @bob.get room_path(@room.code)
+
+    @bob.assert_select '#memes_by_round a[data-meme-save]', false
+  end
 end
