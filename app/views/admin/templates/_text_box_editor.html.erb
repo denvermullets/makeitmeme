@@ -2,8 +2,15 @@
 <section class="text-box-editor" data-text-box-editor
          data-controller="text-box-editor"
          data-text-box-editor-url-value="<%= admin_template_text_boxes_path(template) %>"
+         data-text-box-editor-image-value="<%= template.image.attached? ? rails_storage_proxy_path(template.image) : '' %>"
          data-text-box-editor-boxes-value="<%= template.text_boxes.to_json %>">
   <h2>Text Boxes</h2>
+  <%# Stage: the image with every Text Box drawn over it (built by the controller's renderStage). %>
+  <div class="tbe-stage" data-text-box-editor-target="stage"
+       data-action="pointerdown->text-box-editor#pointerDown">
+    <img class="tbe-image" alt="<%= template.name %>" data-text-box-editor-target="image">
+    <div class="tbe-overlay" data-text-box-editor-target="overlay"></div>
+  </div>
   <p class="autosave-status">
     <span data-text-box-editor-target="status" data-status="idle" role="status"></span>
     <button type="button" hidden data-text-box-editor-target="retry" data-action="text-box-editor#retry">Retry</button>
@@ -12,7 +19,8 @@
 
   <% fields = [['x', 'X', 'percent'], ['y', 'Y', 'percent'], ['w', 'Width', 'percent'], ['h', 'Height', 'percent'], ['angle', 'Angle', 'degrees']] %>
   <% template.text_boxes.each_with_index do |box, index| %>
-    <fieldset class="text-box-row" data-text-box-editor-target="row" data-index="<%= index %>">
+    <fieldset class="text-box-row" data-text-box-editor-target="row" data-index="<%= index %>"
+              data-action="focusin->text-box-editor#selectRow">
       <legend>Box <%= index + 1 %></legend>
       <% fields.each do |field, label, unit| %>
         <% percent = unit == 'percent' %>
