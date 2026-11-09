@@ -1,0 +1,8 @@
+<%# The Recap URL of a Game with a share (or copy) control. Rendered in the Scoreboard screen, so it rides the existing phase broadcast. %>
+<% url = recap_url(game.recap_token) %>
+<div id="recap_link" data-controller="share" data-share-url-value="<%= url %>" data-share-title-value="Our Make It Meme game">
+  <h2 class="mt-4 font-bold">Recap</h2>
+  <a href="<%= url %>" data-recap-url><%= url %></a>
+  <button type="button" data-action="share#share" data-share-target="button" class="border p-2">Share</button>
+  <span data-share-target="status" role="status"></span>
+</div>

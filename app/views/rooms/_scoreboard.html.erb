@@ -18,6 +18,8 @@
     </div>
   </div>
 
+  <%= render 'games/recap_link', game: room.current_game %>
+
   <%= render 'rooms/captioning_preset', room:, player: %>
 
   <%= render 'rooms/pack_list', room:, player: %>
