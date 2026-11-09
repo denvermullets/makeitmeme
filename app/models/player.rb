@@ -59,6 +59,23 @@ class Player < ApplicationRecord
     room.player_went_away!(self)
   end
 
+  # A restart drops every cable connection without running unsubscribe, so counts in the database are stale.
+  # Zero them and give each Player who was not Away a fresh grace: browsers reconnect within seconds and never show as
+  # Away, the rest go Away as usual. Players already Away get no job. Single box only (see config/puma.rb).
+  def self.reset_presence!
+    find_each do |player|
+      player.with_lock do
+        player.update!(connections_count: 0)
+        player.schedule_boot_grace if player.present?
+      end
+    end
+  end
+
+  def schedule_boot_grace
+    increment!(:presence_token)
+    PresenceGraceJob.set(wait: AWAY_GRACE).perform_later(id, presence_token)
+  end
+
   def self.new_browser_token
     SecureRandom.urlsafe_base64(24)
   end
