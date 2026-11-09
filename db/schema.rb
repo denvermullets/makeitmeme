@@ -138,6 +138,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_10_084900) do
     t.integer "current_round_number"
     t.bigint "current_meme_id"
     t.bigint "off_pack_ids", default: [], null: false, array: true
+    t.boolean "upload_grace_used", default: false, null: false
     t.index ["code"], name: "index_rooms_on_code_live", unique: true, where: "(expired_at IS NULL)"
     t.index ["current_game_id"], name: "index_rooms_on_current_game_id"
     t.index ["current_meme_id"], name: "index_rooms_on_current_meme_id"
