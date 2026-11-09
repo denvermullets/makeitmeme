@@ -36,6 +36,23 @@ class TemplateLibraryTest < ActiveSupport::TestCase
     assert(Template.all.all? { |t| t.source_kind == 'memegen' && t.reviewed_at.nil? && t.hidden_at.nil? })
   end
 
+  test 'Custom and Classics exist after a seed, even with an empty manifest' do
+    Pack.delete_all
+    File.write(tmp = Rails.root.join('tmp/empty_manifest.json'), '[]')
+
+    TemplateLibrary.import(tmp, fetcher: @fetcher)
+
+    assert_equal %w[Classics Custom], Pack.order(:name).pluck(:name)
+  end
+
+  test 'entries without a pack land in Classics, entries with one land in that Pack (created if needed)' do
+    TemplateLibrary.import(MANIFEST, fetcher: @fetcher)
+
+    assert_equal 'Classics', Template.find_by!(memegen_id: 'drake').pack.name
+    assert_equal 'Fantasy', Template.find_by!(memegen_id: '3hd').pack.name
+    assert_equal 3, Pack.count
+  end
+
   test 're-importing adds no duplicates and downloads nothing more' do
     TemplateLibrary.import(MANIFEST, fetcher: @fetcher)
     downloads_after_first = @downloads.size

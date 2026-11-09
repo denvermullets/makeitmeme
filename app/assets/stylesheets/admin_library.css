@@ -15,3 +15,5 @@
 .badge-hidden { background: #fee2e2; }
 .badge-review { background: #fef3c7; }
 .badge-upload { background: #dbeafe; }
+.packs { border-collapse: collapse; }
+.packs th, .packs td { padding: .25rem 1rem; text-align: left; border-bottom: 1px solid #ccc; }

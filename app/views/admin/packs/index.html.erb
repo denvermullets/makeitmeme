@@ -1,0 +1,13 @@
+<% content_for :title, 'Packs' %>
+<h1>Packs</h1>
+<table class="packs">
+  <thead><tr><th>Pack</th><th>Templates</th></tr></thead>
+  <tbody>
+    <% @packs.each do |pack| %>
+      <tr data-pack="<%= pack.name %>">
+        <td class="pack-name"><%= pack.name %></td>
+        <td class="pack-count"><%= pack.templates_count %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
