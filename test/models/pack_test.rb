@@ -60,6 +60,15 @@ end
 class PackMigrationTest < ActiveSupport::TestCase
   self.use_transactional_tests = true
 
+  # Migrating down/up rewrites `templates`; the rollback restores it, but this connection's
+  # cached prepared statements still describe the dropped shape. Clear them so later tests
+  # don't hit PreparedStatementCacheExpired.
+  teardown do
+    ActiveRecord::Base.connection.clear_cache!
+    Template.reset_column_information
+    Pack.reset_column_information
+  end
+
   test 'migrating up creates Custom and Classics and backfills existing Templates into Classics' do
     require Rails.root.join('db/migrate/20261109000100_create_packs.rb')
     migration = CreatePacks.new
