@@ -23,6 +23,18 @@ class Template < ApplicationRecord
     end
   end
 
+  # The one seam for dealing: the Templates a Room may deal from. Must not reorder or weight results.
+  # Pack on/off narrows this per Room later (MEME-47); `room` is the argument it will use.
+  def self.dealable_for(_room)
+    where(hidden_at: nil)
+  end
+
+  def hide!
+    update!(hidden_at: Time.current) unless hidden?
+  end
+
+  def unhide! = update!(hidden_at: nil)
+
   def hidden? = hidden_at.present?
   def needs_review? = reviewed_at.nil? && hidden_at.nil?
   def upload? = source_kind == 'upload'

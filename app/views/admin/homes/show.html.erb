@@ -50,6 +50,16 @@
       <%= button_to 'Delete Template', admin_template_path(@selected, q: @query.presence), method: :delete,
                     form: { data: { turbo_frame: '_top' } },
                     data: { turbo_confirm: "Delete #{@selected.name}? It was used in #{pluralize(@selected.memes.count, 'Meme')}. Those Memes are kept." } %>
+      <div class="template-hiding">
+        <% hiding_scope = { q: @query.presence, selected: @selected.id, filter: (@filter unless @filter == 'all') } %>
+        <% if @selected.hidden? %>
+          <%= button_to 'Unhide', admin_template_hiding_path(@selected, hiding_scope), method: :delete,
+                        form: { data: { turbo_frame: '_top' } } %>
+        <% else %>
+          <%= button_to 'Hide from Hands', admin_template_hiding_path(@selected, hiding_scope),
+                        form: { data: { turbo_frame: '_top' } } %>
+        <% end %>
+      </div>
     <% else %>
       <p class="placeholder">Select a Template to edit it.</p>
     <% end %>
