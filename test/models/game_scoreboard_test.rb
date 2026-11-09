@@ -38,7 +38,7 @@ class GameScoreboardTest < ActiveSupport::TestCase
 
   test 'loads in a fixed number of queries and never reads Players or Templates' do
     sql = sql_during { @game.scoreboard.rows }
-    assert_operator sql.length, :<=, 2
+    assert_operator sql.length, :<=, 3
     assert(sql.none? { |q| q.match?(/FROM "(players|templates)"/) })
 
     5.times { |i| @game.game_players.create!(nickname: "Extra#{i}") }

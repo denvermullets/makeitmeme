@@ -6,6 +6,9 @@
       <span><%= row.nickname %></span>
       <span><%= row.total %></span>
       <span data-buddies-received><%= row.buddies_received %></span>
+      <% row.round_points.each do |number, pts| %>
+        <span data-round-points="<%= number %>"><%= pts.nil? ? 'none' : pts %></span>
+      <% end %>
     </li>
   <% end %>
 </ol>
