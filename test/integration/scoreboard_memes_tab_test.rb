@@ -72,7 +72,7 @@ class ScoreboardMemesTabTest < ActionDispatch::IntegrationTest
 
     @bob.get room_path(@room.code)
 
-    @bob.assert_select '#memes_by_round li[data-nickname="Ada"] a[data-meme-save][download="round-2-ada.png"][href*="/rails/active_storage/blobs/proxy/"]', text: /Save/
+    @bob.assert_select '#memes_by_round li[data-nickname="Ada"] a[data-meme-save][download="round-2-ada.png"][href*="/rails/active_storage/blobs/proxy/"][data-controller="meme-save"][data-action="click->meme-save#save"]', text: /Save/
   end
 
   test 'the download file name uses a filename-safe nickname' do
