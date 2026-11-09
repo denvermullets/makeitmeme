@@ -1,0 +1,5 @@
+<%# Standings between Rounds: the same for every phone, Spectators included. The full screen is MEME-76. %>
+<div id="standings" data-round="<%= room.current_round_number %>">
+  <h2 class="mt-4 font-bold">Standings after Round <%= room.current_round_number %></h2>
+  <%= render 'shared/countdown', deadline: room.phase_deadline_at %>
+</div>

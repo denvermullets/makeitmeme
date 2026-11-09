@@ -9,6 +9,7 @@ class RoomDealingTest < ActiveSupport::TestCase
     3.times do
       hands << room.current_game.rounds.find_by(number: room.current_round_number).hands.to_a
       room.advance!
+      room.advance! if room.reload.standings?
     end
     hands
   end

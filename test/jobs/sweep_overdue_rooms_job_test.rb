@@ -15,7 +15,7 @@ class SweepOverdueRoomsJobTest < ActiveSupport::TestCase
     travel_to(91.seconds.from_now) { SweepOverdueRoomsJob.perform_now } # extends the deadline
     travel_to(96.seconds.from_now) { SweepOverdueRoomsJob.perform_now }
 
-    assert_equal 2, @room.reload.current_round_number
+    assert @room.reload.standings?
   end
 
   test 'leaves a Room whose deadline has not passed' do

@@ -7,7 +7,7 @@ class RoomPlayAgainTest < ActiveSupport::TestCase
     seed_templates(30)
     @ada = @room.player_for('ada')
     @room.start(by: @ada)
-    3.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
+    5.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
   end
 
   test 'Play again needs 3 present Players' do

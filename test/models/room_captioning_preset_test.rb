@@ -49,7 +49,7 @@ class RoomCaptioningPresetTest < ActiveSupport::TestCase
     @room.choose_captioning_preset(preset: :quick, by: @host)
     @room.start(by: @host)
     freeze_time do
-      @room.advance!
+      2.times { @room.advance! }
       assert @room.reload.captioning?
       assert_equal 2, @room.current_round_number
       assert_equal 60.seconds.from_now, @room.phase_deadline_at

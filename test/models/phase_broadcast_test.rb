@@ -45,6 +45,7 @@ class PhaseBroadcastTest < ActiveSupport::TestCase
 
     assert_includes seen, 'vote'
     assert_includes seen, 'reveal'
+    assert_includes seen, 'standings'
     assert_includes seen, 'scoreboard'
   end
 end

@@ -72,6 +72,7 @@ class RoomScoringTest < ActiveSupport::TestCase
         assert_equal EXPECTED[index].fetch(maker), counts(meme.reload), "Round #{index + 1} #{maker}"
         end_phase
       end
+      end_phase if index < 2 # Standings
     end
 
     assert @room.scoreboard?
@@ -111,6 +112,7 @@ class RoomScoringTest < ActiveSupport::TestCase
       assert_equal 1, meme.reload.up_count, 'the Player with no Meme still voted'
       end_phase
     end
+    end_phase # Standings
 
     assert_equal %w[ada bob], seen.sort
     assert_equal 0, cy.reload.total
@@ -122,7 +124,7 @@ class RoomScoringTest < ActiveSupport::TestCase
   end
 
   test 'a Round where nobody made a Meme scores nobody and the Game goes on' do
-    3.times { end_phase }
+    5.times { end_phase }
 
     assert @room.scoreboard?
     assert_equal [0, 0, 0], @room.current_game.game_players.map(&:total)
@@ -137,6 +139,7 @@ class RoomScoringTest < ActiveSupport::TestCase
       end_phase
       end_phase
     end
+    end_phase # Standings
     submit_memes(@room, 'ada', 'bob', 'cy')
     3.times do
       meme = @room.current_meme
@@ -146,6 +149,7 @@ class RoomScoringTest < ActiveSupport::TestCase
       end_phase
     end
 
+    end_phase # Standings
     totals = @room.reload.current_game.game_players.to_h { |g| [g.nickname, g.total] }
     assert_equal({ 'Ada' => 2, 'Bob' => 2, 'Cy' => 1 }, totals)
     assert_equal 3, @room.current_round_number

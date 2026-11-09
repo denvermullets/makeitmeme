@@ -26,7 +26,7 @@ class ScoreboardTest < ActionDispatch::IntegrationTest
     game = @room.reload.current_game
     game.game_players.find_by(nickname: 'Cy').update!(total: 7)
     game.game_players.find_by(nickname: 'Ada').update!(total: 3)
-    3.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
+    5.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
 
     @bob.get room_path(@room.code)
 
@@ -38,7 +38,7 @@ class ScoreboardTest < ActionDispatch::IntegrationTest
   end
 
   test 'tied totals share a place' do
-    3.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
+    5.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
 
     @bob.get room_path(@room.code)
 
@@ -46,7 +46,7 @@ class ScoreboardTest < ActionDispatch::IntegrationTest
   end
 
   test 'only the Host sees Play again on the Scoreboard' do
-    3.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
+    5.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
 
     @host.get room_path(@room.code)
     @host.assert_select 'form[action=?]', play_again_room_path(@room.code)
@@ -55,7 +55,7 @@ class ScoreboardTest < ActionDispatch::IntegrationTest
   end
 
   test 'the Host presses Play again and the Room is Waiting with the same Players' do
-    3.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
+    5.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
 
     @bob.post play_again_room_path(@room.code)
     @bob.assert_response :unprocessable_content
@@ -70,7 +70,7 @@ class ScoreboardTest < ActionDispatch::IntegrationTest
   end
 
   test 'Play again is disabled with the reason when fewer than 3 Players are present' do
-    3.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
+    5.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
     Player.find_by!(nickname: 'Cy').update!(away_at: Time.current)
 
     @host.get room_path(@room.code)
@@ -83,7 +83,7 @@ class ScoreboardTest < ActionDispatch::IntegrationTest
   end
 
   test 'a presence change on the Scoreboard re-sends each Players Play again gate' do
-    3.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
+    5.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
     @room.reload
     ActionCable.server.pubsub.clear
 
