@@ -91,7 +91,9 @@ class Room < ApplicationRecord
       reject!(START_GATE_REASON) unless enough_dealable_templates?
 
       game = games.create!
-      players.each { |player| game.game_players.create!(player:, nickname: player.nickname) }
+      players.order(:id).each do |player|
+        game.game_players.create!(player:, nickname: player.nickname, buddies_left: GamePlayer::BUDDIES_PER_GAME)
+      end
       enter_captioning!(game:, number: 1)
       touch_activity!
     end

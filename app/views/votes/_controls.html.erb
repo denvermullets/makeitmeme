@@ -10,7 +10,7 @@
     <% buddies_left = game_player.buddies_left %>
     <%= form_with url: room_votes_path(room.code), class: 'flex gap-2' do %>
       <%= hidden_field_tag :meme_id, room.current_meme.id %>
-      <% %w[up meh down buddy].each do |kind| %>
+      <% Vote.kinds.each_key do |kind| %>
         <% label = kind == 'buddy' ? "Buddy ×#{buddies_left}" : kind.capitalize %>
         <%= button_tag label, type: 'submit', name: 'kind', value: kind,
                        disabled: cast.present? || (kind == 'buddy' && buddies_left.zero?),

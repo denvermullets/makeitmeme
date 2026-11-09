@@ -287,6 +287,6 @@ class RoomVotingTest < ActiveSupport::TestCase
     buddy = controls.at_css("button[value='buddy']")
     assert_includes buddy.text, 'Buddy ×1'
     assert_equal 'true', buddy['aria-pressed']
-    assert controls.css('button').all? { |b| b['disabled'] }
+    assert(controls.css('button').all? { |b| b['disabled'] })
   end
 end

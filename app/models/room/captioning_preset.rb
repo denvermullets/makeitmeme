@@ -26,7 +26,7 @@ module Room::CaptioningPreset
   end
 
   # How many seconds this Room's Captioning lasts.
-  def preset_seconds = SECONDS.fetch(captioning_preset)
+  def captioning_preset_seconds = SECONDS.fetch(captioning_preset)
 
   # Call after commit: every Player gets their own preset control, one stream each (Host-only buttons).
   def broadcast_captioning_preset!

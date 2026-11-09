@@ -8,6 +8,6 @@
                     aria: { current: (room.captioning_preset == preset).to_s } %>
     <% end %>
   <% else %>
-    <span><%= room.captioning_preset.capitalize %> <%= room.preset_seconds %>s</span>
+    <span><%= room.captioning_preset.capitalize %> <%= room.captioning_preset_seconds %>s</span>
   <% end %>
 </div>

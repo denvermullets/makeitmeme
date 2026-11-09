@@ -59,7 +59,10 @@ module Room::Voting
 
   # The current Round's Meme(s) of the Round, with their makers, or none outside a Game.
   def memes_of_the_round
-    current_game&.rounds&.find_by(number: current_round_number)&.memes_of_the_round&.includes(:game_player)
+    return unless current_game
+
+    round = current_game.rounds.find_by(number: current_round_number)
+    round&.memes_of_the_round&.includes(:game_player)
   end
 
   private
@@ -69,16 +72,18 @@ module Room::Voting
     reject!('That is not the Meme being voted on') unless meme_id.to_i == current_meme_id
     reject!('You cannot vote on your own Meme') if current_meme.game_player_id == voter.id
     reject!('You already voted') if current_meme.vote_by(voter)
-    reject!('You have no Buddies left') if kind.to_s == 'buddy' && voter.buddies_left.zero?
+    reject!('You have no Buddies left') if buddy?(kind) && voter.buddies_left.zero?
   end
 
   # Stores the Vote, then closes the vote early when it was the last one awaited.
   def record_vote(voter, kind)
     current_meme.votes.create!(game_player: voter, kind:).tap do
-      voter.decrement!(:buddies_left) if kind.to_s == 'buddy'
+      voter.decrement!(:buddies_left) if buddy?(kind)
       finish_early_if_done!
     end
   end
+
+  def buddy?(kind) = kind.to_s == 'buddy'
 
   def current_round = current_game.rounds.find_by!(number: current_round_number)
 end
