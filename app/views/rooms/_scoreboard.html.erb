@@ -1,5 +1,9 @@
 <%# Final standings of the finished Game. Ties share a place. %>
-<div id="scoreboard">
+<%# No finished time means nothing to reveal against: leave the controller off and show everything. %>
+<% finished_at = room.current_game.finished_at %>
+<div id="scoreboard" <% if finished_at %>data-controller="reveal"
+     data-reveal-finished-at-value="<%= finished_at.iso8601(3) %>"
+     data-reveal-server-now-value="<%= Time.current.iso8601(3) %>"<% end %>>
   <h2 class="mt-4 font-bold">Scoreboard</h2>
   <%= render 'games/scoreboard', scoreboard: room.current_game.scoreboard %>
 

@@ -1,7 +1,7 @@
 <%# Shared Scoreboard list, rendered from a Game::Scoreboard (live Scoreboard now, Recap later). Reads the snapshot only, never Players. %>
 <ol>
   <% scoreboard.rows.each do |row| %>
-    <li data-nickname="<%= row.nickname %>">
+    <li data-nickname="<%= row.nickname %>" data-place="<%= row.place %>" data-reveal-target="row">
       <span><%= row.place %></span>
       <span><%= row.nickname %></span>
       <span><%= row.total %></span>

@@ -62,6 +62,24 @@ class ScoreboardTest < ActionDispatch::IntegrationTest
     @bob.assert_select '#scoreboard li', text: /^\s*1\b/, count: 3
   end
 
+  test 'the Scoreboard carries the reveal anchor and each places as data attributes and renders every row' do
+    game = @room.reload.current_game
+    game.game_players.find_by(nickname: 'Cy').update!(total: 7)
+    game.game_players.find_by(nickname: 'Ada').update!(total: 3)
+    5.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
+    finished_at = @room.reload.current_game.finished_at
+
+    @bob.get room_path(@room.code)
+
+    @bob.assert_select "#scoreboard[data-controller='reveal'][data-reveal-finished-at-value=?]", finished_at.iso8601(3)
+    @bob.assert_select '#scoreboard[data-reveal-server-now-value]'
+    @bob.assert_select '#scoreboard li', 3
+    @bob.assert_select "#scoreboard li[data-reveal-target='row'][data-place='1'][data-nickname='Cy']"
+    @bob.assert_select "#scoreboard li[data-reveal-target='row'][data-place='2'][data-nickname='Ada']"
+    @bob.assert_select "#scoreboard li[data-reveal-target='row'][data-place='3'][data-nickname='Bob']"
+    @bob.assert_select '#scoreboard li[hidden]', false
+  end
+
   test 'the Host sees preset choices on the Scoreboard and others see it read-only' do
     5.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
 
