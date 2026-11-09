@@ -16,6 +16,7 @@
       <strong>Admin</strong>
       <%= link_to 'Library', admin_root_path %>
       <%= link_to 'Packs', admin_packs_path %>
+      <%= link_to 'Games', admin_games_path %>
       <% if admin_signed_in? %>
         <%= button_to 'Sign out', admin_sign_out_path, method: :delete %>
       <% end %>
