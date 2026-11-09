@@ -9,6 +9,7 @@
           <li data-nickname="<%= meme.game_player.nickname %>" data-meme-id="<%= meme.id %>">
             <% if meme.image.attached? %>
               <%= image_tag rails_storage_proxy_path(meme.image), alt: "Meme by #{meme.game_player.nickname}", class: 'w-full mt-2' %>
+            <%= link_to 'Save', rails_storage_proxy_path(meme.image), download: meme_download_name(round, meme), data: { meme_save: true }, class: 'underline' %>
             <% end %>
             <span><%= meme.game_player.nickname %></span>
             <span data-meme-points><%= meme.points %></span>
