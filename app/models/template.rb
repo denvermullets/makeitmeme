@@ -2,6 +2,7 @@
 class Template < ApplicationRecord
   has_one_attached :image
   has_many :memes, dependent: :nullify
+  belongs_to :pack, default: -> { Pack.classics }
 
   validates :memegen_id, :name, presence: true
 
