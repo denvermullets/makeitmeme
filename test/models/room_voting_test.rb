@@ -253,7 +253,7 @@ class RoomVotingTest < ActiveSupport::TestCase
     spender = voter_other_than(meme)
     idle = (%w[ada bob cy] - [maker_token(meme), spender]).first
     vote(spender, 'buddy')
-    end_phase while @room.vote? || @room.reveal?
+    end_phase while @room.vote? || @room.reveal? || @room.standings?
 
     assert @room.captioning?
     assert_equal 1, buddies_left(spender)

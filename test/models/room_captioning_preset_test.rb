@@ -85,7 +85,7 @@ class RoomCaptioningPresetTest < ActiveSupport::TestCase
 
   test 'the Host can change it on the Scoreboard, and it carries through Play again into the next Captioning' do
     @room.start(by: @host)
-    3.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
+    5.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
     assert @room.reload.scoreboard?
 
     @room.choose_captioning_preset(preset: :quick, by: @host)
@@ -102,14 +102,14 @@ class RoomCaptioningPresetTest < ActiveSupport::TestCase
   test 'a preset kept through Play again is not reset' do
     @room.choose_captioning_preset(preset: :chill, by: @host)
     @room.start(by: @host)
-    3.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
+    5.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
     @room.play_again(by: @host)
     assert @room.reload.chill?
   end
 
   test 'only the Host can change it on the Scoreboard' do
     @room.start(by: @host)
-    3.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
+    5.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
     assert_raises(ActiveRecord::RecordInvalid) do
       @room.choose_captioning_preset(preset: :quick, by: @room.player_for('bob'))
     end

@@ -113,7 +113,7 @@ class RoomDealingTest < ActiveSupport::TestCase
     seed_templates(15)
     room = room_with_players
     room.start(by: room.host)
-    room.advance!
+    2.times { room.advance! } # through Standings
     game = room.current_game
     round_one = game.rounds.find_by(number: 1).hands.index_by(&:game_player_id)
 
@@ -127,7 +127,7 @@ class RoomDealingTest < ActiveSupport::TestCase
     seed_templates(60)
     room = room_with_players
     room.start(by: room.host)
-    room.advance!
+    2.times { room.advance! } # through Standings
 
     ids = room.current_game.rounds.find_by(number: 2).hands.flat_map(&:template_ids)
 
@@ -151,7 +151,7 @@ class RoomDealingTest < ActiveSupport::TestCase
     seed_templates(40)
     room = room_with_players
     room.start(by: room.host)
-    room.advance!
+    2.times { room.advance! } # through Standings
     dealt_round_one = room.current_game.rounds.find_by(number: 1).hands.flat_map(&:template_ids).uniq
     fresh_count = Template.dealable_for(room).count - dealt_round_one.size
 

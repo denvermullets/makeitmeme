@@ -46,7 +46,7 @@ class ScoreboardTest < ActionDispatch::IntegrationTest
   end
 
   test 'the Host sees preset choices on the Scoreboard and others see it read-only' do
-    3.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
+    5.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
 
     @host.get room_path(@room.code)
     @host.assert_select "#captioning_preset[data-preset='normal']"
@@ -58,7 +58,7 @@ class ScoreboardTest < ActionDispatch::IntegrationTest
   end
 
   test 'a preset chosen on the Scoreboard shows in Waiting after Play again' do
-    3.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
+    5.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
 
     @host.post room_captioning_preset_path(@room.code, preset: 'chill')
     @host.assert_response :redirect
@@ -73,7 +73,7 @@ class ScoreboardTest < ActionDispatch::IntegrationTest
   end
 
   test 'a non-Host cannot change the preset on the Scoreboard' do
-    3.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
+    5.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
 
     @bob.post room_captioning_preset_path(@room.code, preset: 'quick')
     @bob.assert_response :unprocessable_content
