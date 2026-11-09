@@ -14,10 +14,7 @@ module Room::Voting
     with_lock do
       reject!('Voting is closed') if !vote? || closed?
       voter = game_player_for(by) || reject!('You are not in this Game')
-      reject!('That is not the Meme being voted on') unless meme_id.to_i == current_meme_id
-      reject!('You cannot vote on your own Meme') if current_meme.game_player_id == voter.id
-      reject!('You already voted') if current_meme.vote_by(voter)
-      reject!('You have no Buddies left') if kind.to_s == 'buddy' && voter.buddies_left.zero?
+      validate_vote!(voter, meme_id, kind)
 
       record_vote(voter, kind)
     end
@@ -61,6 +58,14 @@ module Room::Voting
   end
 
   private
+
+  # Raises unless this Voter may cast a `kind` Vote on `meme_id` right now.
+  def validate_vote!(voter, meme_id, kind)
+    reject!('That is not the Meme being voted on') unless meme_id.to_i == current_meme_id
+    reject!('You cannot vote on your own Meme') if current_meme.game_player_id == voter.id
+    reject!('You already voted') if current_meme.vote_by(voter)
+    reject!('You have no Buddies left') if kind.to_s == 'buddy' && voter.buddies_left.zero?
+  end
 
   # Stores the Vote, then closes the vote early when it was the last one awaited.
   def record_vote(voter, kind)
