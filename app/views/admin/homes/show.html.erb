@@ -32,6 +32,9 @@
   <%= turbo_frame_tag 'template_panel', data: { template_id: @selected&.id } do %>
     <% if @selected %>
       <p><%= @selected.name %></p>
+      <%= button_to 'Delete Template', admin_template_path(@selected, q: @query.presence), method: :delete,
+                    form: { data: { turbo_frame: '_top' } },
+                    data: { turbo_confirm: "Delete #{@selected.name}? It was used in #{pluralize(@selected.memes.count, 'Meme')}. Those Memes are kept." } %>
     <% else %>
       <p class="placeholder">Select a Template to edit it.</p>
     <% end %>
