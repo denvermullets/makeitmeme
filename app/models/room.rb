@@ -51,10 +51,20 @@ class Room < ApplicationRecord
     live.find_by(code: code.to_s.upcase)
   end
 
+  # An expired Room that once held this code (any letter case), or nil. Only meaningful when no live Room has it.
+  def self.expired_by_code(code)
+    where.not(expired_at: nil).find_by(code: code.to_s.upcase)
+  end
+
+  def self.missing_room_message(code)
+    expired_by_code(code) ? 'This Room has ended' : 'No live Room with that code'
+  end
+  private_class_method :missing_room_message
+
   # Room game operation: join a live Room by code. A browser that already has a Player in the
   # Room gets that Player back. Raises ActiveRecord::RecordInvalid with a clear message otherwise.
   def self.join(code:, nickname:, browser_token:)
-    room = live_by_code(code) || new.reject!('No live Room with that code')
+    room = live_by_code(code) || new.reject!(missing_room_message(code))
 
     room.with_lock do
       room.player_for(browser_token) || begin
