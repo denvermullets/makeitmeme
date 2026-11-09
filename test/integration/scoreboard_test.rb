@@ -45,6 +45,47 @@ class ScoreboardTest < ActionDispatch::IntegrationTest
     @bob.assert_select '#scoreboard li', text: /^\s*1\b/, count: 3
   end
 
+  test 'the Host sees preset choices on the Scoreboard and others see it read-only' do
+    3.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
+
+    @host.get room_path(@room.code)
+    @host.assert_select "#captioning_preset[data-preset='normal']"
+    @host.assert_select '#captioning_preset button', 3
+    @bob.get room_path(@room.code)
+    @bob.assert_select "#captioning_preset[data-preset='normal']"
+    @bob.assert_select '#captioning_preset button', 0
+    @bob.assert_select '#captioning_preset', /Normal/
+  end
+
+  test 'a preset chosen on the Scoreboard shows in Waiting after Play again' do
+    3.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
+
+    @host.post room_captioning_preset_path(@room.code, preset: 'chill')
+    @host.assert_response :redirect
+    @bob.get room_path(@room.code)
+    @bob.assert_select "#captioning_preset[data-preset='chill']"
+
+    @host.post play_again_room_path(@room.code)
+    @bob.get room_path(@room.code)
+    @bob.assert_select "#captioning_preset[data-preset='chill']"
+    @host.get room_path(@room.code)
+    @host.assert_select "#captioning_preset [data-preset-option='chill'][aria-current='true']"
+  end
+
+  test 'a non-Host cannot change the preset on the Scoreboard' do
+    3.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
+
+    @bob.post room_captioning_preset_path(@room.code, preset: 'quick')
+    @bob.assert_response :unprocessable_content
+    assert @room.reload.normal?
+  end
+
+  test 'a preset change in Captioning is refused' do
+    @host.post room_captioning_preset_path(@room.code, preset: 'quick')
+    @host.assert_response :unprocessable_content
+    assert @room.reload.normal?
+  end
+
   test 'only the Host sees Play again on the Scoreboard' do
     3.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
 
