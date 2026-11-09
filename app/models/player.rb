@@ -17,6 +17,8 @@ class Player < ApplicationRecord
   after_create_commit -> { broadcast_append_to room, target: 'players' }
   after_create_commit :offer_kick_to_host
   after_destroy_commit -> { broadcast_remove_to room }
+  after_create_commit -> { room.broadcast_start_gate! }
+  after_destroy_commit -> { Room.find_by(id: room_id)&.broadcast_start_gate! }
 
   def away? = away_at.present?
   def present? = !away?
@@ -31,7 +33,10 @@ class Player < ApplicationRecord
         save!
       end
     end
-    broadcast_away_marker if was_away
+    return unless was_away
+
+    broadcast_away_marker
+    room.broadcast_start_gate!
   end
 
   def disconnected!

@@ -83,7 +83,7 @@ class Room < ApplicationRecord
     with_lock do
       reject!('Only the Host can start the Game') unless host?(by)
       reject!('A Game is already under way') unless waiting?
-      reject!("Need at least #{MIN_PLAYERS} Players to start") if players.count < MIN_PLAYERS
+      reject!(present_players_gate_reason) if present_players_gate_reason
       reject!(START_GATE_REASON) unless enough_dealable_templates?
 
       game = games.create!
@@ -121,6 +121,7 @@ class Room < ApplicationRecord
     with_lock do
       reject!('Only the Host can play again') unless host?(by)
       reject!('The Game is not over yet') unless scoreboard?
+      reject!(present_players_gate_reason) if present_players_gate_reason
 
       advance!(from_seq: phase_seq)
       touch_activity!

@@ -47,6 +47,19 @@ class RoomPackBroadcastTest < ActiveSupport::TestCase
     assert_nil gate.at_css('#start-gate-reason')
   end
 
+  test 'the Start gate says how many Players are present and follows presence live' do
+    @room.player_for('cy').update!(away_at: Time.current)
+    @room.broadcast_packs!
+
+    gate = fragment_for(@host, 'start_gate')
+    assert gate.at_css('button[disabled]')
+    assert_equal 'Need 3 present Players, 2 here', gate.at_css('#start-gate-reason').text.strip
+
+    ActionCable.server.pubsub.clear
+    @room.player_for('cy').connected!
+    assert_nil fragment_for(@host, 'start_gate').at_css('button[disabled]')
+  end
+
   test 'a refused toggle broadcasts nothing' do
     assert_no_turbo_stream_broadcasts @room do
       assert_raises(ActiveRecord::RecordInvalid) { @room.toggle_pack(pack: @extra, by: @room.player_for('bob')) }
