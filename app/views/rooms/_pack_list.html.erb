@@ -1,9 +1,9 @@
 <%# Every Pack with its dealable Template count; the Host turns each on or off. Off Packs are stored on the Room. %>
 <div id="pack_list">
   <h2 class="mt-4 font-bold">Packs</h2>
-  <% counts = ::Template.where(hidden_at: nil).group(:pack_id).count %>
+  <% counts = Pack.dealable_counts %>
   <div id="packs">
-    <% Pack.order(Arel.sql('lower(name)')).each do |pack| %>
+    <% Pack.alphabetical.each do |pack| %>
       <% on = !room.pack_off?(pack) %>
       <div data-pack="<%= pack.id %>" data-pack-on="<%= on %>">
         <span><%= pack.name %></span>

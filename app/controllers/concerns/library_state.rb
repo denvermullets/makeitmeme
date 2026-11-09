@@ -6,7 +6,7 @@ module LibraryState
 
   def load_library(selected: params[:selected])
     @query = params[:q].to_s.strip
-    @filter = Template::FILTERS.include?(params[:filter]) ? params[:filter] : 'all'
+    @filter = filter_param || 'all'
     @pack = Pack.find_by(id: params[:pack])
     searched = Template.named_like(@query)
     searched = searched.where(pack: @pack) if @pack
@@ -17,7 +17,12 @@ module LibraryState
 
   # Query params that keep the Admin's search and filter while selecting a Template.
   def library_params(selected)
-    filter = params[:filter] if Template::FILTERS.include?(params[:filter]) && params[:filter] != 'all'
+    filter = filter_param unless filter_param == 'all'
     { q: params[:q].presence, selected:, filter:, pack: Pack.find_by(id: params[:pack])&.id }
+  end
+
+  # The filter key from params when it is a known one, else nil.
+  def filter_param
+    params[:filter] if Template::FILTERS.include?(params[:filter])
   end
 end

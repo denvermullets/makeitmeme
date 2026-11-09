@@ -63,6 +63,43 @@ class AdminTextBoxAutosaveTest < ActionDispatch::IntegrationTest
     assert_rejected([VALID.merge('h' => -0.1)])
   end
 
+  test 'a box smaller than the minimum size is rejected' do
+    assert_rejected([VALID.merge('w' => 0.01)])
+    assert_rejected([VALID.merge('h' => 0.019)])
+  end
+
+  test 'a save that includes the name renames the Template too' do
+    patch admin_template_text_boxes_path(@template), params: { text_boxes: [VALID], name: '  Fresh name ' }, as: :json
+
+    assert_response :success
+    assert_equal 'Fresh name', JSON.parse(response.body)['name']
+    assert_equal 'Fresh name', @template.reload.name
+    assert_not_nil @template.reviewed_at
+  end
+
+  test 'a blank name rejects the whole save' do
+    name = @template.name
+    patch admin_template_text_boxes_path(@template), params: { text_boxes: [VALID], name: ' ' }, as: :json
+
+    assert_response :unprocessable_content
+    @template.reload
+    assert_equal name, @template.name
+    assert_equal @original, @template.text_boxes
+    assert_nil @template.reviewed_at
+  end
+
+  test 'a save without a name leaves the name alone' do
+    name = @template.name
+    patch_boxes([VALID])
+    assert_equal name, @template.reload.name
+  end
+
+  test 'renaming through the inspector form does not mark the Template reviewed' do
+    patch admin_template_path(@template), params: { template: { name: 'Renamed' } }
+    assert_equal 'Renamed', @template.reload.name
+    assert_nil @template.reviewed_at
+  end
+
   test 'an empty array is rejected' do
     assert_rejected([])
   end

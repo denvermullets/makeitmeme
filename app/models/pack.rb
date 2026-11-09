@@ -10,6 +10,10 @@ class Pack < ApplicationRecord
 
   before_destroy :keep_custom, prepend: true
   after_destroy :forget_in_rooms
+  # Story 63: every open Room sees Pack changes live.
+  after_commit -> { Room.broadcast_packs_to_open_rooms }
+
+  scope :alphabetical, -> { order(Arel.sql('lower(packs.name)')) }
 
   def self.custom
     find_by(custom: true) || create!(name: CUSTOM_NAME, custom: true)
@@ -17,6 +21,11 @@ class Pack < ApplicationRecord
 
   def self.classics
     where('lower(name) = ?', CLASSICS_NAME.downcase).first || create!(name: CLASSICS_NAME)
+  end
+
+  # Dealable (not hidden) Template counts by Pack id, for the Pack list.
+  def self.dealable_counts
+    Template.not_hidden.group(:pack_id).count
   end
 
   private

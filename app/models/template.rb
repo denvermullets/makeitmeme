@@ -13,6 +13,16 @@ class Template < ApplicationRecord
   scope :needs_review, -> { where(reviewed_at: nil, hidden_at: nil) }
   scope :player_uploads, -> { where(source_kind: 'upload') }
   scope :hidden, -> { where.not(hidden_at: nil) }
+  scope :not_hidden, -> { where(hidden_at: nil) }
+  # Case-insensitive partial match on name; LIKE wildcards in the term match literally.
+  scope :named_like, lambda { |term|
+    term.blank? ? all : where('name ILIKE ?', "%#{sanitize_sql_like(term.to_s.strip)}%")
+  }
+
+  after_destroy { TemplateTombstone.bury(memegen_id) }
+  # Story 63: hiding, moving, adding or deleting a Template changes the Pack counts and the Start gate.
+  after_commit -> { Room.broadcast_packs_to_open_rooms },
+               if: -> { destroyed? || previously_new_record? || saved_change_to_hidden_at? || saved_change_to_pack_id? }
 
   def self.in_filter(key)
     case key.to_s
@@ -26,7 +36,7 @@ class Template < ApplicationRecord
   # The one seam for dealing: the Templates a Room may deal from. Must not reorder or weight results.
   # Narrowed to Templates whose Pack is on for the Room (Rooms store the Packs that are off).
   def self.dealable_for(room)
-    scope = where(hidden_at: nil)
+    scope = not_hidden
     room.off_pack_ids.any? ? scope.where.not(pack_id: room.off_pack_ids) : scope
   end
 
@@ -38,20 +48,19 @@ class Template < ApplicationRecord
 
   # Replaces the ordered Text Boxes from untrusted input. Valid input also marks the Template reviewed;
   # invalid input persists nothing. Returns the TextBoxes::Result.
-  def update_text_boxes(raw)
+  # An optional `name` renames in the same save; a blank name is refused along with the boxes.
+  def update_text_boxes(raw, name: nil)
     result = TextBoxes.check(raw)
-    update!(text_boxes: result.boxes, reviewed_at: Time.current) if result.valid?
+    result = TextBoxes::Result.new([], result.errors + ['Name can\'t be blank']) if !name.nil? && name.to_s.strip.empty?
+    return result unless result.valid?
+
+    attrs = { text_boxes: result.boxes, reviewed_at: Time.current }
+    attrs[:name] = name.to_s.strip unless name.nil?
+    update!(attrs)
     result
   end
 
   def hidden? = hidden_at.present?
   def needs_review? = reviewed_at.nil? && hidden_at.nil?
   def upload? = source_kind == 'upload'
-
-  after_destroy { TemplateTombstone.bury(memegen_id) }
-
-  # Case-insensitive partial match on name; LIKE wildcards in the term match literally.
-  scope :named_like, lambda { |term|
-    term.blank? ? all : where('name ILIKE ?', "%#{sanitize_sql_like(term.to_s.strip)}%")
-  }
 end

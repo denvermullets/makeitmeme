@@ -2,12 +2,17 @@
 // ({cx, cy, w, h, a}) while dragging; `fromPx` turns that back into the stored shape (0-1 fractions, x/y = top left).
 // Every result passes through `clampBox`, so no drag can produce geometry TextBoxes.check on the server would reject.
 export const MIN_PX = 12
+// Mirrors TextBoxes::MIN_SIZE on the server: a box is never smaller than this fraction of the image.
+export const MIN_FRACTION = 0.02
 export const SNAP_STEP = 15
 export const SNAP_ZERO = 4
 
 export const HANDLE_DIRS = {
   nw: [-1, -1], n: [0, -1], ne: [1, -1], e: [1, 0], se: [1, 1], s: [0, 1], sw: [-1, 1], w: [-1, 0],
 }
+
+// Smallest box side in stage pixels along an axis of length `dim`: 12px, or MIN_FRACTION of the axis on big stages.
+export const minPx = (dim) => Math.min(Math.max(MIN_PX, MIN_FRACTION * dim), dim)
 
 const r3 = (v) => Math.round(v * 1000) / 1000
 const r1 = (v) => Math.round(v * 10) / 10
@@ -31,8 +36,8 @@ export const fromPx = (p, W, H) => {
 
 // Minimum size, never bigger than the image, and the whole (unrotated) rectangle stays inside the image.
 export const clampBox = (b, W, H) => {
-  const w = Math.min(Math.max(b.w, Math.min(MIN_PX, W)), W)
-  const h = Math.min(Math.max(b.h, Math.min(MIN_PX, H)), H)
+  const w = Math.min(Math.max(b.w, minPx(W)), W)
+  const h = Math.min(Math.max(b.h, minPx(H)), H)
   const cx = Math.min(Math.max(b.cx, w / 2), W - w / 2)
   const cy = Math.min(Math.max(b.cy, h / 2), H - h / 2)
   return { ...b, w, h, cx, cy }
@@ -46,8 +51,8 @@ export const resizeBox = (b0, handle, dx, dy, W, H) => {
   const rad = (b0.a * Math.PI) / 180, c = Math.cos(rad), s = Math.sin(rad)
   const lx = dx * c + dy * s, ly = -dx * s + dy * c
   const b = { ...b0 }
-  if (sx) b.w = Math.max(MIN_PX, b0.w + sx * lx)
-  if (sy) b.h = Math.max(MIN_PX, b0.h + sy * ly)
+  if (sx) b.w = Math.max(minPx(W), b0.w + sx * lx)
+  if (sy) b.h = Math.max(minPx(H), b0.h + sy * ly)
   const ux = (sx * (b.w - b0.w)) / 2, uy = (sy * (b.h - b0.h)) / 2
   b.cx += ux * c - uy * s
   b.cy += ux * s + uy * c

@@ -32,4 +32,11 @@ class TextBoxesTest < ActiveSupport::TestCase
     result = TextBoxes.check([BOX, BOX.merge('color' => 'red')])
     assert_match(/Box 2: color/, result.errors.first)
   end
+
+  test 'width and height below MIN_SIZE are rejected, the minimum itself is accepted' do
+    assert_equal 0.02, TextBoxes::MIN_SIZE
+    assert_not_predicate TextBoxes.check([BOX.merge('w' => 0.019)]), :valid?
+    assert_not_predicate TextBoxes.check([BOX.merge('h' => 0.001)]), :valid?
+    assert_predicate TextBoxes.check([BOX.merge('w' => 0.02, 'h' => 0.02)]), :valid?
+  end
 end
