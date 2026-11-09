@@ -54,6 +54,55 @@ class ScoreboardTest < ActionDispatch::IntegrationTest
     @bob.assert_select "#scoreboard li[data-nickname='Cy'] [data-buddies-received]", text: '0'
   end
 
+  def finish_game_with(memes)
+    5.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
+    game = @room.reload.current_game
+    rounds = game.rounds.order(:number).to_a
+    memes.each do |round_index, nickname, points|
+      Meme.create!(round: rounds[round_index], game_player: game.game_players.find_by!(nickname:), points:)
+    end
+    @bob.get room_path(@room.code)
+  end
+
+  def badge(nickname) = "#scoreboard li[data-nickname='#{nickname}'] [data-meme-of-the-round]"
+
+  test 'a Player with one Meme of the Round shows the badge without a count' do
+    finish_game_with([[0, 'Ada', 5], [0, 'Bob', 2]])
+
+    @bob.assert_select badge('Ada'), 1
+    @bob.assert_select "#{badge('Ada')} [data-count]", false
+    @bob.assert_select badge('Bob'), false
+    @bob.assert_select badge('Cy'), false
+  end
+
+  test 'a Player with several Memes of the Round shows the badge with the count' do
+    finish_game_with([[0, 'Ada', 5], [1, 'Ada', 4], [2, 'Ada', 3], [0, 'Bob', 1], [1, 'Bob', 1], [2, 'Bob', 1]])
+
+    @bob.assert_select "#{badge('Ada')} [data-count]", text: '3'
+    @bob.assert_select badge('Bob'), false
+  end
+
+  test 'tied top Memes in a Round credit every maker' do
+    finish_game_with([[0, 'Ada', 5], [0, 'Bob', 5], [0, 'Cy', 1]])
+
+    @bob.assert_select badge('Ada'), 1
+    @bob.assert_select badge('Bob'), 1
+    @bob.assert_select badge('Cy'), false
+  end
+
+  test 'a Round with no Memes credits nobody' do
+    finish_game_with([])
+
+    @bob.assert_select '#scoreboard [data-meme-of-the-round]', false
+  end
+
+  test 'the count is of Rounds won, including shared wins' do
+    finish_game_with([[0, 'Ada', 5], [1, 'Ada', 5], [1, 'Bob', 5]])
+
+    @bob.assert_select "#{badge('Ada')} [data-count]", text: '2'
+    @bob.assert_select "#{badge('Bob')} [data-count]", false
+  end
+
   test 'tied totals share a place' do
     5.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
 
