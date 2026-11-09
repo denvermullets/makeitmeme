@@ -5,6 +5,8 @@ class Room < ApplicationRecord
   MAX_PLAYERS = 10
   MIN_PLAYERS = 3
   ROUNDS_PER_GAME = 3
+  MIN_DEALABLE_TEMPLATES = 10
+  START_GATE_REASON = "Turn on Packs with at least #{MIN_DEALABLE_TEMPLATES} Templates".freeze
 
   enum :phase, { waiting: 'waiting', captioning: 'captioning', vote: 'vote', reveal: 'reveal',
                  scoreboard: 'scoreboard' }, default: :waiting
@@ -13,14 +15,23 @@ class Room < ApplicationRecord
   include PhaseEngine
   include Voting
 
+  after_update_commit :broadcast_packs!, if: :saved_change_to_off_pack_ids?
+
   has_many :players, dependent: :destroy
   has_many :games, dependent: :destroy
   belongs_to :current_game, class_name: 'Game', optional: true, inverse_of: false
   belongs_to :host, class_name: 'Player', foreign_key: :host_player_id, optional: true, inverse_of: false
 
   scope :live, -> { where(expired_at: nil) }
+  # Live Rooms where the Pack list is on screen: Waiting and the Scoreboard.
+  scope :showing_packs, -> { live.where(phase: %w[waiting scoreboard]) }
   # Live Rooms whose phase deadline has passed: what the crash sweep advances.
   scope :overdue, -> { live.where(phase_deadline_at: ..Time.current) }
+
+  # Re-sends the Pack list (and Start gate) to every Room showing it. Called after Pack and Template changes commit.
+  def self.broadcast_packs_to_open_rooms
+    showing_packs.find_each(&:broadcast_packs!)
+  end
 
   # Room game operation: create a Room and its Host Player.
   # Raises ActiveRecord::RecordInvalid when the nickname is not acceptable.
@@ -54,13 +65,13 @@ class Room < ApplicationRecord
 
   # Room game operation: the Host starts a Game. Everyone in the Room is dealt in and Round 1 begins.
   # Raises ActiveRecord::RecordInvalid unless the caller is the Host, the Room is waiting, there are
-  # enough Players and the Template Library can fill a Hand.
+  # enough Players and the Room has enough dealable Templates (the Start gate).
   def start(by:)
     with_lock do
       reject!('Only the Host can start the Game') unless host?(by)
       reject!('A Game is already under way') unless waiting?
       reject!("Need at least #{MIN_PLAYERS} Players to start") if players.count < MIN_PLAYERS
-      reject!("Need at least #{Hand::SIZE} Templates in the Library to start") if Template.count < Hand::SIZE
+      reject!(START_GATE_REASON) unless enough_dealable_templates?
 
       game = games.create!
       players.each { |player| game.game_players.create!(player:, nickname: player.nickname) }
@@ -68,6 +79,26 @@ class Room < ApplicationRecord
     end
     self
   end
+
+  # The Start gate: the Room needs at least MIN_DEALABLE_TEMPLATES dealable Templates.
+  def enough_dealable_templates?
+    Template.dealable_for(self).count >= MIN_DEALABLE_TEMPLATES
+  end
+
+  # Room game operation: the Host turns a Pack on or off for the next Game (`on:` nil flips it).
+  # Raises ActiveRecord::RecordInvalid unless the caller is the Host and the Room is in Waiting or on the Scoreboard.
+  def toggle_pack(pack:, by:, on: nil)
+    with_lock do
+      reject!('Only the Host can choose Packs') unless host?(by)
+      reject!('Packs can only be changed between Games') unless waiting? || scoreboard?
+
+      on = pack_off?(pack) if on.nil?
+      update!(off_pack_ids: on ? off_pack_ids - [pack.id] : (off_pack_ids | [pack.id]))
+    end
+    self
+  end
+
+  def pack_off?(pack) = off_pack_ids.include?(pack.id)
 
   # Room game operation: the Host sends the Room from the Scoreboard back to Waiting.
   # Raises ActiveRecord::RecordInvalid unless the caller is the Host and the Room is on the Scoreboard.
@@ -130,5 +161,18 @@ class Room < ApplicationRecord
     return if browser_token.blank?
 
     players.find_by(browser_token:)
+  end
+
+  # Call after commit: every Player gets their own Pack list (and, in Waiting, Start gate), one stream each, so
+  # Host-only buttons never reach other Players.
+  def broadcast_packs!
+    players.each do |player|
+      broadcast_replace_to self, player, target: 'pack_list', partial: 'rooms/pack_list',
+                                         locals: { room: self, player: }
+      next unless waiting?
+
+      broadcast_replace_to self, player, target: 'start_gate', partial: 'rooms/start_gate',
+                                         locals: { room: self, player: }
+    end
   end
 end

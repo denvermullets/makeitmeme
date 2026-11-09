@@ -5,7 +5,7 @@ class Round < ApplicationRecord
 
   # Deal every game-player of the Game a fresh Hand. Called at the start of each Round's Captioning.
   def deal_hands!
-    template_ids = Template.pluck(:id)
+    template_ids = Template.dealable_for(game.room).pluck(:id)
     game.game_players.each { |game_player| hands.create!(game_player:, template_ids: template_ids.sample(Hand::SIZE)) }
   end
 end

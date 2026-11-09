@@ -12,6 +12,17 @@ module ActiveSupport
 
     # Add more helper methods to be used by all tests here...
 
+    ADMIN_PASSWORD = 'correct-horse'.freeze
+
+    # Run the block with the Admin password env var set (nil unsets it).
+    def with_admin_password(value = ADMIN_PASSWORD)
+      original = ENV.fetch('ADMIN_PASSWORD', nil)
+      value.nil? ? ENV.delete('ADMIN_PASSWORD') : ENV['ADMIN_PASSWORD'] = value
+      yield
+    ensure
+      original.nil? ? ENV.delete('ADMIN_PASSWORD') : ENV['ADMIN_PASSWORD'] = original
+    end
+
     # Fill the Template Library with `count` Templates, each with an attached image.
     def seed_templates(count = Hand::SIZE)
       Array.new(count) do |i|
@@ -41,5 +52,12 @@ module ActiveSupport
                          template_id: room.hand_for(player).template_ids.first, captions: [])
       end
     end
+  end
+end
+
+class ActionDispatch::IntegrationTest
+  # Sign this integration session in as the Admin through the real sign-in form.
+  def sign_in_as_admin(password = ActiveSupport::TestCase::ADMIN_PASSWORD)
+    with_admin_password(password) { post admin_sign_in_path, params: { password: password } }
   end
 end

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= content_for(:title) || "Admin" %> · Makeitmeme</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="robots" content="noindex">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+    <%= yield :head %>
+    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+  </head>
+
+  <body data-layout="admin">
+    <header>
+      <strong>Admin</strong>
+      <%= link_to 'Library', admin_root_path %>
+      <%= link_to 'Packs', admin_packs_path %>
+      <% if admin_signed_in? %>
+        <%= button_to 'Sign out', admin_sign_out_path, method: :delete %>
+      <% end %>
+    </header>
+    <main><%= yield %></main>
+  </body>
+</html>

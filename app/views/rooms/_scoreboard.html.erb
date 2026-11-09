@@ -12,6 +12,8 @@
     <% end %>
   </ol>
 
+  <%= render 'rooms/pack_list', room:, player: %>
+
   <% if player && room.host?(player) %>
     <%= button_to 'Play again', play_again_room_path(room.code), class: 'border p-2 font-bold mt-4' %>
   <% end %>

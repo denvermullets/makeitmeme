@@ -4,15 +4,13 @@
     <%= render partial: 'players/player', collection: room.players.includes(:room).order(:joined_at, :id) %>
   </ul>
 
+  <%= render 'rooms/pack_list', room:, player: %>
+
   <% if errors&.any? %>
     <ul class="text-red-600 mt-2">
       <% errors.each do |message| %><li><%= message %></li><% end %>
     </ul>
   <% end %>
 
-  <% if player && room.host?(player) %>
-    <%= button_to 'Start', start_room_path(room.code), class: 'border p-2 font-bold mt-4' %>
-  <% elsif player %>
-    <p class="mt-4">You are <%= player.nickname %>. Waiting for the Host to start.</p>
-  <% end %>
+  <%= render 'rooms/start_gate', room:, player: %>
 </div>

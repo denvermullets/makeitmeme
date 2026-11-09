@@ -52,6 +52,14 @@ _Avoid_: Theme, category, collection, set
 The Pack that every Player-uploaded Template joins.
 _Avoid_: User pack, uploads
 
+**Hide from Hands**:
+An Admin action that keeps a Template in the Template Library but stops it being dealt into any new Hand; Hands already dealt are untouched, and the Admin can undo it.
+_Avoid_: Disable, archive, soft delete, ban
+
+**Mark reviewed**:
+An Admin action that records the Admin has checked a Template's Text Boxes; saving the Text Boxes marks it reviewed too, but renaming or moving it does not.
+_Avoid_: Approve, publish, verify
+
 ### Gameplay
 
 **Game**:

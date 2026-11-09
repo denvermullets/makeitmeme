@@ -1,0 +1,72 @@
+<%# Text Box editor; autosaves the whole ordered array. `controls: :full` (default) adds the sample-text preview switch,
+    the action toolbar and the numeric rows; `controls: :compact` is the stage alone (for the phone layout). %>
+<% full = local_assigns.fetch(:controls, :full).to_sym == :full %>
+<section class="text-box-editor" data-text-box-editor data-controls="<%= full ? 'full' : 'compact' %>"
+         data-controller="text-box-editor"
+         data-text-box-editor-url-value="<%= admin_template_text_boxes_path(template) %>"
+         data-text-box-editor-image-value="<%= template.image.attached? ? rails_storage_proxy_path(template.image) : '' %>"
+         data-text-box-editor-boxes-value="<%= template.text_boxes.to_json %>">
+  <h2>Text Boxes</h2>
+  <%# Stage: the image with every Text Box drawn over it (built by the controller's renderStage). %>
+  <div class="tbe-stage" data-text-box-editor-target="stage"
+       data-action="pointerdown->text-box-editor#pointerDown">
+    <img class="tbe-image" alt="<%= template.name %>" data-text-box-editor-target="image">
+    <canvas class="tbe-preview" hidden data-text-box-editor-target="preview"></canvas>
+    <div class="tbe-overlay" data-text-box-editor-target="overlay"></div>
+  </div>
+  <% if full %>
+  <%# Sample-text preview: per-viewer UI only, never saved to the Template. %>
+  <fieldset class="tbe-preview-switch">
+    <legend>Sample text</legend>
+    <% %w[off short medium long].each do |level| %>
+      <label>
+        <input type="radio" name="sample_level_<%= template.id %>" value="<%= level %>" data-sample-level="<%= level %>"
+               <%= 'checked' if level == 'off' %> data-action="change->text-box-editor#setSample">
+        <%= level.capitalize %>
+      </label>
+    <% end %>
+  </fieldset>
+  <ul class="tbe-fits" hidden data-text-box-editor-target="fits"></ul>
+  <% end %>
+  <p class="autosave-status">
+    <span data-text-box-editor-target="status" data-status="idle" role="status"></span>
+    <button type="button" hidden data-text-box-editor-target="retry" data-action="text-box-editor#retry">Retry</button>
+  </p>
+  <ul class="errors" data-text-box-editor-target="errors"></ul>
+
+  <% if full %>
+  <%# Box actions (MEME-39). Enabled/disabled by the controller's renderActions. %>
+  <div class="tbe-actions" role="toolbar" aria-label="Text Box actions">
+    <button type="button" data-action="text-box-editor#addBox">+ Text Box</button>
+    <button type="button" data-text-box-editor-target="needsSelection" data-action="text-box-editor#duplicateBox">Duplicate</button>
+    <button type="button" data-text-box-editor-target="removeButton" data-action="text-box-editor#removeBox">Remove</button>
+    <button type="button" data-text-box-editor-target="earlierButton" data-action="text-box-editor#moveEarlier">Move earlier</button>
+    <button type="button" data-text-box-editor-target="laterButton" data-action="text-box-editor#moveLater">Move later</button>
+    <button type="button" data-action="text-box-editor#resetBoxes">Reset to top &amp; bottom</button>
+  </div>
+
+  <%# Rows are built from the controller's boxes (renderRows) using this template. %>
+  <% fields = [['x', 'X', 'percent'], ['y', 'Y', 'percent'], ['w', 'Width', 'percent'], ['h', 'Height', 'percent'], ['angle', 'Angle', 'degrees']] %>
+  <template data-text-box-editor-target="rowTemplate">
+    <fieldset class="text-box-row" data-text-box-editor-target="row" data-action="focusin->text-box-editor#selectRow">
+      <legend>Box</legend>
+      <% fields.each do |field, label, unit| %>
+        <% percent = unit == 'percent' %>
+        <label>
+          <%= label %> <%= percent ? '(%)' : '(°)' %>
+          <input type="number" step="<%= percent ? '0.5' : '1' %>"
+                 data-field="<%= field %>" data-unit="<%= unit %>" data-action="input->text-box-editor#edit">
+        </label>
+      <% end %>
+      <label>
+        Text style
+        <select data-field="style" data-action="change->text-box-editor#style">
+          <option value="white">White with outline</option>
+          <option value="black">Black, no outline</option>
+        </select>
+      </label>
+    </fieldset>
+  </template>
+  <div class="tbe-rows" data-text-box-editor-target="rows"></div>
+  <% end %>
+</section>

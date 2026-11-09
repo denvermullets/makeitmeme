@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_08_002701) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_09_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -100,6 +100,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_08_002701) do
     t.index ["template_id"], name: "index_memes_on_template_id"
   end
 
+  create_table "packs", force: :cascade do |t|
+    t.string "name", null: false
+    t.boolean "custom", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index "lower((name)::text)", name: "index_packs_on_lower_name", unique: true
+    t.index ["custom"], name: "index_packs_on_single_custom", unique: true, where: "custom"
+  end
+
   create_table "players", force: :cascade do |t|
     t.bigint "room_id", null: false
     t.string "browser_token", null: false
@@ -125,6 +134,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_08_002701) do
     t.bigint "current_game_id"
     t.integer "current_round_number"
     t.bigint "current_meme_id"
+    t.bigint "off_pack_ids", default: [], null: false, array: true
     t.index ["code"], name: "index_rooms_on_code_live", unique: true, where: "(expired_at IS NULL)"
     t.index ["current_game_id"], name: "index_rooms_on_current_game_id"
     t.index ["current_meme_id"], name: "index_rooms_on_current_meme_id"
@@ -139,6 +149,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_08_002701) do
     t.index ["game_id"], name: "index_rounds_on_game_id"
   end
 
+  create_table "template_tombstones", force: :cascade do |t|
+    t.string "memegen_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["memegen_id"], name: "index_template_tombstones_on_memegen_id", unique: true
+  end
+
   create_table "templates", force: :cascade do |t|
     t.string "memegen_id", null: false
     t.string "name", null: false
@@ -146,7 +163,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_08_002701) do
     t.jsonb "text_boxes", default: [], null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "source_kind", default: "memegen", null: false
+    t.datetime "reviewed_at"
+    t.datetime "hidden_at"
+    t.bigint "pack_id", null: false
     t.index ["memegen_id"], name: "index_templates_on_memegen_id", unique: true
+    t.index ["pack_id"], name: "index_templates_on_pack_id"
   end
 
   create_table "votes", force: :cascade do |t|
@@ -175,6 +197,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_08_002701) do
   add_foreign_key "rooms", "memes", column: "current_meme_id", on_delete: :nullify
   add_foreign_key "rooms", "players", column: "host_player_id"
   add_foreign_key "rounds", "games"
+  add_foreign_key "templates", "packs"
   add_foreign_key "votes", "game_players"
   add_foreign_key "votes", "memes"
 end

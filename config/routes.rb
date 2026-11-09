@@ -11,14 +11,25 @@ Rails.application.routes.draw do
   # get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
   # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
 
-  # PROTOTYPE (MEME-6), throwaway: Admin Text Box editor variants, dev only.
-  get 'prototype/admin_text_boxes' => 'prototype_admin_text_boxes#show' if Rails.env.development?
+  namespace :admin do
+    get 'sign_in' => 'sessions#new'
+    post 'sign_in' => 'sessions#create'
+    delete 'sign_out' => 'sessions#destroy'
+    resources :packs, only: %i[index create update destroy]
+    root 'homes#show'
+    resources :templates, only: %i[update destroy] do
+      post :review, on: :member
+      resource :hiding, only: %i[create destroy]
+      resource :text_boxes, only: :update
+    end
+  end
 
   root 'rooms#new'
   resources :rooms, only: :create
   resources :joins, only: :create
   get 'rooms/:code' => 'rooms#show', as: :room
   post 'rooms/:code/start' => 'starts#create', as: :start_room
+  post 'rooms/:code/packs/:pack_id/toggle' => 'pack_toggles#create', as: :toggle_room_pack
   post 'rooms/:code/memes' => 'memes#create', as: :room_memes
   post 'rooms/:code/votes' => 'votes#create', as: :room_votes
   post 'rooms/:code/play_again' => 'play_agains#create', as: :play_again_room
