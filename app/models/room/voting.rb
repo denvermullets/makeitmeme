@@ -57,6 +57,11 @@ module Room::Voting
     following ? enter_vote!(following) : enter_next_round_or_scoreboard!
   end
 
+  # The current Round's Meme(s) of the Round, with their makers, or none outside a Game.
+  def memes_of_the_round
+    current_game&.rounds&.find_by(number: current_round_number)&.memes_of_the_round&.includes(:game_player)
+  end
+
   private
 
   # Raises unless this Voter may cast a `kind` Vote on `meme_id` right now.

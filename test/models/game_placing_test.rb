@@ -15,7 +15,7 @@ class GamePlacingTest < ActiveSupport::TestCase
     end
   end
 
-  def placed = @game.placed_game_players.map { |gp| [gp.place, gp.nickname, gp.total] }
+  def placed = @game.placed_game_players.map { |p| [p.place, p.game_player.nickname, p.game_player.total] }
 
   test 'orders by total, highest first, with sequential places when totals differ' do
     set_totals(3, 7, 0)

@@ -2,16 +2,8 @@
 <div id="standings" data-round="<%= room.current_round_number %>">
   <h2 class="mt-4 font-bold">Standings after Round <%= room.current_round_number %></h2>
   <%= render 'shared/countdown', deadline: room.phase_deadline_at %>
-  <ol>
-    <% room.current_game.placed_game_players.each do |game_player| %>
-      <li>
-        <span><%= game_player.place %></span>
-        <span><%= game_player.nickname %><%= render 'players/away_marker', player: game_player.player if game_player.player %></span>
-        <span><%= game_player.total %></span>
-      </li>
-    <% end %>
-  </ol>
-  <% memes_of_the_round = room.current_game.rounds.find_by(number: room.current_round_number)&.memes_of_the_round&.includes(:game_player) %>
+  <%= render 'rooms/placed_list', placings: room.current_game.placed_game_players %>
+  <% memes_of_the_round = room.memes_of_the_round %>
   <% if memes_of_the_round.present? %>
     <div id="meme_of_the_round">
       <h3 class="mt-4 font-bold">Meme of the Round</h3>

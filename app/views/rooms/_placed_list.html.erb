@@ -1,0 +1,10 @@
+<%# Game-players in order of place; ties share one. `placings` come from Game#placed_game_players. %>
+<ol>
+  <% placings.each do |placing| %>
+    <li>
+      <span><%= placing.place %></span>
+      <span><%= placing.game_player.nickname %><%= render 'players/away_marker', player: placing.game_player.player if placing.game_player.player %></span>
+      <span><%= placing.game_player.total %></span>
+    </li>
+  <% end %>
+</ol>
