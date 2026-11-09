@@ -87,7 +87,7 @@ class RoomUploadGraceTest < ActiveSupport::TestCase
     travel_to(@deadline + 1.second) { deadline_job }
     travel_to(@grace_ends + 1.second) { deadline_job }
 
-    assert_equal 2, @room.reload.current_round_number # advanced to the next Round, not extended again
+    assert @room.reload.standings? # advanced past Round 1, not extended again
     assert_equal 3, @room.phase_seq
   end
 

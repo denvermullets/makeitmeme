@@ -52,7 +52,7 @@ class RoomSpectatorTest < ActiveSupport::TestCase
 
   test 'the next Game deals Spectators in' do
     dee = join_late
-    3.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
+    5.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
     @room.play_again(by: @ada)
     assert @room.reload.waiting?
 

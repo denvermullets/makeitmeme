@@ -53,10 +53,12 @@ class RoomVotingTest < ActiveSupport::TestCase
 
   test 'a Round with no Memes skips to the next Round, or to the Scoreboard after Round 3' do
     end_phase
+    assert @room.standings?
+    end_phase
     assert @room.captioning?
     assert_equal 2, @room.current_round_number
 
-    2.times { end_phase }
+    3.times { end_phase }
     assert @room.scoreboard?
     assert_nil @room.current_meme_id
   end
@@ -75,13 +77,15 @@ class RoomVotingTest < ActiveSupport::TestCase
     end
 
     assert_equal memes.map(&:id).sort, seen.sort
+    assert @room.standings?
+    end_phase
     assert @room.captioning?
     assert_equal 2, @room.current_round_number
     assert_nil @room.current_meme_id
   end
 
   test 'after the last Meme of Round 3 the Room goes to the Scoreboard' do
-    2.times { end_phase }
+    4.times { end_phase }
     submit_memes(@room, 'ada')
     3.times { end_phase }
 
@@ -90,7 +94,7 @@ class RoomVotingTest < ActiveSupport::TestCase
   end
 
   test 'play again clears the current Meme' do
-    2.times { end_phase }
+    4.times { end_phase }
     submit_memes(@room, 'ada')
     3.times { end_phase }
     @room.play_again(by: @room.player_for('ada'))
@@ -249,7 +253,7 @@ class RoomVotingTest < ActiveSupport::TestCase
     spender = voter_other_than(meme)
     idle = (%w[ada bob cy] - [maker_token(meme), spender]).first
     vote(spender, 'buddy')
-    end_phase while @room.vote? || @room.reveal?
+    end_phase while @room.vote? || @room.reveal? || @room.standings?
 
     assert @room.captioning?
     assert_equal 1, buddies_left(spender)
