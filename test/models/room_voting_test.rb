@@ -201,6 +201,61 @@ class RoomVotingTest < ActiveSupport::TestCase
     assert_equal 1, meme.votes.count
   end
 
+  def buddies_left(token) = @room.game_player_for(@room.player_for(token)).reload.buddies_left
+
+  test 'every game-player starts with 2 Buddies and spending one leaves 1' do
+    submit_memes(@room, 'ada', 'bob', 'cy')
+    voter = voter_other_than(current_meme)
+    assert_equal([2, 2, 2], %w[ada bob cy].map { |t| buddies_left(t) })
+
+    vote(voter, 'buddy')
+
+    assert_equal 1, buddies_left(voter)
+  end
+
+  test 'a Buddy is refused with nothing written when none are left, and an up still works' do
+    submit_memes(@room, 'ada', 'bob', 'cy')
+    meme = current_meme
+    voter = voter_other_than(meme)
+    @room.game_player_for(@room.player_for(voter)).update!(buddies_left: 0)
+
+    rejected_with('You have no Buddies left') { vote(voter, 'buddy', meme:) }
+
+    assert_equal 0, meme.votes.count
+    assert_equal 0, buddies_left(voter)
+    vote(voter, 'up', meme:)
+    assert_equal 1, meme.votes.count
+  end
+
+  test 'a refused Buddy spends nothing, whatever the reason' do
+    submit_memes(@room, 'ada', 'bob', 'cy')
+    meme = current_meme
+    maker = maker_token(meme)
+    voter = voter_other_than(meme)
+
+    assert_raises(ActiveRecord::RecordInvalid) { vote(maker, 'buddy', meme:) }
+    vote(voter, 'up')
+    assert_raises(ActiveRecord::RecordInvalid) { vote(voter, 'buddy', meme:) }
+    end_phase
+    late = (%w[ada bob cy] - [maker, voter]).first
+    assert_raises(ActiveRecord::RecordInvalid) { vote(late, 'buddy', meme:) }
+
+    assert_equal([2, 2, 2], %w[ada bob cy].map { |t| buddies_left(t) })
+  end
+
+  test 'Buddies carry across Rounds, and a voter who casts nothing keeps theirs' do
+    submit_memes(@room, 'ada', 'bob', 'cy')
+    meme = current_meme
+    spender = voter_other_than(meme)
+    idle = (%w[ada bob cy] - [maker_token(meme), spender]).first
+    vote(spender, 'buddy')
+    end_phase while @room.vote? || @room.reveal?
+
+    assert @room.captioning?
+    assert_equal 1, buddies_left(spender)
+    assert_equal 2, buddies_left(idle)
+  end
+
   test 'a Vote reaches only the voters own stream' do
     submit_memes(@room, 'ada', 'bob', 'cy')
     voter = @room.player_for(voter_other_than(current_meme))

@@ -9,6 +9,7 @@ module Room::Voting
   # Room game operation: a Player casts their Vote on the Meme under vote. A tap is final.
   # Raises ActiveRecord::RecordInvalid unless it is the vote phase, the caller is in the Game, `meme_id`
   # is the current Meme, it is not their own, they have not voted yet and `kind` is up, meh, down or buddy.
+  # A Buddy also needs one left; it is spent in the same transaction as the Vote.
   def cast_vote(by:, meme_id:, kind:)
     with_lock do
       reject!('Voting is closed') if !vote? || closed?
@@ -16,6 +17,7 @@ module Room::Voting
       reject!('That is not the Meme being voted on') unless meme_id.to_i == current_meme_id
       reject!('You cannot vote on your own Meme') if current_meme.game_player_id == voter.id
       reject!('You already voted') if current_meme.vote_by(voter)
+      reject!('You have no Buddies left') if kind.to_s == 'buddy' && voter.buddies_left.zero?
 
       record_vote(voter, kind)
     end
@@ -62,7 +64,10 @@ module Room::Voting
 
   # Stores the Vote, then closes the vote early when it was the last one awaited.
   def record_vote(voter, kind)
-    current_meme.votes.create!(game_player: voter, kind:).tap { finish_early_if_done! }
+    current_meme.votes.create!(game_player: voter, kind:).tap do
+      voter.decrement!(:buddies_left) if kind.to_s == 'buddy'
+      finish_early_if_done!
+    end
   end
 
   def current_round = current_game.rounds.find_by!(number: current_round_number)

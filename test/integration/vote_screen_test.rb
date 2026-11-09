@@ -45,6 +45,25 @@ class VoteScreenTest < ActionDispatch::IntegrationTest
     @sessions[@voter].assert_select "#vote_controls button[value='buddy'][aria-pressed='true']"
   end
 
+  test 'the Buddy button shows how many are left and is disabled at 0' do
+    @sessions[@voter].get room_path(@room.code)
+    @sessions[@voter].assert_select "#vote_controls button[value='buddy']", text: /Buddy ×2/
+
+    @room.reload.current_game.game_players.find_by(nickname: @voter).update!(buddies_left: 0)
+    @sessions[@voter].get room_path(@room.code)
+    @sessions[@voter].assert_select "#vote_controls button[value='buddy']", text: /Buddy ×0/
+    @sessions[@voter].assert_select "#vote_controls button[value='buddy'][disabled]"
+    @sessions[@voter].assert_select "#vote_controls button[value='up']:not([disabled])"
+  end
+
+  test 'a Buddy tap with none left is refused and writes nothing' do
+    @room.current_game.game_players.find_by(nickname: @voter).update!(buddies_left: 0)
+    @sessions[@voter].post room_votes_path(@room.code), params: { meme_id: @meme.id, kind: 'buddy' }
+
+    assert_not_equal 204, @sessions[@voter].response.status
+    assert_equal 0, @meme.votes.count
+  end
+
   test 'the maker sees this one is theirs and no buttons' do
     @sessions[@maker].get room_path(@room.code)
     @sessions[@maker].assert_select '#vote_controls', text: /this one's yours/i
