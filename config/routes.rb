@@ -14,6 +14,13 @@ Rails.application.routes.draw do
   # PROTOTYPE (MEME-6), throwaway: Admin Text Box editor variants, dev only.
   get 'prototype/admin_text_boxes' => 'prototype_admin_text_boxes#show' if Rails.env.development?
 
+  namespace :admin do
+    get 'sign_in' => 'sessions#new'
+    post 'sign_in' => 'sessions#create'
+    delete 'sign_out' => 'sessions#destroy'
+    root 'homes#show'
+  end
+
   root 'rooms#new'
   resources :rooms, only: :create
   resources :joins, only: :create
