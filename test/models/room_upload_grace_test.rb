@@ -91,13 +91,17 @@ class RoomUploadGraceTest < ActiveSupport::TestCase
     assert_equal 3, @room.phase_seq
   end
 
-  test 'an upload after Captioning advanced is rejected' do
+  # Ada's Meme is in, so when Captioning ends the Room goes to the vote. With no Memes at all it would go straight to
+  # the next Round's Captioning, where a late upload is a valid Meme of that Round (the server decides the Round).
+  test 'an upload after Captioning advanced to the vote is rejected' do
+    submit_memes(@room, 'ada')
     travel_to(@deadline + 1.second) { deadline_job }
     travel_to(@grace_ends + 1.second) do
       deadline_job
+      assert @room.reload.vote?
       assert_raises(ActiveRecord::RecordInvalid) { submit_memes(@room, 'cy') }
     end
-    assert_equal 0, memes_in_round_one
+    assert_equal 1, memes_in_round_one
   end
 
   test 'an upload after the grace ends but before the job ran is rejected' do
