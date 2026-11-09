@@ -4,6 +4,23 @@
 module Room::Membership
   extend ActiveSupport::Concern
 
+  # A new Player joins (caller holds the lock). A present Player's nickname fails the uniqueness validation ("taken").
+  def add_player(nickname:, browser_token:)
+    reject!("Room is full (#{Room::MAX_PLAYERS} Players)") if players.count >= Room::MAX_PLAYERS
+
+    players.create!(nickname: nickname.to_s.strip, browser_token:, joined_at: Time.current).tap { touch_activity! }
+  end
+
+  # The joining browser takes over the Away Player holding this nickname (trimmed, ignoring case): the Player's
+  # browser token is rebound, so the old browser matches no Player. Everything else about the Player is untouched.
+  # Returns nil when no Away Player has the nickname (caller holds the lock).
+  def take_over_away_player(nickname:, browser_token:)
+    away = players.away.find_by('lower(nickname) = ?', nickname.to_s.strip.downcase)
+    return unless away
+
+    away.tap { |player| player.update!(browser_token:) }
+  end
+
   # Room game operation: the Host kicks a Player in Waiting. A kick is not a ban: the Player can rejoin under any
   # nickname. Raises ActiveRecord::RecordInvalid unless the caller is the Host, the Room is in Waiting and the
   # target is another Player of this Room.
