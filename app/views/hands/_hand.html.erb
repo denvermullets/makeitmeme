@@ -6,7 +6,8 @@
     <div class="meme-submitted">
       <p class="meme-submitted-title">Meme submitted</p>
       <%= image_tag rails_storage_proxy_path(meme.image), alt: 'Your submitted Meme', class: 'meme-submitted-image' %>
-      <p class="meme-submitted-note">It's in and final. Waiting for the others.</p>
+      <% remaining = room.captioners_remaining %>
+      <p class="meme-submitted-note">It's in and final. Waiting for <%= remaining %> <%= 'other'.pluralize(remaining) %>&hellip;</p>
     </div>
   <% elsif hand %>
     <% templates = hand.templates.map do |template|
