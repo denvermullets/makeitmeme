@@ -78,9 +78,59 @@ class RoomDealingTest < ActiveSupport::TestCase
     seed_templates(90)
     room = room_with_players
 
-    per_round = play_three_rounds(room).map { |hands| hands.flat_map(&:template_ids).uniq }
+    hands_per_round = play_three_rounds(room)
+    all = hands_per_round.flatten.flat_map(&:template_ids)
 
-    assert_equal per_round.flatten.uniq.size, per_round.flatten.size
+    assert_equal all.uniq.size, all.size
+  end
+
+  test 'with 30 dealable Templates and 3 Players Round 1 Hands share no Template' do
+    seed_templates(30)
+    room = room_with_players
+    room.start(by: room.host)
+
+    ids = room.current_game.rounds.find_by(number: 1).hands.flat_map(&:template_ids)
+
+    assert_equal 30, ids.size
+    assert_equal ids.uniq.size, ids.size
+  end
+
+  test 'with 15 dealable Templates Round 1 Hands overlap, stay distinct, and use every Template' do
+    seed_templates(15)
+    room = room_with_players
+    room.start(by: room.host)
+
+    hands = room.current_game.rounds.find_by(number: 1).hands.to_a
+    ids = hands.flat_map(&:template_ids)
+
+    hands.each { |hand| assert_equal hand.template_ids.uniq, hand.template_ids }
+    assert_operator ids.uniq.size, :<, ids.size
+    assert_equal Template.dealable_for(room).pluck(:id).sort, ids.uniq.sort
+  end
+
+  test 'when short a Player takes Templates others hold this Round before ones they had earlier' do
+    seed_templates(15)
+    room = room_with_players
+    room.start(by: room.host)
+    room.advance!
+    game = room.current_game
+    round_one = game.rounds.find_by(number: 1).hands.index_by(&:game_player_id)
+
+    game.rounds.find_by(number: 2).hands.each do |hand|
+      not_own = Template.dealable_for(room).pluck(:id) - round_one[hand.game_player_id].template_ids
+      assert_empty not_own - hand.template_ids
+    end
+  end
+
+  test 'in Round 2 with room for it Hands in the Round do not overlap' do
+    seed_templates(60)
+    room = room_with_players
+    room.start(by: room.host)
+    room.advance!
+
+    ids = room.current_game.rounds.find_by(number: 2).hands.flat_map(&:template_ids)
+
+    assert_equal ids.uniq.size, ids.size
   end
 
   test 'with 30 dealable Templates later Rounds reuse Templates others had, never ones the Player had' do
