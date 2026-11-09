@@ -29,6 +29,29 @@ class RoomScoringTest < ActiveSupport::TestCase
 
   def counts(meme) = [meme.up_count, meme.meh_count, meme.down_count, meme.points]
 
+  test 'each Buddy adds 3 to the Meme and its maker, and is neither an up nor a meh' do
+    submit_memes(@room, 'ada', 'bob', 'cy')
+    meme = @room.current_meme
+    maker = meme.game_player
+    others = %w[ada bob cy] - [maker.player.browser_token]
+    others.each { |t| @room.cast_vote(by: @room.player_for(t), meme_id: meme.id, kind: 'buddy') }
+
+    assert @room.reload.reveal?
+    assert_equal [0, 0, 0, 6], counts(meme.reload)
+    assert_equal 6, maker.reload.total
+  end
+
+  test 'a Buddy mixes with Votes and a missing Vote is still a meh' do
+    submit_memes(@room, 'ada', 'bob', 'cy')
+    meme = @room.current_meme
+    others = %w[ada bob cy] - [meme.game_player.player.browser_token]
+    @room.cast_vote(by: @room.player_for(others.first), meme_id: meme.id, kind: 'buddy')
+    end_phase
+    end_phase if @room.vote?
+
+    assert_equal [0, 1, 0, 3], counts(meme.reload)
+  end
+
   test 'a scripted three-Round Game caches each Meme, each total and the Scoreboard order' do
     SCRIPT.each_with_index do |round_votes, index|
       submit_memes(@room, 'ada', 'bob', 'cy')

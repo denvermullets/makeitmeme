@@ -8,7 +8,7 @@ module Room::Voting
 
   # Room game operation: a Player casts their Vote on the Meme under vote. A tap is final.
   # Raises ActiveRecord::RecordInvalid unless it is the vote phase, the caller is in the Game, `meme_id`
-  # is the current Meme, it is not their own, they have not voted yet and `kind` is up, meh or down.
+  # is the current Meme, it is not their own, they have not voted yet and `kind` is up, meh, down or buddy.
   def cast_vote(by:, meme_id:, kind:)
     with_lock do
       reject!('Voting is closed') if !vote? || closed?
