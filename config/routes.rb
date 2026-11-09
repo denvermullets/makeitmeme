@@ -24,6 +24,8 @@ Rails.application.routes.draw do
     end
   end
 
+  get 'recap/:token' => 'recaps#show', as: :recap
+
   root 'rooms#new'
   resources :rooms, only: :create
   resources :joins, only: :create
