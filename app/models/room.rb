@@ -157,6 +157,11 @@ class Room < ApplicationRecord
   end
   private_class_method :insert_with_unique_code
 
+  # A Player with no seat in the Game under way: arrived mid-Game, dealt in on the next Game.
+  def spectator?(player)
+    !waiting? && current_game.present? && game_player_for(player).nil?
+  end
+
   def host?(player)
     player.present? && player.id == host_player_id
   end

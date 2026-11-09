@@ -1,0 +1,9 @@
+<%# Shown to a Spectator (arrived mid-Game) during Captioning and voting: they sit out until the next Game. %>
+<div id="spectator">
+  <h2 class="mt-4 font-bold">You're in for the next Game</h2>
+  <p class="mt-2">A Game is under way. You'll be dealt in when the Host plays again.</p>
+  <% if room.vote? && room.current_meme %>
+    <%= render 'shared/countdown', deadline: room.phase_deadline_at %>
+    <%= image_tag rails_storage_proxy_path(room.current_meme.image), alt: 'The Meme being voted on', class: 'w-full mt-2' %>
+  <% end %>
+</div>

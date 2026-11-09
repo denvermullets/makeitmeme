@@ -1,6 +1,8 @@
 <%# The phase-specific screen. Broadcasts replace #screen as a whole; `player` is nil there. %>
 <div id="screen">
-  <% if room.captioning? %>
+  <% if player && (room.captioning? || room.vote?) && room.spectator?(player) %>
+    <%= render 'rooms/spectator', room: room %>
+  <% elsif room.captioning? %>
     <%= render 'rooms/captioning', room: room, player: player %>
   <% elsif room.vote? %>
     <%= render 'rooms/vote', room: room, player: player %>
