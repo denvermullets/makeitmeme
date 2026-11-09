@@ -37,6 +37,23 @@ class ScoreboardTest < ActionDispatch::IntegrationTest
     @bob.assert_select '[data-controller=countdown]', false
   end
 
+  test 'the Scoreboard shows Buddies received, summed from the cached Buddy counts over the Game' do
+    5.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
+    game = @room.reload.current_game
+    ada = game.game_players.find_by!(nickname: 'Ada')
+    bob = game.game_players.find_by!(nickname: 'Bob')
+    rounds = game.rounds.order(:number).to_a
+    Meme.create!(round: rounds[0], game_player: ada, buddy_count: 2)
+    Meme.create!(round: rounds[1], game_player: ada, buddy_count: 1)
+    Meme.create!(round: rounds[0], game_player: bob, buddy_count: 4)
+
+    @bob.get room_path(@room.code)
+
+    @bob.assert_select "#scoreboard li[data-nickname='Ada'] [data-buddies-received]", text: '3'
+    @bob.assert_select "#scoreboard li[data-nickname='Bob'] [data-buddies-received]", text: '4'
+    @bob.assert_select "#scoreboard li[data-nickname='Cy'] [data-buddies-received]", text: '0'
+  end
+
   test 'tied totals share a place' do
     5.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
 

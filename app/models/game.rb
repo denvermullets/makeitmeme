@@ -19,6 +19,9 @@ class Game < ApplicationRecord
     end
   end
 
+  # The Game's final Scoreboard read model (see Game::Scoreboard).
+  def scoreboard = Game::Scoreboard.new(self)
+
   # The Player's seat in this Game, or nil.
   def game_player_for(player)
     game_players.find_by(player_id: player.id) if player
