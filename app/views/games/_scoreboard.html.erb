@@ -6,6 +6,9 @@
       <span><%= row.nickname %></span>
       <span><%= row.total %></span>
       <span data-buddies-received><%= row.buddies_received %></span>
+      <% if row.memes_of_the_round.positive? %>
+        <span data-meme-of-the-round>Meme of the Round<% if row.memes_of_the_round > 1 %> x<span data-count><%= row.memes_of_the_round %></span><% end %></span>
+      <% end %>
     </li>
   <% end %>
 </ol>
