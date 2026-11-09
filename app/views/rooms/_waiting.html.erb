@@ -14,4 +14,6 @@
   <% end %>
 
   <%= render 'rooms/start_gate', room:, player: %>
+
+  <%= button_to 'Leave Room', leave_room_path(room.code), class: 'border p-2 mt-4' %>
 </div>
