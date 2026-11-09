@@ -7,3 +7,5 @@
 .template-name { display: block; padding: .25rem .5rem 0; font-weight: 600; font-size: .85rem; }
 .box-badge { display: inline-block; margin: .25rem .5rem; font-size: .75rem; background: #eee; border-radius: 999px; padding: 0 .5rem; }
 @media (max-width: 40rem) { .library { grid-template-columns: 1fr; } }
+.packs { border-collapse: collapse; }
+.packs th, .packs td { padding: .25rem 1rem; text-align: left; border-bottom: 1px solid #ccc; }

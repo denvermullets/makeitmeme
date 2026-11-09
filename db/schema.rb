@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_08_002701) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_09_000100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -100,6 +100,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_08_002701) do
     t.index ["template_id"], name: "index_memes_on_template_id"
   end
 
+  create_table "packs", force: :cascade do |t|
+    t.string "name", null: false
+    t.boolean "custom", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index "lower((name)::text)", name: "index_packs_on_lower_name", unique: true
+    t.index ["custom"], name: "index_packs_on_single_custom", unique: true, where: "custom"
+  end
+
   create_table "players", force: :cascade do |t|
     t.bigint "room_id", null: false
     t.string "browser_token", null: false
@@ -146,7 +155,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_08_002701) do
     t.jsonb "text_boxes", default: [], null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "pack_id", null: false
     t.index ["memegen_id"], name: "index_templates_on_memegen_id", unique: true
+    t.index ["pack_id"], name: "index_templates_on_pack_id"
   end
 
   create_table "votes", force: :cascade do |t|
@@ -175,6 +186,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_08_002701) do
   add_foreign_key "rooms", "memes", column: "current_meme_id", on_delete: :nullify
   add_foreign_key "rooms", "players", column: "host_player_id"
   add_foreign_key "rounds", "games"
+  add_foreign_key "templates", "packs"
   add_foreign_key "votes", "game_players"
   add_foreign_key "votes", "memes"
 end
