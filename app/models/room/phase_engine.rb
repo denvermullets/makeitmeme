@@ -23,7 +23,9 @@ module Room::PhaseEngine
 
   included do
     # Seconds each timed phase lasts. One place to change them; tests shorten them.
-    class_attribute :phase_seconds, default: { captioning: 90, vote: 15, reveal: 4 }
+    # Captioning is absent: its length is the Room's preset (`captioning_seconds`). Tests may set `captioning:` to
+    # override it.
+    class_attribute :phase_seconds, default: { vote: 15, reveal: 4 }
 
     # Every phase change reaches phones only after commit, and before any content for that phase.
     after_update_commit :phase_changed, if: :saved_change_to_phase_seq?
@@ -102,9 +104,12 @@ module Room::PhaseEngine
   # When the phase may be closed: its deadline plus its grace.
   def due_at = phase_deadline_at&.then { |at| at + phase_config[:grace] }
 
+  # How long Captioning lasts: the test override in phase_seconds, else the Room's preset.
+  def captioning_seconds = self.class.phase_seconds[:captioning] || preset_seconds
+
   # Every entry step ends here: new phase, bumped phase_seq, and the deadline when the phase has a duration.
   def enter_phase!(phase, **attrs)
-    seconds = self.class.phase_seconds[phase.to_sym]
+    seconds = phase.to_sym == :captioning ? captioning_seconds : self.class.phase_seconds[phase.to_sym]
     update!(phase:, phase_seq: phase_seq + 1, phase_deadline_at: seconds&.seconds&.from_now, upload_grace_used: false,
             last_activity_at: Time.current, **attrs)
   end

@@ -5,6 +5,7 @@
                       locals: { viewer: player } %>
   </ul>
 
+  <%= render 'rooms/captioning_preset', room:, player: %>
   <%= render 'rooms/pack_list', room:, player: %>
 
   <% if errors&.any? %>

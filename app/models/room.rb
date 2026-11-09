@@ -12,6 +12,7 @@ class Room < ApplicationRecord
                  scoreboard: 'scoreboard' }, default: :waiting
 
   include Rejectable
+  include CaptioningPreset
   include PhaseEngine
   include Voting
   include Activity
