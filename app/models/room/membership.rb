@@ -38,6 +38,20 @@ module Room::Membership
     self
   end
 
+  # Room game operation: a Player leaves the Room in Waiting or on the Scoreboard (never mid-Game). A leaving Host
+  # hands the role off first (earliest-joined present Player, else earliest-joined remaining, else nobody). The
+  # Player is deleted, which frees the slot and nickname. Leaving is Room activity.
+  def leave(player:)
+    with_lock do
+      reject!('You can only leave in Waiting or on the Scoreboard') unless waiting? || scoreboard?
+
+      hand_off_host!(from: player, fallback_to_away: true)
+      remove_player!(player)
+      touch_activity!
+    end
+    self
+  end
+
   # Deletes the Player from the Room (caller holds the lock and has already handled the Host role: the Room's
   # host link must not point at the Player). Everyone's Player list drops them, and once committed the removed
   # Player's own browser is told to reload, which lands it on the join form.

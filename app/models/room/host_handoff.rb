@@ -5,7 +5,8 @@ module Room::HostHandoff
 
   # Hands the Host role from `from` to the Player who joined earliest. Does nothing unless `from` is the Host.
   # By default only present Players qualify and, if there is none, the Host stays. With `fallback_to_away: true`
-  # (Leave) every other Player qualifies and, if there is none, the Room is left without a Host.
+  # (Leave) present Players still come first, then any other Player, and if there is none the Room is left
+  # without a Host.
   # Returns the new Host, or nil when nobody took over. Safe inside a caller's lock/transaction: the broadcasts
   # go out once everything has committed.
   def hand_off_host!(from:, fallback_to_away: false)
@@ -13,9 +14,8 @@ module Room::HostHandoff
     successor = with_lock do
       next unless host_player_id == from.id
 
-      candidates = players.where.not(id: from.id)
-      candidates = candidates.present unless fallback_to_away
-      candidate = candidates.order(:joined_at, :id).first
+      candidates = players.where.not(id: from.id).order(:joined_at, :id)
+      candidate = candidates.present.first || (candidates.first if fallback_to_away)
       changed = candidate.present? || fallback_to_away
       update!(host: candidate) if changed
       candidate
