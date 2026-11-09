@@ -40,3 +40,13 @@ plugin :solid_queue if ENV['SOLID_QUEUE_IN_PUMA']
 # Specify the PID file. Defaults to tmp/pids/server.pid in development.
 # In other environments, only set the PID file if requested.
 pidfile ENV['PIDFILE'] if ENV['PIDFILE']
+
+# A restart drops every cable connection without running unsubscribe, so presence is reset once the server is up.
+# `on_booted` only fires inside the Puma server process (not in console, rake, assets:precompile or tests), and a
+# failure here must never stop the app from serving. Single box only: with several, one box's boot would reset the
+# connections of the others.
+on_booted do
+  Player.reset_presence!
+rescue StandardError => e
+  Rails.logger&.error("Presence reset on boot failed: #{e.class}: #{e.message}")
+end
