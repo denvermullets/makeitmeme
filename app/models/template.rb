@@ -27,6 +27,8 @@ class Template < ApplicationRecord
   def needs_review? = reviewed_at.nil? && hidden_at.nil?
   def upload? = source_kind == 'upload'
 
+  after_destroy { TemplateTombstone.bury(memegen_id) }
+
   # Case-insensitive partial match on name; LIKE wildcards in the term match literally.
   scope :named_like, lambda { |term|
     term.blank? ? all : where('name ILIKE ?', "%#{sanitize_sql_like(term.to_s.strip)}%")

@@ -1,7 +1,7 @@
 require 'net/http'
 
 # Seeds the Template Library from a committed JSON manifest (no images in git).
-# Upserts by memegen id; an image is downloaded only for Templates that lack one.
+# Idempotent by memegen id (insert-only); an image is downloaded only for Templates that lack one.
 module TemplateLibrary
   DEFAULT_MANIFEST = Rails.root.join('db/templates_manifest.json')
 
@@ -17,15 +17,23 @@ module TemplateLibrary
     JSON.parse(File.read(manifest_path)).each { |entry| import_entry(entry, fetcher) }
   end
 
+  # Creates a Template only for a memegen id never seen (and not tombstoned). Existing Templates are
+  # never updated, so Admin curation (boxes, name, Pack, hidden/reviewed state) survives a re-seed.
   def self.import_entry(entry, fetcher)
-    template = Template.find_or_initialize_by(memegen_id: entry.fetch('id'))
-    template.source_kind = 'memegen' if template.new_record?
-    template.update!(name: entry.fetch('name'), source: entry['source'], text_boxes: entry.fetch('text_boxes'),
-                     pack: pack_for(entry['pack']))
+    memegen_id = entry.fetch('id')
+    return if TemplateTombstone.buried?(memegen_id)
+
+    template = Template.find_by(memegen_id: memegen_id) || create_template(memegen_id, entry)
     return if template.image.attached?
 
     url = entry.fetch('image_url')
     template.image.attach(io: StringIO.new(fetcher.call(url)), filename: File.basename(URI(url).path))
+  end
+
+  def self.create_template(memegen_id, entry)
+    Template.create!(memegen_id: memegen_id, name: entry.fetch('name'), source: entry['source'],
+                     text_boxes: entry.fetch('text_boxes'), pack: pack_for(entry['pack']),
+                     source_kind: 'memegen')
   end
 
   def self.ensure_system_packs

@@ -148,6 +148,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_09_120000) do
     t.index ["game_id"], name: "index_rounds_on_game_id"
   end
 
+  create_table "template_tombstones", force: :cascade do |t|
+    t.string "memegen_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["memegen_id"], name: "index_template_tombstones_on_memegen_id", unique: true
+  end
+
   create_table "templates", force: :cascade do |t|
     t.string "memegen_id", null: false
     t.string "name", null: false
