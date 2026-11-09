@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_09_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_10_084900) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -116,6 +116,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_09_130000) do
     t.datetime "joined_at", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "connections_count", default: 0, null: false
+    t.integer "presence_token", default: 0, null: false
+    t.datetime "away_at"
     t.index "room_id, lower((nickname)::text)", name: "index_players_on_room_id_and_lower_nickname", unique: true
     t.index ["room_id", "browser_token"], name: "index_players_on_room_id_and_browser_token", unique: true
     t.index ["room_id"], name: "index_players_on_room_id"
