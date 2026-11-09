@@ -12,6 +12,7 @@ class Round::Dealer
     @game.game_players.to_a.shuffle.each do |game_player|
       template_ids = pool.sort_by { |id| sort_key(game_player, id) }.first(Hand::SIZE)
       @round.hands.create!(game_player:, template_ids:)
+      round_dealt.merge(template_ids)
     end
   end
 
@@ -20,7 +21,13 @@ class Round::Dealer
   # Smaller sorts first. Fields: [dealt to this game-player earlier this Game? (0 no, 1 yes),
   # dealt to any game-player earlier this Game? (0 no, 1 yes), random tiebreak].
   def sort_key(game_player, template_id)
-    [own_dealt(game_player).include?(template_id) ? 1 : 0, game_dealt.include?(template_id) ? 1 : 0, rand]
+    [own_dealt(game_player).include?(template_id) ? 1 : 0, game_dealt.include?(template_id) ? 1 : 0,
+     round_dealt.include?(template_id) ? 1 : 0, rand]
+  end
+
+  # Grows as each Hand of this Round is dealt.
+  def round_dealt
+    @round_dealt ||= Set.new
   end
 
   def game_dealt
