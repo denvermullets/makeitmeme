@@ -20,6 +20,7 @@ Rails.application.routes.draw do
     delete 'sign_out' => 'sessions#destroy'
     resources :packs, only: :index
     root 'homes#show'
+    resources :templates, only: :destroy
   end
 
   root 'rooms#new'
