@@ -17,3 +17,6 @@
 .badge-upload { background: #dbeafe; }
 .packs { border-collapse: collapse; }
 .packs th, .packs td { padding: .25rem 1rem; text-align: left; border-bottom: 1px solid #ccc; }
+.text-box-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .25rem .5rem; margin: .5rem 0; }
+.text-box-row label { font-size: .8rem; display: grid; }
+.autosave-status [data-status=error] { color: #b91c1c; }

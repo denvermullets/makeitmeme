@@ -50,6 +50,7 @@
   <%= turbo_frame_tag 'template_panel', data: { template_id: @selected&.id } do %>
     <% if @selected %>
       <%= render 'admin/templates/inspector', template: @selected, errors: @template_errors %>
+      <%= render 'admin/templates/text_box_editor', template: @selected %>
       <%= button_to 'Delete Template', admin_template_path(@selected, q: @query.presence, pack: @pack&.id), method: :delete,
                     form: { data: { turbo_frame: '_top' } },
                     data: { turbo_confirm: "Delete #{@selected.name}? It was used in #{pluralize(@selected.memes.count, 'Meme')}. Those Memes are kept." } %>

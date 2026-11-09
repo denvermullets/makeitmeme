@@ -36,6 +36,14 @@ class Template < ApplicationRecord
 
   def unhide! = update!(hidden_at: nil)
 
+  # Replaces the ordered Text Boxes from untrusted input. Valid input also marks the Template reviewed;
+  # invalid input persists nothing. Returns the TextBoxes::Result.
+  def update_text_boxes(raw)
+    result = TextBoxes.check(raw)
+    update!(text_boxes: result.boxes, reviewed_at: Time.current) if result.valid?
+    result
+  end
+
   def hidden? = hidden_at.present?
   def needs_review? = reviewed_at.nil? && hidden_at.nil?
   def upload? = source_kind == 'upload'
