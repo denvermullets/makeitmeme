@@ -1,0 +1,29 @@
+<section class="inspector" data-inspector>
+  <% if template.image.attached? %>
+    <%= image_tag rails_storage_proxy_path(template.image), alt: template.name, class: 'inspector-image' %>
+  <% end %>
+
+  <%= form_with model: template, url: admin_template_path(template, q: params[:q].presence, filter: params[:filter].presence),
+                method: :patch, data: { turbo_frame: '_top', controller: 'autosubmit' } do |form| %>
+    <%= form.label :name, 'Name' %>
+    <%= form.text_field :name, value: (params.dig(:template, :name) || template.name), required: true,
+                        data: { action: 'change->autosubmit#submit' } %>
+    <% if errors.present? %>
+      <ul class="errors"><% errors.each do |message| %><li><%= message %></li><% end %></ul>
+    <% end %>
+  <% end %>
+
+  <dl class="inspector-meta">
+    <dt>Source</dt>
+    <dd data-inspector-source><%= template.upload? ? 'Player upload' : 'memegen import' %></dd>
+    <dt>Used in</dt>
+    <dd data-inspector-uses><%= pluralize(template.memes.count, 'Meme') %></dd>
+    <dt>Reviewed</dt>
+    <dd data-inspector-reviewed><%= template.reviewed_at ? "Reviewed #{template.reviewed_at.to_date}" : 'Needs review' %></dd>
+  </dl>
+
+  <% if template.reviewed_at.nil? %>
+    <%= button_to 'Mark reviewed', review_admin_template_path(template, q: params[:q].presence, filter: params[:filter].presence),
+                  method: :post, form: { data: { turbo_frame: '_top' } } %>
+  <% end %>
+</section>
