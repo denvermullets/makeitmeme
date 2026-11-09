@@ -1,7 +1,7 @@
 # The Room's one early-finish condition: a timed phase ends before its deadline once nobody present is left to
 # wait for. `finish_early_if_done!` is evaluated under the Room lock and ends the phase through the same
 # `advance!` path as the deadline, so a deadline job left behind finds a stale phase_seq and does nothing.
-# Call it after anything that could complete the condition (a submission, a Player going Away).
+# Call it after anything that could complete the condition (a submission, a Vote, a Player going Away).
 # Each phase adds its own `*_complete?` predicate to `early_finish_due?`.
 module Room::EarlyFinish
   extend ActiveSupport::Concern
@@ -16,7 +16,7 @@ module Room::EarlyFinish
 
   private
 
-  def early_finish_due? = captioning_complete?
+  def early_finish_due? = captioning_complete? || vote_complete?
 
   # Captioning: at least one present dealt-in Player, and every one of them has a Meme this Round.
   # Spectators have no GamePlayer; nobody present means the timer runs the Game.

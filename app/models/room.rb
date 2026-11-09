@@ -19,6 +19,7 @@ class Room < ApplicationRecord
   include Presence
   include HostHandoff
   include EarlyFinish
+  include VoteEarlyClose
 
   after_update_commit :broadcast_packs!, if: :saved_change_to_off_pack_ids?
 

@@ -17,7 +17,6 @@ class RevealScreenTest < ActionDispatch::IntegrationTest
     @voters = (@sessions.keys - [@maker])
     @sessions[@voters.first].post room_votes_path(@room.code), params: { meme_id: @meme.id, kind: 'up' }
     @sessions[@voters.last].post room_votes_path(@room.code), params: { meme_id: @meme.id, kind: 'down' }
-    travel_to(@room.reload.phase_deadline_at + 2.seconds) { @room.advance! }
   end
 
   test 'every phone, including the maker, sees the maker, points, counts and a countdown; a reload is the same' do
