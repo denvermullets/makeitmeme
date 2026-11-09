@@ -4,6 +4,7 @@
   <% memes_by_round.each do |round, memes| %>
     <section data-round="<%= round.number %>">
       <h3 class="mt-2 font-bold">Round <%= round.number %></h3>
+      <% top = memes.map(&:points).max %>
       <ul>
         <% memes.each do |meme| %>
           <li data-nickname="<%= meme.game_player.nickname %>" data-meme-id="<%= meme.id %>">
@@ -12,6 +13,7 @@
             <% end %>
             <span><%= meme.game_player.nickname %></span>
             <span data-meme-points><%= meme.points %></span>
+            <% if meme.points == top %><span data-meme-badge>Meme of the Round</span><% end %>
           </li>
         <% end %>
       </ul>
