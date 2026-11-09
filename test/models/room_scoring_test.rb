@@ -41,6 +41,19 @@ class RoomScoringTest < ActiveSupport::TestCase
     assert_equal 6, maker.reload.total
   end
 
+  test 'the Buddy count is cached on the Meme at reveal, once' do
+    submit_memes(@room, 'ada', 'bob', 'cy')
+    meme = @room.current_meme
+    others = %w[ada bob cy] - [meme.game_player.player.browser_token]
+    @room.cast_vote(by: @room.player_for(others.first), meme_id: meme.id, kind: 'buddy')
+    @room.cast_vote(by: @room.player_for(others.last), meme_id: meme.id, kind: 'up')
+
+    assert_equal 1, meme.reload.buddy_count
+    assert_equal 4, meme.points
+    end_phase
+    assert_equal [1, 4], [meme.reload.buddy_count, meme.points]
+  end
+
   test 'a Buddy mixes with Votes and a missing Vote is still a meh' do
     submit_memes(@room, 'ada', 'bob', 'cy')
     meme = @room.current_meme

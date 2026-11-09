@@ -32,6 +32,17 @@ class RevealScreenTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test 'the reveal shows the Buddy count beside the counts, on every phone, with no giver named' do
+    @meme.update!(buddy_count: 2)
+    2.times do
+      @sessions.each_value do |session|
+        session.get room_path(@room.code)
+        session.assert_select '#reveal_counts', text: /2\s*Buddy|2\s*Buddies/i
+        session.assert_select '#reveal_counts', text: /1\s*up.*0\s*meh.*1\s*down/mi
+      end
+    end
+  end
+
   test 'negative points show with a minus sign' do
     @meme.update!(points: -2)
     @sessions['Ada'].get room_path(@room.code)

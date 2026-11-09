@@ -41,7 +41,7 @@ class Meme < ApplicationRecord
     up = tally.fetch('up', 0)
     down = tally.fetch('down', 0)
     buddy = tally.fetch('buddy', 0)
-    update!(up_count: up, down_count: down, meh_count: eligible_voters - up - down - buddy,
+    update!(up_count: up, down_count: down, buddy_count: buddy, meh_count: eligible_voters - up - down - buddy,
             points: up - down + (BUDDY_POINTS * buddy))
     game_player.increment!(:total, points)
   end

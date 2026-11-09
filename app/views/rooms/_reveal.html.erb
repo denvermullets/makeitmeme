@@ -10,5 +10,6 @@
     <span><%= meme.up_count %> up</span>
     <span><%= meme.meh_count %> meh</span>
     <span><%= meme.down_count %> down</span>
+    <span><%= meme.buddy_count %> <%= 'Buddy'.pluralize(meme.buddy_count).sub('Buddys', 'Buddies') %></span>
   </p>
 </div>
