@@ -56,6 +56,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_10_120000) do
     t.integer "total", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "buddies_left", default: 2, null: false
     t.index ["game_id"], name: "index_game_players_on_game_id"
     t.index ["player_id"], name: "index_game_players_on_player_id"
   end
