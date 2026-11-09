@@ -1,0 +1,34 @@
+<%# Numeric Text Box editor; autosaves the whole ordered array. Stage, handles and preview extend this partial. %>
+<section class="text-box-editor" data-text-box-editor
+         data-controller="text-box-editor"
+         data-text-box-editor-url-value="<%= admin_template_text_boxes_path(template) %>"
+         data-text-box-editor-boxes-value="<%= template.text_boxes.to_json %>">
+  <h2>Text Boxes</h2>
+  <p class="autosave-status">
+    <span data-text-box-editor-target="status" data-status="idle" role="status"></span>
+    <button type="button" hidden data-text-box-editor-target="retry" data-action="text-box-editor#retry">Retry</button>
+  </p>
+  <ul class="errors" data-text-box-editor-target="errors"></ul>
+
+  <% fields = [['x', 'X', 'percent'], ['y', 'Y', 'percent'], ['w', 'Width', 'percent'], ['h', 'Height', 'percent'], ['angle', 'Angle', 'degrees']] %>
+  <% template.text_boxes.each_with_index do |box, index| %>
+    <fieldset class="text-box-row" data-text-box-editor-target="row" data-index="<%= index %>">
+      <legend>Box <%= index + 1 %></legend>
+      <% fields.each do |field, label, unit| %>
+        <% percent = unit == 'percent' %>
+        <label>
+          <%= label %> <%= percent ? '(%)' : '(°)' %>
+          <input type="number" step="<%= percent ? '0.5' : '1' %>" value="<%= (box[field].to_f * (percent ? 100 : 1)).round(1) %>"
+                 data-field="<%= field %>" data-unit="<%= unit %>" data-action="input->text-box-editor#edit">
+        </label>
+      <% end %>
+      <label>
+        Text style
+        <select data-field="style" data-action="change->text-box-editor#style">
+          <option value="white" <%= 'selected' if box['color'] == 'white' %>>White with outline</option>
+          <option value="black" <%= 'selected' if box['color'] == 'black' %>>Black, no outline</option>
+        </select>
+      </label>
+    </fieldset>
+  <% end %>
+</section>

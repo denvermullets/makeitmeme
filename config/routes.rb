@@ -23,6 +23,7 @@ Rails.application.routes.draw do
     resources :templates, only: %i[update destroy] do
       post :review, on: :member
       resource :hiding, only: %i[create destroy]
+      resource :text_boxes, only: :update
     end
   end
 
