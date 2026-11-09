@@ -30,6 +30,12 @@ class TemplateLibraryTest < ActiveSupport::TestCase
     ], drake.text_boxes
   end
 
+  test 'imports are marked memegen and left unreviewed and visible' do
+    TemplateLibrary.import(MANIFEST, fetcher: @fetcher)
+
+    assert(Template.all.all? { |t| t.source_kind == 'memegen' && t.reviewed_at.nil? && t.hidden_at.nil? })
+  end
+
   test 're-importing adds no duplicates and downloads nothing more' do
     TemplateLibrary.import(MANIFEST, fetcher: @fetcher)
     downloads_after_first = @downloads.size

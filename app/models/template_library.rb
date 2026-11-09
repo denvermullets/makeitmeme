@@ -15,6 +15,7 @@ module TemplateLibrary
   def self.import(manifest_path = DEFAULT_MANIFEST, fetcher: DEFAULT_FETCHER)
     JSON.parse(File.read(manifest_path)).each do |entry|
       template = Template.find_or_initialize_by(memegen_id: entry.fetch('id'))
+      template.source_kind = 'memegen' if template.new_record?
       template.update!(name: entry.fetch('name'), source: entry['source'], text_boxes: entry.fetch('text_boxes'))
       next if template.image.attached?
 
