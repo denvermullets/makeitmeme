@@ -1,0 +1,7 @@
+<h1>Admin sign in</h1>
+<% if flash[:alert] %><p role="alert"><%= flash[:alert] %></p><% end %>
+<%= form_with url: admin_sign_in_path do |f| %>
+  <%= f.label :password, 'Password' %>
+  <%= f.password_field :password, autofocus: true, autocomplete: 'current-password' %>
+  <%= f.submit 'Sign in' %>
+<% end %>
