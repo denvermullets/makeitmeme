@@ -12,11 +12,5 @@
     </ul>
   <% end %>
 
-  <% if player && room.host?(player) %>
-    <% gate_open = room.enough_dealable_templates? %>
-    <%= button_to 'Start', start_room_path(room.code), class: 'border p-2 font-bold mt-4', disabled: !gate_open %>
-    <% unless gate_open %><p id="start-gate-reason" class="mt-2"><%= Room::START_GATE_REASON %></p><% end %>
-  <% elsif player %>
-    <p class="mt-4">You are <%= player.nickname %>. Waiting for the Host to start.</p>
-  <% end %>
+  <%= render 'rooms/start_gate', room:, player: %>
 </div>
