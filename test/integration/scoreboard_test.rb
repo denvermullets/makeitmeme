@@ -1,6 +1,9 @@
 require 'test_helper'
+require 'turbo/broadcastable/test_helper'
 
 class ScoreboardTest < ActionDispatch::IntegrationTest
+  include Turbo::Broadcastable::TestHelper
+
   setup do
     seed_templates(30)
     @host = open_session
@@ -64,5 +67,28 @@ class ScoreboardTest < ActionDispatch::IntegrationTest
     @host.get room_path(@room.code)
     @host.assert_select '#players li', 3
     @host.assert_select 'form[action=?]', start_room_path(@room.code)
+  end
+
+  test 'Play again is disabled with the reason when fewer than 3 Players are present' do
+    3.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
+    Player.find_by!(nickname: 'Cy').update!(away_at: Time.current)
+
+    @host.get room_path(@room.code)
+
+    @host.assert_select 'form[action=?] button[disabled]', play_again_room_path(@room.code)
+    @host.assert_select '#play-again-gate-reason', text: /Need 3 present Players, 2 here/
+    @host.post play_again_room_path(@room.code)
+    @host.assert_response :unprocessable_content
+    assert @room.reload.scoreboard?
+  end
+
+  test 'a presence change on the Scoreboard re-sends each Players Play again gate' do
+    3.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
+    @room.reload
+    ActionCable.server.pubsub.clear
+
+    assert_turbo_stream_broadcasts [@room, @room.host], count: 1 do
+      @room.broadcast_start_gate!
+    end
   end
 end

@@ -48,7 +48,7 @@ class RoomJoinTest < ActiveSupport::TestCase
     error = assert_raises(ActiveRecord::RecordInvalid) do
       Room.join(code: @room.code, nickname: 'ADA', browser_token: 't')
     end
-    assert_includes error.record.errors.full_messages, 'Nickname has already been taken'
+    assert_includes error.record.errors.full_messages, 'That nickname is taken'
   end
 
   test 'an empty nickname is rejected' do

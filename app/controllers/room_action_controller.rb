@@ -7,13 +7,15 @@ class RoomActionController < ApplicationController
 
   def create
     operation
-    redirect_to room_path(current_room.code)
+    redirect_to landing_path
   rescue ActiveRecord::RecordInvalid => e
     @errors = e.record.errors.full_messages
     render 'rooms/show', status: :unprocessable_content
   end
 
   private
+
+  def landing_path = room_path(current_room.code)
 
   def deny_player = deny_player_with_redirect
 end

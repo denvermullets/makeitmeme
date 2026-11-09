@@ -14,6 +14,13 @@ module Room::EarlyFinish
     end
   end
 
+  # How many dealt-in Players have not yet submitted a Meme this Round; 0 outside a Round.
+  def captioners_remaining
+    return 0 unless current_game && current_round_number
+
+    [current_game.game_players.count - round_memes.count, 0].max
+  end
+
   private
 
   def early_finish_due? = captioning_complete? || vote_complete?
@@ -26,9 +33,9 @@ module Room::EarlyFinish
     present_game_players.exists? && !present_game_players.where.not(id: round_meme_author_ids).exists?
   end
 
-  def present_game_players = current_game.game_players.where(player_id: players.present.select(:id))
+  def round_meme_author_ids = round_memes.select(:game_player_id)
 
-  def round_meme_author_ids
-    Meme.joins(:round).where(rounds: { game_id: current_game_id, number: current_round_number }).select(:game_player_id)
+  def round_memes
+    Meme.joins(:round).where(rounds: { game_id: current_game_id, number: current_round_number })
   end
 end

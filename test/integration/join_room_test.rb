@@ -47,7 +47,7 @@ class JoinRoomTest < ActionDispatch::IntegrationTest
 
     post joins_path, params: { code: @room.code, nickname: 'ada' }
     assert_response :unprocessable_content
-    assert_select 'li', text: /Nickname has already been taken/
+    assert_select 'li', text: /That nickname is taken/
 
     post joins_path, params: { code: @room.code, nickname: '' }
     assert_response :unprocessable_content

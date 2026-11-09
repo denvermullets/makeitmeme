@@ -10,13 +10,7 @@ module Room::VoteEarlyClose
   def vote_complete?
     return false unless vote? && current_meme
 
-    pending = present_voters.where.not(id: current_meme.game_player_id)
+    pending = present_game_players.where.not(id: current_meme.game_player_id)
     pending.any? && !pending.where.not(id: current_meme.votes.select(:game_player_id)).exists?
-  end
-
-  private
-
-  def present_voters
-    current_game.game_players.where(player_id: players.present.select(:id))
   end
 end
