@@ -16,6 +16,7 @@
        end %>
     <div class="meme-editor" data-controller="meme-editor"
          data-meme-editor-hand-value="<%= templates.to_json %>"
+         data-meme-editor-round-key-value="<%= room.current_game_id %>-<%= room.current_round_number %>"
          data-meme-editor-submit-url-value="<%= room_memes_path(room.code) %>"
          data-meme-editor-direct-upload-url-value="<%= rails_direct_uploads_path %>"
          data-meme-editor-deadline-value="<%= room.phase_deadline_at&.iso8601(3) %>"
