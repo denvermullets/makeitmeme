@@ -63,15 +63,14 @@ class Room < ApplicationRecord
   private_class_method :missing_room_message
 
   # Room game operation: join a live Room by code. A browser that already has a Player in the
-  # Room gets that Player back. Raises ActiveRecord::RecordInvalid with a clear message otherwise.
+  # Room gets that Player back; a nickname held by an Away Player takes that Player over.
+  # Raises ActiveRecord::RecordInvalid with a clear message otherwise.
   def self.join(code:, nickname:, browser_token:)
     room = live_by_code(code) || new.reject!(missing_room_message(code))
 
     room.with_lock do
       room.player_for(browser_token) || begin
-        room.reject!("Room is full (#{MAX_PLAYERS} Players)") if room.players.count >= MAX_PLAYERS
-
-        room.players.create!(nickname:, browser_token:, joined_at: Time.current).tap { room.touch_activity! }
+        room.take_over_away_player(nickname:, browser_token:) || room.add_player(nickname:, browser_token:)
       end
     end
   end
