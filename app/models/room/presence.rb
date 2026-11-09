@@ -5,5 +5,7 @@ module Room::Presence
 
   # THE away-consequences hook: called once, after commit-worthy state is saved, each time a Player becomes Away.
   # Later tickets (Host handoff, early-finish re-checks) extend this method; keep it the single entry point.
-  def player_went_away!(player); end
+  def player_went_away!(_player)
+    finish_vote_early_if_done!
+  end
 end

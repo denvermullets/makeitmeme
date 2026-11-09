@@ -42,8 +42,10 @@ class RoomScoringTest < ActiveSupport::TestCase
 
           @room.cast_vote(by: @room.player_for(voters[i]), meme_id: meme.id, kind:)
         end
-        assert_equal [0, 0, 0, 0], counts(meme.reload), 'nothing is cached before the reveal'
-        end_phase
+        if @room.reload.vote?
+          assert_equal [0, 0, 0, 0], counts(meme.reload), 'nothing is cached before the reveal'
+          end_phase
+        end
         assert @room.reveal?
         assert_equal EXPECTED[index].fetch(maker), counts(meme.reload), "Round #{index + 1} #{maker}"
         end_phase

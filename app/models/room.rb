@@ -17,6 +17,7 @@ class Room < ApplicationRecord
   include Activity
   include Membership
   include Presence
+  include VoteEarlyClose
 
   after_update_commit :broadcast_packs!, if: :saved_change_to_off_pack_ids?
 
