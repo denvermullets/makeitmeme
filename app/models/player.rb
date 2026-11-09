@@ -1,7 +1,13 @@
 class Player < ApplicationRecord
   NICKNAME_MAX = 16
 
+  AWAY_GRACE = 20.seconds
+
   belongs_to :room
+
+  # Present = not Away. One query for game logic: `Player.present` / `player.present?`.
+  scope :present, -> { where(away_at: nil) }
+  scope :away, -> { where.not(away_at: nil) }
 
   validates :nickname, presence: true, length: { maximum: NICKNAME_MAX },
                        uniqueness: { scope: :room_id, case_sensitive: false }
@@ -12,17 +18,40 @@ class Player < ApplicationRecord
   after_create_commit :offer_kick_to_host
   after_destroy_commit -> { broadcast_remove_to room }
 
+  def away? = away_at.present?
+  def present? = !away?
+
   # Several open tabs count as one presence: the count only reaches 0 when the last one closes.
   def connected!
-    with_lock do
+    was_away = with_lock do
       increment(:connections_count)
       increment(:presence_token)
-      save!
+      away?.tap do
+        self.away_at = nil
+        save!
+      end
     end
+    broadcast_away_marker if was_away
   end
 
   def disconnected!
-    with_lock { update!(connections_count: [connections_count - 1, 0].max) }
+    with_lock do
+      update!(connections_count: [connections_count - 1, 0].max)
+      PresenceGraceJob.set(wait: AWAY_GRACE).perform_later(id, presence_token) if connections_count.zero?
+    end
+  end
+
+  # Called by the grace job: Away only if still unconnected and nobody reconnected since the job was scheduled.
+  def go_away!(token)
+    went_away = with_lock do
+      next false unless connections_count.zero? && presence_token == token && present?
+
+      update!(away_at: Time.current)
+    end
+    return unless went_away
+
+    broadcast_away_marker
+    room.player_went_away!(self)
   end
 
   def self.new_browser_token
@@ -37,5 +66,10 @@ class Player < ApplicationRecord
 
     broadcast_replace_to room, room.host, target: "kick_#{ActionView::RecordIdentifier.dom_id(self)}",
                                           partial: 'players/kick', locals: { player: self, viewer: room.host }
+  end
+
+  def broadcast_away_marker
+    broadcast_replace_to room, target: "away_#{ActionView::RecordIdentifier.dom_id(self)}",
+                               partial: 'players/away_marker', locals: { player: self }
   end
 end

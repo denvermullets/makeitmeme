@@ -1,5 +1,5 @@
 <% if player.room.host?(player) %>
-  <li id="<%= dom_id(player) %>" data-host><%= player.nickname %> (Host)</li>
+  <li id="<%= dom_id(player) %>" data-host><%= player.nickname %> (Host)<%= render 'players/away_marker', player: %></li>
 <% else %>
-  <li id="<%= dom_id(player) %>"><%= player.nickname %><%= render 'players/kick', player:, viewer: local_assigns[:viewer] %></li>
+  <li id="<%= dom_id(player) %>"><%= player.nickname %><%= render 'players/away_marker', player: %><%= render 'players/kick', player:, viewer: local_assigns[:viewer] %></li>
 <% end %>
