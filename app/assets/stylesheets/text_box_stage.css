@@ -21,3 +21,9 @@
 .tbe-rotate::after { content: ""; position: absolute; inset: -8px; }
 .text-box-row.selected { outline: 2px solid #ffe14d; }
 .tbe-actions { display: flex; flex-wrap: wrap; gap: .4rem; margin: .5rem 0; }
+.tbe-preview { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
+.tbe-preview[hidden] { display: none; }
+.tbe-preview-switch { border: 0; padding: 0; margin: 0 0 8px; display: flex; gap: 12px; align-items: center; }
+.tbe-preview-switch legend { float: left; margin-right: 8px; font-size: .8rem; }
+.tbe-fits { list-style: none; padding: 0; margin: 0 0 8px; font-size: .8rem; }
+.tbe-fits .warning { color: #b00020; font-weight: 700; }

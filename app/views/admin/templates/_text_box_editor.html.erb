@@ -9,8 +9,21 @@
   <div class="tbe-stage" data-text-box-editor-target="stage"
        data-action="pointerdown->text-box-editor#pointerDown">
     <img class="tbe-image" alt="<%= template.name %>" data-text-box-editor-target="image">
+    <canvas class="tbe-preview" hidden data-text-box-editor-target="preview"></canvas>
     <div class="tbe-overlay" data-text-box-editor-target="overlay"></div>
   </div>
+  <%# Sample-text preview: per-viewer UI only, never saved to the Template. %>
+  <fieldset class="tbe-preview-switch">
+    <legend>Sample text</legend>
+    <% %w[off short medium long].each do |level| %>
+      <label>
+        <input type="radio" name="sample_level_<%= template.id %>" value="<%= level %>" data-sample-level="<%= level %>"
+               <%= 'checked' if level == 'off' %> data-action="change->text-box-editor#setSample">
+        <%= level.capitalize %>
+      </label>
+    <% end %>
+  </fieldset>
+  <ul class="tbe-fits" hidden data-text-box-editor-target="fits"></ul>
   <p class="autosave-status">
     <span data-text-box-editor-target="status" data-status="idle" role="status"></span>
     <button type="button" hidden data-text-box-editor-target="retry" data-action="text-box-editor#retry">Retry</button>

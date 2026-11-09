@@ -18,4 +18,22 @@ class AdminTextBoxStageTest < ActionDispatch::IntegrationTest
     assert_select '[data-text-box-editor-target=stage] img[data-text-box-editor-target=image]'
     assert_select '[data-text-box-editor-target=overlay]'
   end
+
+  test 'the editor offers an off/short/medium/long sample-text switch and a preview canvas' do
+    get admin_root_path(selected: @template.id)
+
+    assert_select '[data-text-box-editor-target=stage] canvas[data-text-box-editor-target=preview]'
+    assert_select 'input[type=radio][data-sample-level]', 4
+    assert_select 'input[data-sample-level=off][checked]'
+    %w[short medium long].each { |level| assert_select "input[data-sample-level=#{level}]" }
+    assert_select '[data-text-box-editor-target=fits]'
+  end
+
+  test 'a sample level sent with a save is ignored and never stored on the Template' do
+    patch admin_template_text_boxes_path(@template), as: :json,
+                                                     params: { text_boxes: @template.text_boxes, sample_level: 'long' }
+
+    assert_response :success
+    assert_equal %w[angle color font h w x y], @template.reload.text_boxes.first.keys.sort
+  end
 end
