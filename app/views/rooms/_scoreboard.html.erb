@@ -1,7 +1,7 @@
 <%# Final standings of the finished Game. Ties share a place. %>
 <div id="scoreboard">
   <h2 class="mt-4 font-bold">Scoreboard</h2>
-  <%= render 'rooms/placed_list', placings: room.current_game.placed_game_players %>
+  <%= render 'games/scoreboard', scoreboard: room.current_game.scoreboard %>
 
   <%= render 'rooms/captioning_preset', room:, player: %>
 
