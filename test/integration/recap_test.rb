@@ -40,6 +40,34 @@ class RecapTest < ActionDispatch::IntegrationTest
     assert_select '[data-controller]', false
   end
 
+  test 'the Recap has a title, description and Open Graph meta for link unfurls' do
+    finish_game
+
+    get recap_path(@game.recap_token)
+
+    assert_select 'title', /Recap/
+    assert_select 'meta[name=description][content]'
+    assert_select 'meta[property="og:title"][content]'
+    assert_select 'meta[property="og:description"][content]'
+  end
+
+  test 'the Recap shows the date the Game finished' do
+    finish_game
+    @game.update!(finished_at: Time.utc(2026, 3, 14, 12))
+
+    get recap_path(@game.recap_token)
+
+    assert_select '#recap time[datetime]', /March 14, 2026/
+  end
+
+  test 'the Recap links to the home page' do
+    finish_game
+
+    get recap_path(@game.recap_token)
+
+    assert_select '#recap a[href=?]', root_path
+  end
+
   test 'an unknown or malformed token is a 404' do
     finish_game
 
