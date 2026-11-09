@@ -6,8 +6,8 @@ class RecapTest < ActionDispatch::IntegrationTest
     @host = open_session
     @host.post rooms_path, params: { nickname: 'Ada' }
     @room = Room.live.last
-    open_session.post joins_path, params: { code: @room.code, nickname: 'Bob' }
-    open_session.post joins_path, params: { code: @room.code, nickname: 'Cy' }
+    @bob = open_session.tap { |s| s.post joins_path, params: { code: @room.code, nickname: 'Bob' } }
+    @cy = open_session.tap { |s| s.post joins_path, params: { code: @room.code, nickname: 'Cy' } }
     @host.post start_room_path(@room.code)
     @game = @room.reload.current_game
   end
@@ -54,5 +54,57 @@ class RecapTest < ActionDispatch::IntegrationTest
     get recap_path(@game.recap_token)
 
     assert_response :not_found
+  end
+
+  def recap_html
+    get recap_path(@game.recap_token)
+    assert_response :success
+    response.body
+  end
+
+  test 'the Recap is unchanged after Play again and a new Game in the same Room' do
+    finish_game
+    before = recap_html
+
+    @host.post play_again_room_path(@room.code)
+    @host.post start_room_path(@room.code)
+    assert_not_equal @game.id, @room.reload.current_game.id
+
+    assert_equal before, recap_html
+  end
+
+  test 'the Recap is unchanged after a Player Leaves or is kicked' do
+    finish_game
+    before = recap_html
+
+    @host.post play_again_room_path(@room.code)
+    @bob.post leave_room_path(@room.code)
+    @host.post kick_room_player_path(@room.code, @room.players.find_by!(nickname: 'Cy'))
+
+    assert_nil @game.game_players.find_by!(nickname: 'Bob').player_id
+    assert_nil @game.game_players.find_by!(nickname: 'Cy').player_id
+    assert_equal before, recap_html
+  end
+
+  test 'the Recap is unchanged after the Room expires' do
+    finish_game
+    before = recap_html
+
+    @room.update_columns(last_activity_at: 2.days.ago)
+    assert @room.reload.expire_if_idle!
+
+    assert_equal 0, Player.where(room_id: @room.id).count
+    assert_equal before, recap_html
+  end
+
+  test 'nicknames come from the game-player snapshot' do
+    finish_game
+    @game.game_players.find_by(nickname: 'Cy').update_columns(nickname: 'Snapshot')
+    @room.players.find_by!(nickname: 'Ada').update_columns(nickname: 'Renamed')
+
+    body = recap_html
+
+    assert_includes body, 'Snapshot'
+    assert_not_includes body, 'Renamed'
   end
 end
