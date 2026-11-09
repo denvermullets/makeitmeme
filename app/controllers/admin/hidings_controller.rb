@@ -1,6 +1,8 @@
 module Admin
   # Hide from Hands: a hidden Template stays in the Library but is never dealt. Existing Hands are untouched.
   class HidingsController < BaseController
+    include LibraryState
+
     before_action :set_template
 
     def create
@@ -20,9 +22,7 @@ module Admin
     end
 
     def redirect_back_to_library
-      filter = Template::FILTERS.include?(params[:filter]) && params[:filter] != 'all' ? params[:filter] : nil
-      redirect_to admin_root_path(q: params[:q].presence, selected: params[:selected].presence, filter:, pack: params[:pack].presence),
-                  status: :see_other
+      redirect_to admin_root_path(library_params(params[:selected].presence)), status: :see_other
     end
   end
 end

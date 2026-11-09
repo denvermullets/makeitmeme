@@ -8,6 +8,8 @@ module TextBoxes
   COLORS = %w[white black].freeze
   FONTS = %w[thick thin].freeze
   EPSILON = 1e-6
+  # Smallest width or height, as a fraction of the image (about 12px on a 600px stage).
+  MIN_SIZE = 0.02
   GEOMETRY = %w[x y w h].freeze
   LABELS = { 'x' => 'x', 'y' => 'y', 'w' => 'width', 'h' => 'height', 'angle' => 'angle' }.freeze
 
@@ -57,7 +59,7 @@ module TextBoxes
     x, y, w, h = GEOMETRY.map { |key| box[key].to_f }
     problems = []
     problems << 'x and y must not be negative' if x < -EPSILON || y < -EPSILON
-    problems << 'width and height must be greater than 0' if w <= 0 || h <= 0
+    problems << "width and height must be at least #{MIN_SIZE}" if w < MIN_SIZE - EPSILON || h < MIN_SIZE - EPSILON
     problems << 'must stay inside the image' if x + w > 1 + EPSILON || y + h > 1 + EPSILON
     problems
   end

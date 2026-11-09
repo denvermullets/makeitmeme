@@ -33,7 +33,7 @@ export default class extends Controller {
 
   // crossOrigin must be set before src so the image stays usable for canvas previews (MEME-40).
   loadImage() {
-    if (!this.hasImageTarget || !this.imageValue) return
+    if (!this.hasImageTarget || !this.hasStageTarget || !this.imageValue) return
     this.imageTarget.crossOrigin = "anonymous"
     this.imageTarget.addEventListener("load", () => {
       const { naturalWidth, naturalHeight } = this.imageTarget
@@ -94,7 +94,7 @@ export default class extends Controller {
   // Mouse, touch and pen all arrive as pointer events. Press on a handle resizes/rotates, on a box moves it,
   // on empty image deselects.
   pointerDown(event) {
-    if (event.button > 0) return
+    if (!this.hasStageTarget || event.button > 0) return
     const handleEl = event.target.closest("[data-handle]")
     const boxEl = event.target.closest("[data-box-index]")
     if (!boxEl) {
@@ -168,7 +168,7 @@ export default class extends Controller {
   // Rows are built here from this.boxes, never by the server. Call after the box count or order changes (not while
   // dragging; use syncFields for that).
   renderRows() {
-    if (!this.hasRowsTarget) return
+    if (!this.hasRowsTarget || !this.hasRowTemplateTarget) return
     this.rowsTarget.replaceChildren(...this.boxes.map((box, index) => {
       const row = this.rowTemplateTarget.content.firstElementChild.cloneNode(true)
       row.dataset.index = index
@@ -262,13 +262,14 @@ export default class extends Controller {
   }
 
   drawPreview() {
+    if (!this.hasImageTarget) return
     const canvas = this.previewTarget
     const img = this.imageTarget
     const on = this.sampleLevel !== "off"
     canvas.hidden = !on
-    this.fitsTarget.hidden = !on
+    if (this.hasFitsTarget) this.fitsTarget.hidden = !on
     if (!on) {
-      this.fitsTarget.replaceChildren()
+      if (this.hasFitsTarget) this.fitsTarget.replaceChildren()
       return
     }
     if (!this.fontReady || !img.complete || !img.naturalWidth) return
@@ -284,6 +285,7 @@ export default class extends Controller {
   }
 
   showFits(fits) {
+    if (!this.hasFitsTarget) return
     this.fitsTarget.replaceChildren(...fits.map((fit, index) => {
       const { text, warning } = fitSummary(fit)
       const li = Object.assign(document.createElement("li"), { textContent: `Box ${index + 1}: ${text || "n/a"}` })
@@ -296,6 +298,12 @@ export default class extends Controller {
     this.saver.retry()
   }
 
+  // The whole Text Box array, plus the Template's name when the inspector's name field is on the page.
+  payload() {
+    const nameField = document.querySelector('[data-inspector] input[name="template[name]"]')
+    return nameField?.value.trim() ? { text_boxes: this.boxes, name: nameField.value } : { text_boxes: this.boxes }
+  }
+
   async save() {
     const response = await fetch(this.urlValue, {
       method: "PATCH",
@@ -304,7 +312,7 @@ export default class extends Controller {
         Accept: "application/json",
         "X-CSRF-Token": document.querySelector("meta[name=csrf-token]")?.content,
       },
-      body: JSON.stringify({ text_boxes: this.boxes }),
+      body: JSON.stringify(this.payload()),
     })
     const body = await response.json().catch(() => ({}))
     if (!response.ok) {
@@ -317,12 +325,15 @@ export default class extends Controller {
   }
 
   showStatus(status) {
-    this.statusTarget.textContent = LABELS[status] || ""
-    this.statusTarget.dataset.status = status
-    this.retryTarget.hidden = status !== "error"
+    if (this.hasStatusTarget) {
+      this.statusTarget.textContent = LABELS[status] || ""
+      this.statusTarget.dataset.status = status
+    }
+    if (this.hasRetryTarget) this.retryTarget.hidden = status !== "error"
   }
 
   showErrors(errors) {
+    if (!this.hasErrorsTarget) return
     this.errorsTarget.replaceChildren(
       ...errors.map((message) => Object.assign(document.createElement("li"), { textContent: message }))
     )

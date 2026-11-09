@@ -7,7 +7,7 @@
   </ul>
 <% end %>
 <%= form_with url: admin_packs_path, scope: :pack, class: 'new-pack' do |f| %>
-  <%= f.text_field :name, value: @new_name, placeholder: 'New Pack name', required: true, 'aria-label': 'New Pack name' %>
+  <%= f.text_field :name, value: (@failed_pack.name if @failed_pack&.new_record?), placeholder: 'New Pack name', required: true, 'aria-label': 'New Pack name' %>
   <%= f.submit 'Create Pack' %>
 <% end %>
 <table class="packs">
@@ -17,7 +17,7 @@
       <tr data-pack="<%= pack.name %>">
         <td class="pack-name">
           <%= form_with url: admin_pack_path(pack), scope: :pack, method: :patch, class: 'rename-pack' do |f| %>
-            <%= f.text_field :name, value: (pack.id == @renamed_id ? @renamed_name : pack.name), required: true, 'aria-label': "Name of #{pack.name}" %>
+            <%= f.text_field :name, value: (@failed_pack&.id == pack.id ? @failed_pack.name : pack.name), required: true, 'aria-label': "Name of #{pack.name}" %>
             <%= f.submit 'Rename' %>
           <% end %>
         </td>

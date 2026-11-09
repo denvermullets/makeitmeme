@@ -110,3 +110,20 @@ test("any drag output converts to fractions the server accepts", () => {
     }
   }
 })
+
+test("clampBox keeps boxes at least MIN_FRACTION of the image so the server accepts them", async () => {
+  const { MIN_FRACTION } = await import("../../app/javascript/text_box_geometry.js")
+  for (const [BW, BH] of [[400, 300], [1000, 800], [2000, 1500]]) {
+    const out = fromPx(clampBox({ cx: 5, cy: 5, w: 1, h: 1, a: 0 }, BW, BH), BW, BH)
+    assert.ok(out.w >= MIN_FRACTION - 1e-9, `w ${out.w} at ${BW}`)
+    assert.ok(out.h >= MIN_FRACTION - 1e-9, `h ${out.h} at ${BH}`)
+  }
+})
+
+test("resizeBox cannot shrink below MIN_FRACTION on a large stage", async () => {
+  const { MIN_FRACTION } = await import("../../app/javascript/text_box_geometry.js")
+  const BW = 1600, BH = 1200
+  const shrunk = resizeBox(toPx(box, BW, BH), "se", -5000, -5000, BW, BH)
+  const out = fromPx(shrunk, BW, BH)
+  assert.ok(out.w >= MIN_FRACTION - 1e-9 && out.h >= MIN_FRACTION - 1e-9)
+})
