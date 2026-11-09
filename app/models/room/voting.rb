@@ -26,6 +26,11 @@ module Room::Voting
     current_game&.game_player_for(player)
   end
 
+  # How many Players in the Game have not yet submitted a Meme this Round.
+  def captioners_remaining
+    current_game.game_players.count - current_round.memes.count
+  end
+
   # The Player's own Vote on the Meme under vote, or nil.
   def vote_by(player)
     current_meme&.vote_by(game_player_for(player))
