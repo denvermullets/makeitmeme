@@ -77,4 +77,39 @@ class AdminGamesTest < ActionDispatch::IntegrationTest
     assert_select 'main form', 0
     assert_select 'main button, main input[type=submit]', 0
   end
+
+  test 'pages Games newest first, a fixed page size at a time, with next and previous links only when there is somewhere to go' do
+    size = Admin::GamesController::PER_PAGE
+    games = (size + 1).times.map { |n| make_game([['Ada', n]], finished_at: (n + 1).hours.ago) }
+    sign_in_as_admin
+
+    get admin_games_path
+    assert_select '[data-game]', size
+    assert_select "[data-game='#{games.first.id}']"
+    assert_select "[data-game='#{games.last.id}']", 0
+    assert_select 'a[rel=next][href=?]', admin_games_path(page: 2)
+    assert_select 'a[rel=prev]', 0
+
+    get admin_games_path(page: 2)
+    assert_select '[data-game]', 1
+    assert_select "[data-game='#{games.last.id}']"
+    assert_select 'a[rel=prev][href=?]', admin_games_path(page: 1)
+    assert_select 'a[rel=next]', 0
+  end
+
+  test 'an out-of-range or malformed page shows an empty list, not an error' do
+    make_game([['Ada', 1]])
+    sign_in_as_admin
+
+    get admin_games_path(page: 99)
+    assert_response :success
+    assert_select '[data-game]', 0
+    assert_select 'a[rel=prev]'
+
+    [0, -3, 'abc'].each do |page|
+      get admin_games_path(page: page)
+      assert_response :success
+      assert_select '[data-game]', 1
+    end
+  end
 end
