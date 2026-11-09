@@ -9,9 +9,10 @@ class Room < ApplicationRecord
   START_GATE_REASON = "Turn on Packs with at least #{MIN_DEALABLE_TEMPLATES} Templates".freeze
 
   enum :phase, { waiting: 'waiting', captioning: 'captioning', vote: 'vote', reveal: 'reveal',
-                 scoreboard: 'scoreboard' }, default: :waiting
+                 standings: 'standings', scoreboard: 'scoreboard' }, default: :waiting
 
   include Rejectable
+  include CaptioningPreset
   include PhaseEngine
   include Voting
   include Activity
@@ -25,6 +26,7 @@ class Room < ApplicationRecord
 
   has_many :players, dependent: :destroy
   has_many :games, dependent: :destroy
+  has_many :deal_histories, dependent: :delete_all
   belongs_to :current_game, class_name: 'Game', optional: true, inverse_of: false
   belongs_to :host, class_name: 'Player', foreign_key: :host_player_id, optional: true, inverse_of: false
 
@@ -89,7 +91,9 @@ class Room < ApplicationRecord
       reject!(START_GATE_REASON) unless enough_dealable_templates?
 
       game = games.create!
-      players.each { |player| game.game_players.create!(player:, nickname: player.nickname) }
+      players.order(:id).each do |player|
+        game.game_players.create!(player:, nickname: player.nickname, buddies_left: GamePlayer::BUDDIES_PER_GAME)
+      end
       enter_captioning!(game:, number: 1)
       touch_activity!
     end

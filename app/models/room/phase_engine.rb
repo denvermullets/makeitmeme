@@ -18,12 +18,15 @@ module Room::PhaseEngine
     captioning: { next_step: :finish_captioning!, grace: 0.seconds, screen: :per_player },
     vote: { next_step: :enter_reveal!, grace: VOTE_GRACE, screen: :per_player },
     reveal: { next_step: :finish_reveal!, grace: 0.seconds, screen: :shared },
+    standings: { next_step: :start_next_round!, grace: 0.seconds, screen: :shared },
     scoreboard: { next_step: :enter_waiting!, grace: 0.seconds, screen: :per_player }
   }.freeze
 
   included do
     # Seconds each timed phase lasts. One place to change them; tests shorten them.
-    class_attribute :phase_seconds, default: { captioning: 90, vote: 15, reveal: 4 }
+    # Captioning is absent: its length is the Room's preset (`captioning_preset_seconds`). Tests may set
+    # `captioning:` to override it.
+    class_attribute :phase_seconds, default: { vote: 15, reveal: 4, standings: 10 }
 
     # Every phase change reaches phones only after commit, and before any content for that phase.
     after_update_commit :phase_changed, if: :saved_change_to_phase_seq?
@@ -102,20 +105,27 @@ module Room::PhaseEngine
   # When the phase may be closed: its deadline plus its grace.
   def due_at = phase_deadline_at&.then { |at| at + phase_config[:grace] }
 
+  # How long Captioning lasts: the test override in phase_seconds, else the Room's preset.
+  def captioning_seconds = self.class.phase_seconds[:captioning] || captioning_preset_seconds
+
   # Every entry step ends here: new phase, bumped phase_seq, and the deadline when the phase has a duration.
   def enter_phase!(phase, **attrs)
-    seconds = self.class.phase_seconds[phase.to_sym]
+    seconds = phase.to_sym == :captioning ? captioning_seconds : self.class.phase_seconds[phase.to_sym]
     update!(phase:, phase_seq: phase_seq + 1, phase_deadline_at: seconds&.seconds&.from_now, upload_grace_used: false,
             last_activity_at: Time.current, **attrs)
   end
 
-  # The next Round, or the Scoreboard after the last.
+  # After a Round: Standings after Rounds 1 and 2, the Scoreboard after the last.
   def enter_next_round_or_scoreboard!
-    if current_round_number < Room::ROUNDS_PER_GAME
-      enter_captioning!(game: current_game, number: current_round_number + 1)
-    else
-      enter_scoreboard!
-    end
+    current_round_number < Room::ROUNDS_PER_GAME ? enter_standings! : enter_scoreboard!
+  end
+
+  # Entry step: between Rounds. Timers only.
+  def enter_standings! = enter_phase!(:standings, current_meme: nil)
+
+  # Standings' next step: the next Round's Captioning, with fresh Hands.
+  def start_next_round!
+    enter_captioning!(game: current_game, number: current_round_number + 1)
   end
 
   # After commit: schedule the phase's deadline job, then tell the phones.

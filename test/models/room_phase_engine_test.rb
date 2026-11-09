@@ -28,10 +28,10 @@ class RoomPhaseEngineTest < ActiveSupport::TestCase
   end
 
   test 'phase durations live in one place and can be changed' do
-    assert_equal({ captioning: 90, vote: 15, reveal: 4 }, Room.phase_seconds)
+    assert_equal({ vote: 15, reveal: 4, standings: 10 }, Room.phase_seconds)
     Room.phase_seconds = Room.phase_seconds.merge(captioning: 5)
     freeze_time do
-      @room.advance!
+      2.times { @room.advance! } # through Standings
       assert_equal 5.seconds.from_now, @room.reload.phase_deadline_at
     end
   end
@@ -39,13 +39,15 @@ class RoomPhaseEngineTest < ActiveSupport::TestCase
   test 'a Captioning deadline in Round 1 deals Round 2 with fresh Hands and a new 90s deadline' do
     bob = @room.player_for('bob')
     old_hand = @room.hand_for(bob)
-    travel_to(96.seconds.from_now) do
-      run_deadline_job
+    travel_to(96.seconds.from_now) { run_deadline_job }
+    assert @room.reload.standings?
+    travel_to(@room.phase_deadline_at + 1.second) do
+      run_deadline_job_once
 
       @room.reload
       assert @room.captioning?
       assert_equal 2, @room.current_round_number
-      assert_equal 3, @room.phase_seq
+      assert_equal 4, @room.phase_seq
       assert_equal 90.seconds.from_now.to_i, @room.phase_deadline_at.to_i
       assert_not_equal old_hand.id, @room.hand_for(bob).id
       assert_equal 2, @room.hand_for(bob).game_player.hands.count
@@ -54,7 +56,7 @@ class RoomPhaseEngineTest < ActiveSupport::TestCase
   end
 
   test 'after Round 3 the Room goes to the Scoreboard with no deadline and the Game is finished' do
-    3.times do
+    5.times do
       travel_to(@room.reload.phase_deadline_at + 7.seconds) { run_deadline_job }
     end
 
@@ -66,7 +68,7 @@ class RoomPhaseEngineTest < ActiveSupport::TestCase
   end
 
   test 'the Scoreboard schedules no further job' do
-    2.times { travel_to(@room.reload.phase_deadline_at + 7.seconds) { run_deadline_job } }
+    4.times { travel_to(@room.reload.phase_deadline_at + 7.seconds) { run_deadline_job } }
     travel_to(@room.reload.phase_deadline_at + 1.second) { run_deadline_job_once } # the grace extension
     clear_enqueued_jobs
     travel_to(@room.reload.phase_deadline_at + 1.second) { run_deadline_job_once }
@@ -92,7 +94,7 @@ class RoomPhaseEngineTest < ActiveSupport::TestCase
     assert @room.advance!(from_seq: 1)
     assert_not other.advance!(from_seq: 1)
     assert_equal 2, @room.reload.phase_seq
-    assert_equal 2, @room.current_round_number
+    assert @room.standings?
   end
 
   test 'a due-only advance (the sweep path) skips a Room whose deadline has not passed' do
@@ -118,6 +120,7 @@ class RoomPhaseEngineTest < ActiveSupport::TestCase
 
   test 'a transition broadcasts the new screen once to each Player, on their own stream' do
     players = @room.players.to_a
+    @room.advance! # Standings, which is shared
     ActionCable.server.pubsub.clear
     @room.advance!
 
@@ -125,13 +128,27 @@ class RoomPhaseEngineTest < ActiveSupport::TestCase
     assert_empty capture_turbo_stream_broadcasts(@room)
   end
 
+  test 'Standings is sent once on the shared Room stream with a countdown, and on no Player stream' do
+    players = @room.players.to_a
+    ActionCable.server.pubsub.clear
+    @room.advance!
+
+    shared = capture_turbo_stream_broadcasts(@room)
+    assert_equal 1, shared.size
+    assert_includes shared.first.to_html, 'id="standings"'
+    assert_includes shared.first.to_html, 'data-controller="countdown"'
+    players.each { |player| assert_empty capture_turbo_stream_broadcasts([@room, player]) }
+  end
+
   test 'a whole empty Game plays from Start to the Scoreboard through performed jobs' do
     Room.phase_seconds = Room.phase_seconds.merge(captioning: 1)
     room = room_with_players
     room.start(by: room.player_for('ada'))
-    3.times do
-      travel 7.seconds
-      2.times { perform_enqueued_jobs(only: PhaseDeadlineJob) }
+    12.times do
+      break if room.reload.scoreboard?
+
+      travel 11.seconds
+      perform_enqueued_jobs(only: PhaseDeadlineJob)
     end
 
     assert room.reload.scoreboard?

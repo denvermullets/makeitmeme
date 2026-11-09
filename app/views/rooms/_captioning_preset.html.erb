@@ -1,0 +1,13 @@
+<%# How long Captioning lasts. The Host gets three choices; everyone else sees the current one. %>
+<div id="captioning_preset" data-preset="<%= room.captioning_preset %>">
+  <h2 class="mt-4 font-bold">Captioning</h2>
+  <% if player && room.host?(player) %>
+    <% Room::CaptioningPreset::SECONDS.each do |preset, seconds| %>
+      <%= button_to "#{preset.capitalize} #{seconds}s", room_captioning_preset_path(room.code, preset:),
+                    class: 'border px-2', data: { preset_option: preset },
+                    aria: { current: (room.captioning_preset == preset).to_s } %>
+    <% end %>
+  <% else %>
+    <span><%= room.captioning_preset.capitalize %> <%= room.captioning_preset_seconds %>s</span>
+  <% end %>
+</div>

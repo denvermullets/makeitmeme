@@ -53,10 +53,12 @@ class RoomVotingTest < ActiveSupport::TestCase
 
   test 'a Round with no Memes skips to the next Round, or to the Scoreboard after Round 3' do
     end_phase
+    assert @room.standings?
+    end_phase
     assert @room.captioning?
     assert_equal 2, @room.current_round_number
 
-    2.times { end_phase }
+    3.times { end_phase }
     assert @room.scoreboard?
     assert_nil @room.current_meme_id
   end
@@ -75,13 +77,15 @@ class RoomVotingTest < ActiveSupport::TestCase
     end
 
     assert_equal memes.map(&:id).sort, seen.sort
+    assert @room.standings?
+    end_phase
     assert @room.captioning?
     assert_equal 2, @room.current_round_number
     assert_nil @room.current_meme_id
   end
 
   test 'after the last Meme of Round 3 the Room goes to the Scoreboard' do
-    2.times { end_phase }
+    4.times { end_phase }
     submit_memes(@room, 'ada')
     3.times { end_phase }
 
@@ -90,7 +94,7 @@ class RoomVotingTest < ActiveSupport::TestCase
   end
 
   test 'play again clears the current Meme' do
-    2.times { end_phase }
+    4.times { end_phase }
     submit_memes(@room, 'ada')
     3.times { end_phase }
     @room.play_again(by: @room.player_for('ada'))
@@ -177,6 +181,85 @@ class RoomVotingTest < ActiveSupport::TestCase
     assert_equal 0, Vote.count
   end
 
+  test 'a Player spends a Buddy as their Vote on someone elses Meme' do
+    submit_memes(@room, 'ada', 'bob', 'cy')
+    voter = voter_other_than(current_meme)
+    vote(voter, 'buddy')
+
+    assert_equal 'buddy', @room.vote_by(@room.player_for(voter))&.kind
+    assert_equal 1, current_meme.votes.count
+  end
+
+  test 'a Buddy on your own Meme, after voting, or after the vote closed is refused and writes nothing' do
+    submit_memes(@room, 'ada', 'bob', 'cy')
+    meme = current_meme
+    rejected_with('You cannot vote on your own Meme') { vote(maker_token(meme), 'buddy', meme:) }
+    voter = voter_other_than(meme)
+    vote(voter, 'up')
+    rejected_with('You already voted') { vote(voter, 'buddy', meme:) }
+    assert_equal 1, meme.votes.count
+
+    end_phase
+    late = (%w[ada bob cy] - [maker_token(meme), voter]).first
+    rejected_with('Voting is closed') { vote(late, 'buddy', meme:) }
+    assert_equal 1, meme.votes.count
+  end
+
+  def buddies_left(token) = @room.game_player_for(@room.player_for(token)).reload.buddies_left
+
+  test 'every game-player starts with 2 Buddies and spending one leaves 1' do
+    submit_memes(@room, 'ada', 'bob', 'cy')
+    voter = voter_other_than(current_meme)
+    assert_equal([2, 2, 2], %w[ada bob cy].map { |t| buddies_left(t) })
+
+    vote(voter, 'buddy')
+
+    assert_equal 1, buddies_left(voter)
+  end
+
+  test 'a Buddy is refused with nothing written when none are left, and an up still works' do
+    submit_memes(@room, 'ada', 'bob', 'cy')
+    meme = current_meme
+    voter = voter_other_than(meme)
+    @room.game_player_for(@room.player_for(voter)).update!(buddies_left: 0)
+
+    rejected_with('You have no Buddies left') { vote(voter, 'buddy', meme:) }
+
+    assert_equal 0, meme.votes.count
+    assert_equal 0, buddies_left(voter)
+    vote(voter, 'up', meme:)
+    assert_equal 1, meme.votes.count
+  end
+
+  test 'a refused Buddy spends nothing, whatever the reason' do
+    submit_memes(@room, 'ada', 'bob', 'cy')
+    meme = current_meme
+    maker = maker_token(meme)
+    voter = voter_other_than(meme)
+
+    assert_raises(ActiveRecord::RecordInvalid) { vote(maker, 'buddy', meme:) }
+    vote(voter, 'up')
+    assert_raises(ActiveRecord::RecordInvalid) { vote(voter, 'buddy', meme:) }
+    end_phase
+    late = (%w[ada bob cy] - [maker, voter]).first
+    assert_raises(ActiveRecord::RecordInvalid) { vote(late, 'buddy', meme:) }
+
+    assert_equal([2, 2, 2], %w[ada bob cy].map { |t| buddies_left(t) })
+  end
+
+  test 'Buddies carry across Rounds, and a voter who casts nothing keeps theirs' do
+    submit_memes(@room, 'ada', 'bob', 'cy')
+    meme = current_meme
+    spender = voter_other_than(meme)
+    idle = (%w[ada bob cy] - [maker_token(meme), spender]).first
+    vote(spender, 'buddy')
+    end_phase while @room.vote? || @room.reveal? || @room.standings?
+
+    assert @room.captioning?
+    assert_equal 1, buddies_left(spender)
+    assert_equal 2, buddies_left(idle)
+  end
+
   test 'a Vote reaches only the voters own stream' do
     submit_memes(@room, 'ada', 'bob', 'cy')
     voter = @room.player_for(voter_other_than(current_meme))
@@ -190,5 +273,20 @@ class RoomVotingTest < ActiveSupport::TestCase
         end
       end
     end
+  end
+
+  test 'spending a Buddy re-renders the voters own controls with one fewer Buddy, disabled' do
+    submit_memes(@room, 'ada', 'bob', 'cy')
+    voter = @room.player_for(voter_other_than(current_meme))
+    ActionCable.server.pubsub.clear
+
+    vote(voter.browser_token, 'buddy')
+
+    streams = capture_turbo_stream_broadcasts([@room, voter])
+    controls = Nokogiri::HTML.fragment(streams.find { |s| s['target'] == 'vote_controls' }.to_html)
+    buddy = controls.at_css("button[value='buddy']")
+    assert_includes buddy.text, 'Buddy ×1'
+    assert_equal 'true', buddy['aria-pressed']
+    assert(controls.css('button').all? { |b| b['disabled'] })
   end
 end

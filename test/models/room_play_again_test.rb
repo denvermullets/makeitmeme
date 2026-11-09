@@ -7,7 +7,7 @@ class RoomPlayAgainTest < ActiveSupport::TestCase
     seed_templates(30)
     @ada = @room.player_for('ada')
     @room.start(by: @ada)
-    3.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
+    5.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
   end
 
   test 'Play again needs 3 present Players' do
@@ -27,6 +27,15 @@ class RoomPlayAgainTest < ActiveSupport::TestCase
     assert_nil @room.current_round_number
     assert_nil @room.phase_deadline_at
     assert_equal %w[Ada Bob Cy], @room.players.order(:joined_at, :id).map(&:nickname)
+  end
+
+  test 'play again gives every game-player in the next Game 2 fresh Buddies' do
+    @room.current_game.game_players.update_all(buddies_left: 0)
+    @room.play_again(by: @ada)
+    seed_templates(10)
+    @room.start(by: @ada)
+
+    assert_equal [2, 2, 2], @room.reload.current_game.game_players.pluck(:buddies_left)
   end
 
   test 'only the Host can play again' do

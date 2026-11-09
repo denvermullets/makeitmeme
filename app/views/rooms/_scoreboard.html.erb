@@ -1,16 +1,9 @@
 <%# Final standings of the finished Game. Ties share a place. %>
 <div id="scoreboard">
   <h2 class="mt-4 font-bold">Scoreboard</h2>
-  <% game_players = room.current_game.game_players.order(total: :desc, id: :asc).to_a %>
-  <ol>
-    <% game_players.each do |game_player| %>
-      <li>
-        <span><%= game_players.count { |other| other.total > game_player.total } + 1 %></span>
-        <span><%= game_player.nickname %><%= render 'players/away_marker', player: game_player.player if game_player.player %></span>
-        <span><%= game_player.total %></span>
-      </li>
-    <% end %>
-  </ol>
+  <%= render 'rooms/placed_list', placings: room.current_game.placed_game_players %>
+
+  <%= render 'rooms/captioning_preset', room:, player: %>
 
   <%= render 'rooms/pack_list', room:, player: %>
 

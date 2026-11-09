@@ -2,6 +2,7 @@
 class Template < ApplicationRecord
   has_one_attached :image
   has_many :memes, dependent: :nullify
+  has_many :deal_histories, dependent: :delete_all
   belongs_to :pack, default: -> { Pack.classics }
 
   SOURCE_KINDS = %w[memegen upload].freeze

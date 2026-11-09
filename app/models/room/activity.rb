@@ -34,6 +34,7 @@ module Room::Activity
 
       update_columns(expired_at: Time.current, host_player_id: nil)
       players.destroy_all
+      deal_histories.delete_all
       true
     end
   end

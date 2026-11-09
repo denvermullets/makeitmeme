@@ -90,6 +90,10 @@ _Avoid_: Meme Buddy, super-vote, boost, star
 The highest-scoring Meme of a Round, highlighted for honour only; ties share the title.
 _Avoid_: Winner, best meme, MVP
 
+**Captioning preset**:
+How long Captioning lasts: Quick 60s, Normal 90s (the default) or Chill 150s. The Host chooses it in Waiting or on the Scoreboard; it is stored on the Room, so it carries through Play again.
+_Avoid_: Timer, difficulty, speed
+
 **Standings**:
 Every Player's running total shown between Rounds, before the Game has ended.
 _Avoid_: Scoreboard (that is the final one), leaderboard

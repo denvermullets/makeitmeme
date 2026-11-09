@@ -8,6 +8,8 @@
     <%= render 'rooms/vote', room: room, player: player %>
   <% elsif room.reveal? %>
     <%= render 'rooms/reveal', room: room %>
+  <% elsif room.standings? %>
+    <%= render 'rooms/standings', room: room %>
   <% elsif room.scoreboard? %>
     <%= render 'rooms/scoreboard', room: room, player: player %>
   <% else %>

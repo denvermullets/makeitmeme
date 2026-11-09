@@ -3,9 +3,12 @@ class Round < ApplicationRecord
   has_many :hands, dependent: :destroy
   has_many :memes, dependent: :destroy
 
-  # Deal every game-player of the Game a fresh Hand. Called at the start of each Round's Captioning.
-  def deal_hands!
-    template_ids = Template.dealable_for(game.room).pluck(:id)
-    game.game_players.each { |game_player| hands.create!(game_player:, template_ids: template_ids.sample(Hand::SIZE)) }
+  # The Round's top-scoring Memes by cached points (ties share; none when there are no Memes). An honour, not stored.
+  def memes_of_the_round
+    top = memes.maximum(:points)
+    top ? memes.where(points: top) : memes.none
   end
+
+  # Deal every game-player of the Game a fresh Hand. Called at the start of each Round's Captioning.
+  def deal_hands! = Round::Dealer.new(self).deal!
 end

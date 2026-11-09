@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_10_084900) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_10_140000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -49,6 +49,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_10_084900) do
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
   end
 
+  create_table "deal_histories", force: :cascade do |t|
+    t.bigint "room_id", null: false
+    t.bigint "template_id", null: false
+    t.datetime "last_dealt_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["room_id", "template_id"], name: "index_deal_histories_on_room_id_and_template_id", unique: true
+    t.index ["room_id"], name: "index_deal_histories_on_room_id"
+    t.index ["template_id"], name: "index_deal_histories_on_template_id"
+  end
+
   create_table "game_players", force: :cascade do |t|
     t.bigint "game_id", null: false
     t.bigint "player_id"
@@ -56,6 +67,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_10_084900) do
     t.integer "total", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "buddies_left", default: 2, null: false
     t.index ["game_id"], name: "index_game_players_on_game_id"
     t.index ["player_id"], name: "index_game_players_on_player_id"
   end
@@ -94,6 +106,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_10_084900) do
     t.integer "down_count", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "buddy_count", default: 0, null: false
     t.index ["game_player_id"], name: "index_memes_on_game_player_id"
     t.index ["round_id", "game_player_id"], name: "index_memes_on_round_id_and_game_player_id", unique: true
     t.index ["round_id"], name: "index_memes_on_round_id"
@@ -139,6 +152,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_10_084900) do
     t.bigint "current_meme_id"
     t.bigint "off_pack_ids", default: [], null: false, array: true
     t.boolean "upload_grace_used", default: false, null: false
+    t.string "captioning_preset", default: "normal", null: false
     t.index ["code"], name: "index_rooms_on_code_live", unique: true, where: "(expired_at IS NULL)"
     t.index ["current_game_id"], name: "index_rooms_on_current_game_id"
     t.index ["current_meme_id"], name: "index_rooms_on_current_meme_id"
@@ -167,10 +181,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_10_084900) do
     t.jsonb "text_boxes", default: [], null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.bigint "pack_id", null: false
     t.string "source_kind", default: "memegen", null: false
     t.datetime "reviewed_at"
     t.datetime "hidden_at"
+    t.bigint "pack_id", null: false
     t.index ["memegen_id"], name: "index_templates_on_memegen_id", unique: true
     t.index ["pack_id"], name: "index_templates_on_pack_id"
   end
@@ -188,6 +202,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_10_084900) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "deal_histories", "rooms"
+  add_foreign_key "deal_histories", "templates", on_delete: :cascade
   add_foreign_key "game_players", "games"
   add_foreign_key "game_players", "players", on_delete: :nullify
   add_foreign_key "games", "rooms"

@@ -31,14 +31,18 @@ class Meme < ApplicationRecord
     texts + Array.new(box_count - texts.length, '')
   end
 
-  # The maker's total moves by these points. Scoring (MEME-7): up +1, meh 0, down -1; a missing Vote is a meh,
-  # so `eligible_voters` (the Game's game-players minus the maker) fills the meh count. Caches the counts and
-  # points here. Call once, under the Room row lock, inside the phase_seq-guarded advance.
+  BUDDY_POINTS = 3
+
+  # The maker's total moves by these points. Scoring (MEME-7): up +1, meh 0, down -1, each Buddy +3; a missing
+  # Vote is a meh, so `eligible_voters` (the Game's game-players minus the maker) fills the meh count.
+  # Caches the counts and points here. Call once, under the Room row lock, inside the phase_seq-guarded advance.
   def score!(eligible_voters:)
     tally = votes.group(:kind).count
     up = tally.fetch('up', 0)
     down = tally.fetch('down', 0)
-    update!(up_count: up, down_count: down, meh_count: eligible_voters - up - down, points: up - down)
+    buddy = tally.fetch('buddy', 0)
+    update!(up_count: up, down_count: down, buddy_count: buddy, meh_count: eligible_voters - up - down - buddy,
+            points: up - down + (BUDDY_POINTS * buddy))
     game_player.increment!(:total, points)
   end
 

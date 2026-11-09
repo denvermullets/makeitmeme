@@ -29,6 +29,42 @@ class RoomScoringTest < ActiveSupport::TestCase
 
   def counts(meme) = [meme.up_count, meme.meh_count, meme.down_count, meme.points]
 
+  test 'each Buddy adds 3 to the Meme and its maker, and is neither an up nor a meh' do
+    submit_memes(@room, 'ada', 'bob', 'cy')
+    meme = @room.current_meme
+    maker = meme.game_player
+    others = %w[ada bob cy] - [maker.player.browser_token]
+    others.each { |t| @room.cast_vote(by: @room.player_for(t), meme_id: meme.id, kind: 'buddy') }
+
+    assert @room.reload.reveal?
+    assert_equal [0, 0, 0, 6], counts(meme.reload)
+    assert_equal 6, maker.reload.total
+  end
+
+  test 'the Buddy count is cached on the Meme at reveal, once' do
+    submit_memes(@room, 'ada', 'bob', 'cy')
+    meme = @room.current_meme
+    others = %w[ada bob cy] - [meme.game_player.player.browser_token]
+    @room.cast_vote(by: @room.player_for(others.first), meme_id: meme.id, kind: 'buddy')
+    @room.cast_vote(by: @room.player_for(others.last), meme_id: meme.id, kind: 'up')
+
+    assert_equal 1, meme.reload.buddy_count
+    assert_equal 4, meme.points
+    end_phase
+    assert_equal [1, 4], [meme.reload.buddy_count, meme.points]
+  end
+
+  test 'a Buddy mixes with Votes and a missing Vote is still a meh' do
+    submit_memes(@room, 'ada', 'bob', 'cy')
+    meme = @room.current_meme
+    others = %w[ada bob cy] - [meme.game_player.player.browser_token]
+    @room.cast_vote(by: @room.player_for(others.first), meme_id: meme.id, kind: 'buddy')
+    end_phase
+    end_phase if @room.vote?
+
+    assert_equal [0, 1, 0, 3], counts(meme.reload)
+  end
+
   test 'a scripted three-Round Game caches each Meme, each total and the Scoreboard order' do
     SCRIPT.each_with_index do |round_votes, index|
       submit_memes(@room, 'ada', 'bob', 'cy')
@@ -49,6 +85,7 @@ class RoomScoringTest < ActiveSupport::TestCase
         assert_equal EXPECTED[index].fetch(maker), counts(meme.reload), "Round #{index + 1} #{maker}"
         end_phase
       end
+      end_phase if index < 2 # Standings
     end
 
     assert @room.scoreboard?
@@ -88,6 +125,7 @@ class RoomScoringTest < ActiveSupport::TestCase
       assert_equal 1, meme.reload.up_count, 'the Player with no Meme still voted'
       end_phase
     end
+    end_phase # Standings
 
     assert_equal %w[ada bob], seen.sort
     assert_equal 0, cy.reload.total
@@ -99,7 +137,7 @@ class RoomScoringTest < ActiveSupport::TestCase
   end
 
   test 'a Round where nobody made a Meme scores nobody and the Game goes on' do
-    3.times { end_phase }
+    5.times { end_phase }
 
     assert @room.scoreboard?
     assert_equal [0, 0, 0], @room.current_game.game_players.map(&:total)
@@ -114,6 +152,7 @@ class RoomScoringTest < ActiveSupport::TestCase
       end_phase
       end_phase
     end
+    end_phase # Standings
     submit_memes(@room, 'ada', 'bob', 'cy')
     3.times do
       meme = @room.current_meme
@@ -123,6 +162,7 @@ class RoomScoringTest < ActiveSupport::TestCase
       end_phase
     end
 
+    end_phase # Standings
     totals = @room.reload.current_game.game_players.to_h { |g| [g.nickname, g.total] }
     assert_equal({ 'Ada' => 2, 'Bob' => 2, 'Cy' => 1 }, totals)
     assert_equal 3, @room.current_round_number
