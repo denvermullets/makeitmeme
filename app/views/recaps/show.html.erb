@@ -1,0 +1,21 @@
+<%# Public Recap: static Scoreboard from the shared partial. No reveal, no Host controls, no stream subscription. %>
+<% recap_title = 'Makeitmeme Recap' %>
+<% recap_description = "See the memes and final scoreboard from this game of Makeitmeme." %>
+<% content_for :title, recap_title %>
+<% content_for :head do %>
+  <meta name="description" content="<%= recap_description %>">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="<%= recap_title %>">
+  <meta property="og:description" content="<%= recap_description %>">
+<% end %>
+<main id="recap">
+  <h1 class="font-bold">Recap</h1>
+  <% if @game.finished_at %>
+    <p><time datetime="<%= @game.finished_at.iso8601 %>"><%= @game.finished_at.utc.strftime('%B %-d, %Y') %></time></p>
+  <% end %>
+  <h2 class="mt-4 font-bold">Scoreboard</h2>
+  <%= render 'games/scoreboard', scoreboard: @game.scoreboard %>
+  <h2 class="mt-4 font-bold">Memes</h2>
+  <%= render 'games/memes_by_round', memes_by_round: @game.memes_by_round %>
+  <p class="mt-4"><%= link_to 'Start your own Room', root_path %></p>
+</main>

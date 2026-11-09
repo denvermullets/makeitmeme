@@ -1,0 +1,23 @@
+<%# Shared Memes-by-Round list (the live Scoreboard's Memes tab and the Recap). Locals: `memes_by_round:` from
+    Game#memes_by_round. Reads only the Meme's baked image and cached fields, never its Template. %>
+<div id="memes_by_round">
+  <% memes_by_round.each do |entry| %>
+    <% round = entry.round %>
+    <section data-round="<%= round.number %>">
+      <h3 class="mt-2 font-bold">Round <%= round.number %></h3>
+      <ul>
+        <% entry.memes.each do |meme| %>
+          <li data-nickname="<%= meme.game_player.nickname %>" data-meme-id="<%= meme.id %>">
+            <% if meme.image.attached? %>
+              <%= image_tag rails_storage_proxy_path(meme.image), alt: "Meme by #{meme.game_player.nickname}", class: 'w-full mt-2' %>
+              <%= link_to 'Save', rails_storage_proxy_path(meme.image), download: meme_download_name(round, meme), data: { meme_save: true, controller: 'meme-save', action: 'click->meme-save#save' }, class: 'underline' %>
+            <% end %>
+            <span><%= meme.game_player.nickname %></span>
+            <span data-meme-points><%= meme.points %></span>
+            <% if entry.memes_of_the_round.include?(meme) %><span data-meme-badge>Meme of the Round</span><% end %>
+          </li>
+        <% end %>
+      </ul>
+    </section>
+  <% end %>
+</div>

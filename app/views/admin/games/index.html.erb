@@ -1,0 +1,24 @@
+<% content_for :title, 'Games' %>
+<h1>Games</h1>
+<table class="games">
+  <thead><tr><th>Finished</th><th>Players</th><th>Memes</th><th>1st place</th><th></th></tr></thead>
+  <tbody id="games">
+    <% @games.each do |game| %>
+      <% seats = game.game_players.sort_by(&:id) %>
+      <% first_place = game.placed_game_players(preloaded: true).select { |placing| placing.place == 1 }.map { |placing| placing.game_player.nickname } %>
+      <tr data-game="<%= game.id %>">
+        <td class="game-finished-at"><%= l game.finished_at, format: :long %></td>
+        <td class="game-nicknames"><%= seats.map(&:nickname).join(', ') %></td>
+        <td class="game-meme-count"><%= @meme_counts.fetch(game.id, 0) %></td>
+        <td class="game-first-place"><%= first_place.join(', ') %></td>
+        <td><%= link_to 'Recap', recap_path(game.recap_token) %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+<% if @page > 1 || @next_page %>
+  <nav class="pagination">
+    <%= link_to 'Previous', admin_games_path(page: @page - 1), rel: 'prev' if @page > 1 %>
+    <%= link_to 'Next', admin_games_path(page: @next_page), rel: 'next' if @next_page %>
+  </nav>
+<% end %>

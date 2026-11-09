@@ -1,7 +1,24 @@
 <%# Final standings of the finished Game. Ties share a place. %>
-<div id="scoreboard">
+<%# No finished time means nothing to reveal against: leave the controller off and show everything. %>
+<% finished_at = room.current_game.finished_at %>
+<div id="scoreboard" <% if finished_at %>data-controller="reveal"
+     data-reveal-finished-at-value="<%= finished_at.iso8601(3) %>"
+     data-reveal-server-now-value="<%= Time.current.iso8601(3) %>"<% end %>>
   <h2 class="mt-4 font-bold">Scoreboard</h2>
-  <%= render 'rooms/placed_list', placings: room.current_game.placed_game_players %>
+  <div data-controller="tabs">
+    <div role="tablist" class="mt-2">
+      <button type="button" role="tab" data-tabs-target="tab" data-action="tabs#select" class="border p-2">Scoreboard</button>
+      <button type="button" role="tab" data-tabs-target="tab" data-reveal-target="memesTab" data-action="tabs#select" class="border p-2">Memes</button>
+    </div>
+    <div data-tabs-target="panel">
+      <%= render 'games/scoreboard', scoreboard: room.current_game.scoreboard %>
+    </div>
+    <div data-tabs-target="panel">
+      <%= render 'games/memes_by_round', memes_by_round: room.current_game.memes_by_round %>
+    </div>
+  </div>
+
+  <%= render 'games/recap_link', game: room.current_game %>
 
   <%= render 'rooms/captioning_preset', room:, player: %>
 
