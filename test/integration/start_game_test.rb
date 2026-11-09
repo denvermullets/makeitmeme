@@ -47,4 +47,49 @@ class StartGameTest < ActionDispatch::IntegrationTest
     @bob.assert_response :unprocessable_content
     assert @room.reload.waiting?
   end
+
+  test 'Start renders disabled with the reason below 10 dealable Templates, enabled at 10' do
+    Template.delete_all
+    seed_templates(9)
+    @host.get room_path(@room.code)
+    @host.assert_select "form[action='#{start_room_path(@room.code)}'] [disabled]"
+    @host.assert_select '#start-gate-reason', text: 'Turn on Packs with at least 10 Templates'
+
+    seed_templates(1)
+    @host.get room_path(@room.code)
+    @host.assert_select "form[action='#{start_room_path(@room.code)}'] [disabled]", count: 0
+    @host.assert_select '#start-gate-reason', count: 0
+  end
+
+  test 'a Start request with 9 dealable Templates is refused with the reason' do
+    Template.delete_all
+    seed_templates(9)
+    @host.post start_room_path(@room.code)
+
+    @host.assert_response :unprocessable_content
+    @host.assert_select 'li', text: /Turn on Packs with at least 10 Templates/
+    assert @room.reload.waiting?
+    assert_equal 0, Game.count
+  end
+
+  test 'a Start request with exactly 10 dealable Templates is allowed' do
+    Template.delete_all
+    seed_templates(10)
+    @host.post start_room_path(@room.code)
+
+    @host.assert_redirected_to room_path(@room.code)
+    assert @room.reload.captioning?
+  end
+
+  test 'hiding a Template just after the page rendered refuses the Start' do
+    Template.delete_all
+    seed_templates(10)
+    @host.get room_path(@room.code)
+    Template.first.hide!
+    @host.post start_room_path(@room.code)
+
+    @host.assert_response :unprocessable_content
+    @host.assert_select 'li', text: /Turn on Packs with at least 10 Templates/
+    assert @room.reload.waiting?
+  end
 end

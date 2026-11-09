@@ -3,9 +3,12 @@
 
 <div class="library">
   <%= turbo_frame_tag 'library_grid' do %>
-    <%= form_with url: admin_root_path, method: :get, data: { turbo_frame: '_top' } do |form| %>
+    <%= form_with url: admin_root_path, method: :get, data: { turbo_frame: '_top', controller: 'autosubmit' } do |form| %>
       <%= hidden_field_tag :selected, @selected.id if @selected %>
       <%= hidden_field_tag :filter, @filter unless @filter == 'all' %>
+      <%= label_tag :pack_filter, 'Pack' %>
+      <%= select_tag :pack, options_from_collection_for_select(Pack.order(:name), :id, :name, @pack&.id),
+                     include_blank: 'All Packs', id: 'pack_filter', data: { action: 'change->autosubmit#submit' } %>
       <%= form.search_field :q, value: @query, placeholder: 'Search Templates', 'aria-label': 'Search Templates' %>
       <%= form.submit 'Search' %>
     <% end %>
@@ -13,7 +16,7 @@
     <% filter_labels = { 'all' => 'All', 'review' => 'Needs review', 'uploads' => 'Player uploads', 'hidden' => 'Hidden' } %>
     <nav class="filter-chips" aria-label="Filter Templates">
       <% filter_labels.each do |key, label| %>
-        <%= link_to admin_root_path(q: @query.presence, selected: @selected&.id, filter: (key unless key == 'all')),
+        <%= link_to admin_root_path(q: @query.presence, selected: @selected&.id, pack: @pack&.id, filter: (key unless key == 'all')),
                     class: 'chip', data: { filter: key, turbo_frame: '_top' },
                     'aria-current': (@filter == key ? 'true' : nil) do %>
           <%= label %> <span class="chip-count"><%= @counts[key] %></span>
@@ -27,7 +30,7 @@
       <ul class="template-grid">
         <% @templates.each do |template| %>
           <li data-template="<%= template.id %>"<%= ' aria-current=true'.html_safe if template == @selected %>>
-            <%= link_to admin_root_path(q: @query.presence, selected: template.id, filter: (@filter unless @filter == 'all')),
+            <%= link_to admin_root_path(q: @query.presence, selected: template.id, pack: @pack&.id, filter: (@filter unless @filter == 'all')),
                         data: { template_link: true, turbo_frame: '_top' } do %>
               <% if template.image.attached? %>
                 <%= image_tag rails_storage_proxy_path(template.image), alt: template.name, loading: 'lazy' %>
@@ -48,11 +51,11 @@
     <% if @selected %>
       <%= render 'admin/templates/inspector', template: @selected, errors: @template_errors %>
       <%= render 'admin/templates/text_box_editor', template: @selected %>
-      <%= button_to 'Delete Template', admin_template_path(@selected, q: @query.presence), method: :delete,
+      <%= button_to 'Delete Template', admin_template_path(@selected, q: @query.presence, pack: @pack&.id), method: :delete,
                     form: { data: { turbo_frame: '_top' } },
                     data: { turbo_confirm: "Delete #{@selected.name}? It was used in #{pluralize(@selected.memes.count, 'Meme')}. Those Memes are kept." } %>
       <div class="template-hiding">
-        <% hiding_scope = { q: @query.presence, selected: @selected.id, filter: (@filter unless @filter == 'all') } %>
+        <% hiding_scope = { q: @query.presence, pack: @pack&.id, selected: @selected.id, filter: (@filter unless @filter == 'all') } %>
         <% if @selected.hidden? %>
           <%= button_to 'Unhide', admin_template_hiding_path(@selected, hiding_scope), method: :delete,
                         form: { data: { turbo_frame: '_top' } } %>

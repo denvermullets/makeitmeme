@@ -4,9 +4,9 @@ module Admin
 
     before_action :set_template, only: %i[update review]
 
-    # Renaming never touches reviewed_at.
+    # Renaming or moving to another Pack never touches reviewed_at or hidden_at.
     def update
-      if @template.update(name: params.dig(:template, :name).to_s.strip)
+      if @template.update(template_changes)
         redirect_to admin_root_path(library_params(@template.id)), status: :see_other
       else
         load_library(selected: @template.id)
@@ -24,10 +24,18 @@ module Admin
     # Hard delete (ADR 0002): the image is purged and Memes keep their baked image with template_id nulled.
     def destroy
       Template.find(params[:id]).destroy!
-      redirect_to admin_root_path(q: params[:q].presence), status: :see_other
+      redirect_to admin_root_path(q: params[:q].presence, pack: params[:pack].presence), status: :see_other
     end
 
     private
+
+    def template_changes
+      attrs = params.fetch(:template, {})
+      changes = {}
+      changes[:name] = attrs[:name].to_s.strip if attrs.key?(:name)
+      changes[:pack] = Pack.find(attrs[:pack_id]) if attrs[:pack_id].present?
+      changes
+    end
 
     def set_template
       @template = Template.find(params[:id])
