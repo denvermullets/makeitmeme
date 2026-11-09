@@ -5,6 +5,8 @@ class Room < ApplicationRecord
   MAX_PLAYERS = 10
   MIN_PLAYERS = 3
   ROUNDS_PER_GAME = 3
+  MIN_DEALABLE_TEMPLATES = 10
+  START_GATE_REASON = 'Turn on Packs with at least 10 Templates'.freeze
 
   enum :phase, { waiting: 'waiting', captioning: 'captioning', vote: 'vote', reveal: 'reveal',
                  scoreboard: 'scoreboard' }, default: :waiting
@@ -60,13 +62,18 @@ class Room < ApplicationRecord
       reject!('Only the Host can start the Game') unless host?(by)
       reject!('A Game is already under way') unless waiting?
       reject!("Need at least #{MIN_PLAYERS} Players to start") if players.count < MIN_PLAYERS
-      reject!("Need at least #{Hand::SIZE} Templates in the Library to start") if Template.count < Hand::SIZE
+      reject!(START_GATE_REASON) unless enough_dealable_templates?
 
       game = games.create!
       players.each { |player| game.game_players.create!(player:, nickname: player.nickname) }
       enter_captioning!(game:, number: 1)
     end
     self
+  end
+
+  # The Start gate: the Room needs at least MIN_DEALABLE_TEMPLATES dealable Templates.
+  def enough_dealable_templates?
+    Template.dealable_for(self).count >= MIN_DEALABLE_TEMPLATES
   end
 
   # Room game operation: the Host sends the Room from the Scoreboard back to Waiting.

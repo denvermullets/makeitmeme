@@ -79,11 +79,28 @@ class RoomStartTest < ActiveSupport::TestCase
     assert room.reload.waiting?
   end
 
-  test 'needs at least 10 Templates, and a refusal leaves nothing behind' do
+  test 'needs at least 10 dealable Templates, and a refusal leaves nothing behind' do
     Template.last.destroy
 
     assert_raises(ActiveRecord::RecordInvalid) { @room.start(by: @host) }
     assert @room.reload.waiting?
+    assert_equal 0, Game.count
+  end
+
+  test 'hidden Templates do not count toward the gate' do
+    Template.limit(Template.count - 9).each(&:hide!)
+    assert_equal 9, Template.dealable_for(@room).count
+
+    error = assert_raises(ActiveRecord::RecordInvalid) { @room.start(by: @host) }
+    assert_match(/at least 10 Templates/, error.message)
+    assert @room.reload.waiting?
+  end
+
+  test 'a hide after the Room was loaded still counts, because the gate is checked under the lock' do
+    stale = Room.find(@room.id)
+    Template.limit(Template.count - 9).each(&:hide!)
+
+    assert_raises(ActiveRecord::RecordInvalid) { stale.start(by: @host) }
     assert_equal 0, Game.count
   end
 end
