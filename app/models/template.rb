@@ -4,7 +4,28 @@ class Template < ApplicationRecord
   has_many :memes, dependent: :nullify
   belongs_to :pack, default: -> { Pack.classics }
 
+  SOURCE_KINDS = %w[memegen upload].freeze
+  FILTERS = %w[all review uploads hidden].freeze
+
   validates :memegen_id, :name, presence: true
+  validates :source_kind, inclusion: { in: SOURCE_KINDS }
+
+  scope :needs_review, -> { where(reviewed_at: nil, hidden_at: nil) }
+  scope :player_uploads, -> { where(source_kind: 'upload') }
+  scope :hidden, -> { where.not(hidden_at: nil) }
+
+  def self.in_filter(key)
+    case key.to_s
+    when 'review' then needs_review
+    when 'uploads' then player_uploads
+    when 'hidden' then hidden
+    else all
+    end
+  end
+
+  def hidden? = hidden_at.present?
+  def needs_review? = reviewed_at.nil? && hidden_at.nil?
+  def upload? = source_kind == 'upload'
 
   # Case-insensitive partial match on name; LIKE wildcards in the term match literally.
   scope :named_like, lambda { |term|

@@ -5,9 +5,21 @@
   <%= turbo_frame_tag 'library_grid' do %>
     <%= form_with url: admin_root_path, method: :get, data: { turbo_frame: '_top' } do |form| %>
       <%= hidden_field_tag :selected, @selected.id if @selected %>
+      <%= hidden_field_tag :filter, @filter unless @filter == 'all' %>
       <%= form.search_field :q, value: @query, placeholder: 'Search Templates', 'aria-label': 'Search Templates' %>
       <%= form.submit 'Search' %>
     <% end %>
+
+    <% filter_labels = { 'all' => 'All', 'review' => 'Needs review', 'uploads' => 'Player uploads', 'hidden' => 'Hidden' } %>
+    <nav class="filter-chips" aria-label="Filter Templates">
+      <% filter_labels.each do |key, label| %>
+        <%= link_to admin_root_path(q: @query.presence, selected: @selected&.id, filter: (key unless key == 'all')),
+                    class: 'chip', data: { filter: key, turbo_frame: '_top' },
+                    'aria-current': (@filter == key ? 'true' : nil) do %>
+          <%= label %> <span class="chip-count"><%= @counts[key] %></span>
+        <% end %>
+      <% end %>
+    </nav>
 
     <% if @templates.empty? %>
       <p class="empty">No Templates found.</p>
@@ -15,13 +27,16 @@
       <ul class="template-grid">
         <% @templates.each do |template| %>
           <li data-template="<%= template.id %>"<%= ' aria-current=true'.html_safe if template == @selected %>>
-            <%= link_to admin_root_path(q: @query.presence, selected: template.id),
+            <%= link_to admin_root_path(q: @query.presence, selected: template.id, filter: (@filter unless @filter == 'all')),
                         data: { template_link: true, turbo_frame: '_top' } do %>
               <% if template.image.attached? %>
                 <%= image_tag rails_storage_proxy_path(template.image), alt: template.name, loading: 'lazy' %>
               <% end %>
               <span class="template-name"><%= template.name %></span>
               <span class="box-badge"><span class="box-count"><%= template.text_boxes.size %></span> boxes</span>
+              <% if template.hidden? %><span class="badge badge-hidden">hidden</span><% end %>
+              <% if template.needs_review? %><span class="badge badge-review">needs review</span><% end %>
+              <% if template.upload? %><span class="badge badge-upload">upload</span><% end %>
             <% end %>
           </li>
         <% end %>

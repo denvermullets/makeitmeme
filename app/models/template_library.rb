@@ -19,6 +19,7 @@ module TemplateLibrary
 
   def self.import_entry(entry, fetcher)
     template = Template.find_or_initialize_by(memegen_id: entry.fetch('id'))
+    template.source_kind = 'memegen' if template.new_record?
     template.update!(name: entry.fetch('name'), source: entry['source'], text_boxes: entry.fetch('text_boxes'),
                      pack: pack_for(entry['pack']))
     return if template.image.attached?

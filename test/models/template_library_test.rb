@@ -30,6 +30,12 @@ class TemplateLibraryTest < ActiveSupport::TestCase
     ], drake.text_boxes
   end
 
+  test 'imports are marked memegen and left unreviewed and visible' do
+    TemplateLibrary.import(MANIFEST, fetcher: @fetcher)
+
+    assert(Template.all.all? { |t| t.source_kind == 'memegen' && t.reviewed_at.nil? && t.hidden_at.nil? })
+  end
+
   test 'Custom and Classics exist after a seed, even with an empty manifest' do
     Pack.delete_all
     File.write(tmp = Rails.root.join('tmp/empty_manifest.json'), '[]')
