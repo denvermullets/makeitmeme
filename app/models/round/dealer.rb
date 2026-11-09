@@ -14,15 +14,23 @@ class Round::Dealer
       @round.hands.create!(game_player:, template_ids:)
       round_dealt.merge(template_ids)
     end
+    DealHistory.record!(room: @game.room, template_ids: round_dealt.to_a)
   end
 
   private
 
   # Smaller sorts first. Fields: [dealt to this game-player earlier this Game? (0 no, 1 yes),
-  # dealt to any game-player earlier this Game? (0 no, 1 yes), random tiebreak].
+  # dealt to any game-player earlier this Game? (0 no, 1 yes), in another Hand this Round? (0 no, 1 yes),
+  # last dealt in this Room (never first, then oldest), random tiebreak].
   def sort_key(game_player, template_id)
     [own_dealt(game_player).include?(template_id) ? 1 : 0, game_dealt.include?(template_id) ? 1 : 0,
-     round_dealt.include?(template_id) ? 1 : 0, rand]
+     round_dealt.include?(template_id) ? 1 : 0, last_dealt_at(template_id), rand]
+  end
+
+  # Never dealt in this Room sorts first (0), then oldest first. Read before this deal is recorded.
+  def last_dealt_at(template_id)
+    @last_dealt_at ||= DealHistory.where(room_id: @game.room_id).pluck(:template_id, :last_dealt_at).to_h
+    @last_dealt_at[template_id]&.to_f || -Float::INFINITY
   end
 
   # Grows as each Hand of this Round is dealt.

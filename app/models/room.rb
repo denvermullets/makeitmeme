@@ -26,6 +26,7 @@ class Room < ApplicationRecord
 
   has_many :players, dependent: :destroy
   has_many :games, dependent: :destroy
+  has_many :deal_histories, dependent: :delete_all
   belongs_to :current_game, class_name: 'Game', optional: true, inverse_of: false
   belongs_to :host, class_name: 'Player', foreign_key: :host_player_id, optional: true, inverse_of: false
 
