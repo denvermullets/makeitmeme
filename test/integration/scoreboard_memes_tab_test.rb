@@ -100,4 +100,42 @@ class ScoreboardMemesTabTest < ActionDispatch::IntegrationTest
 
     @bob.assert_select '#memes_by_round a[data-meme-save]', false
   end
+
+  test 'the top-points Meme of each Round carries the Meme of the Round badge and others do not' do
+    make_meme(@rounds[0], 'Ada', position: 0, points: 2)
+    make_meme(@rounds[0], 'Bob', position: 1, points: 5)
+    make_meme(@rounds[1], 'Cy', position: 0, points: -1)
+
+    @bob.get room_path(@room.code)
+
+    @bob.assert_select '#memes_by_round [data-meme-badge]', 2
+    @bob.assert_select '#memes_by_round li[data-nickname="Bob"] [data-meme-badge]'
+    @bob.assert_select '#memes_by_round li[data-nickname="Ada"] [data-meme-badge]', 0
+    @bob.assert_select '#memes_by_round section[data-round="2"] li[data-nickname="Cy"] [data-meme-badge]'
+  end
+
+  test 'tied top Memes in a Round all carry the badge' do
+    make_meme(@rounds[0], 'Ada', position: 0, points: 4)
+    make_meme(@rounds[0], 'Bob', position: 1, points: 4)
+    make_meme(@rounds[0], 'Cy', position: 2, points: 1)
+
+    @bob.get room_path(@room.code)
+
+    @bob.assert_select '#memes_by_round li[data-nickname="Ada"] [data-meme-badge]'
+    @bob.assert_select '#memes_by_round li[data-nickname="Bob"] [data-meme-badge]'
+    @bob.assert_select '#memes_by_round li[data-nickname="Cy"] [data-meme-badge]', 0
+  end
+
+  test 'the Memes list badge agrees with the Scoreboard badge' do
+    make_meme(@rounds[0], 'Ada', position: 0, points: 4)
+    make_meme(@rounds[0], 'Bob', position: 1, points: 4)
+    make_meme(@rounds[1], 'Cy', position: 0, points: 3)
+
+    @bob.get room_path(@room.code)
+
+    %w[Ada Bob Cy].each do |nick|
+      @bob.assert_select "#memes_by_round li[data-nickname='#{nick}'] [data-meme-badge]", 1
+      @bob.assert_select "#scoreboard ol li[data-nickname='#{nick}'] [data-meme-of-the-round]", 1
+    end
+  end
 end
