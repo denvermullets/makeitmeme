@@ -15,6 +15,8 @@ class Room < ApplicationRecord
   include PhaseEngine
   include Voting
 
+  after_update_commit :broadcast_packs, if: :saved_change_to_off_pack_ids?
+
   has_many :players, dependent: :destroy
   has_many :games, dependent: :destroy
   belongs_to :current_game, class_name: 'Game', optional: true, inverse_of: false
@@ -152,5 +154,20 @@ class Room < ApplicationRecord
     return if browser_token.blank?
 
     players.find_by(browser_token:)
+  end
+
+  private
+
+  # After commit: every Player gets their own Pack list (and, in Waiting, Start gate), one stream each, so
+  # Host-only buttons never reach other Players.
+  def broadcast_packs
+    players.each do |player|
+      broadcast_replace_to self, player, target: 'pack_list', partial: 'rooms/pack_list',
+                                         locals: { room: self, player: }
+      next unless waiting?
+
+      broadcast_replace_to self, player, target: 'start_gate', partial: 'rooms/start_gate',
+                                         locals: { room: self, player: }
+    end
   end
 end
