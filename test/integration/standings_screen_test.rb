@@ -56,4 +56,36 @@ class StandingsScreenTest < ActionDispatch::IntegrationTest
 
     spectator.assert_select '#standings li', 3
   end
+
+  test 'every phone sees the Meme of the Round with its maker, ties sharing it' do
+    round = @room.current_game.rounds.find_by!(number: 1)
+    submit_memes_for_round(round, 'Ada' => 3, 'Bob' => 3, 'Cy' => 1)
+
+    @sessions.each_value do |session|
+      session.get room_path(@room.code)
+      session.assert_select '#standings #meme_of_the_round img', 2
+      session.assert_select '#standings #meme_of_the_round', text: /Ada/
+      session.assert_select '#standings #meme_of_the_round', text: /Bob/
+      session.assert_select '#standings #meme_of_the_round', text: /Cy/, count: 0
+    end
+  end
+
+  test 'a Round with no Memes shows no Meme of the Round' do
+    @sessions['Ada'].get room_path(@room.code)
+
+    @sessions['Ada'].assert_select '#meme_of_the_round', 0
+  end
+
+  private
+
+  def submit_memes_for_round(round, points_by_nickname)
+    points_by_nickname.each do |nickname, points|
+      blob = ActiveStorage::Blob.create_and_upload!(io: File.open(file_fixture('drake.png')),
+                                                    filename: 'drake.png', content_type: 'image/png')
+      gp = @room.current_game.game_players.find_by!(nickname:)
+      meme = round.memes.new(game_player: gp, points:)
+      meme.image.attach(blob)
+      meme.save!
+    end
+  end
 end

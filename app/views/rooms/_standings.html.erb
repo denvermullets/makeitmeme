@@ -11,4 +11,16 @@
       </li>
     <% end %>
   </ol>
+  <% memes_of_the_round = room.current_game.rounds.find_by(number: room.current_round_number)&.memes_of_the_round&.includes(:game_player) %>
+  <% if memes_of_the_round.present? %>
+    <div id="meme_of_the_round">
+      <h3 class="mt-4 font-bold">Meme of the Round</h3>
+      <% memes_of_the_round.each do |meme| %>
+        <div>
+          <%= image_tag rails_storage_proxy_path(meme.image), alt: 'Meme of the Round', class: 'w-full mt-2' %>
+          <p class="mt-2">Made by <strong><%= meme.game_player.nickname %></strong></p>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
 </div>
