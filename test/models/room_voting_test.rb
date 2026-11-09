@@ -35,7 +35,6 @@ class RoomVotingTest < ActiveSupport::TestCase
 
   test 'the end of Captioning shuffles the Rounds Memes and votes on the first for 15s' do
     memes = submit_memes(@room, 'ada', 'bob', 'cy')
-    end_phase
 
     assert @room.vote?
     assert_equal [0, 1, 2], memes.each(&:reload).map(&:position).sort
@@ -64,7 +63,6 @@ class RoomVotingTest < ActiveSupport::TestCase
 
   test 'each Meme gets a vote then a reveal, then the next Round starts' do
     memes = submit_memes(@room, 'ada', 'bob', 'cy')
-    end_phase
     seen = []
     3.times do
       seen << @room.current_meme_id
@@ -112,7 +110,6 @@ class RoomVotingTest < ActiveSupport::TestCase
 
   test 'a Player votes on someone elses Meme' do
     submit_memes(@room, 'ada', 'bob', 'cy')
-    end_phase
     voter = voter_other_than(current_meme)
 
     assert_difference -> { Vote.count }, 1 do
@@ -124,7 +121,6 @@ class RoomVotingTest < ActiveSupport::TestCase
 
   test 'a Vote arriving after the vote deadline and its grace is rejected, one within the grace is taken' do
     submit_memes(@room, 'ada', 'bob', 'cy')
-    end_phase
     meme = current_meme
     deadline = @room.phase_deadline_at
     late, slightly_late = (%w[ada bob cy] - [maker_token(meme)])
@@ -138,7 +134,6 @@ class RoomVotingTest < ActiveSupport::TestCase
 
   test 'a Vote is rejected outside the vote phase' do
     submit_memes(@room, 'ada', 'bob', 'cy')
-    end_phase
     meme = current_meme
     voter = voter_other_than(meme)
     end_phase
@@ -157,14 +152,12 @@ class RoomVotingTest < ActiveSupport::TestCase
 
   test 'a Vote on your own Meme is rejected' do
     submit_memes(@room, 'ada', 'bob', 'cy')
-    end_phase
     meme = current_meme
     rejected_with('You cannot vote on your own Meme') { vote(maker_token(meme), meme:) }
   end
 
   test 'a second Vote is rejected and the first stands' do
     submit_memes(@room, 'ada', 'bob', 'cy')
-    end_phase
     voter = voter_other_than(current_meme)
     vote(voter, 'up')
     rejected_with('You already voted') { vote(voter, 'down') }
@@ -173,7 +166,6 @@ class RoomVotingTest < ActiveSupport::TestCase
 
   test 'a Vote on a Meme other than the current one is rejected' do
     submit_memes(@room, 'ada', 'bob', 'cy')
-    end_phase
     other = Meme.where.not(id: current_meme.id).first
     voter = (%w[ada bob cy] - [maker_token(other)]).first
     rejected_with('That is not the Meme being voted on') { vote(voter, meme: other) }
@@ -181,14 +173,12 @@ class RoomVotingTest < ActiveSupport::TestCase
 
   test 'an unknown kind is rejected' do
     submit_memes(@room, 'ada', 'bob', 'cy')
-    end_phase
     assert_raises(ActiveRecord::RecordInvalid) { vote(voter_other_than(current_meme), 'love') }
     assert_equal 0, Vote.count
   end
 
   test 'a Vote reaches only the voters own stream' do
     submit_memes(@room, 'ada', 'bob', 'cy')
-    end_phase
     voter = @room.player_for(voter_other_than(current_meme))
     other = @room.players.where.not(id: voter.id).first
     ActionCable.server.pubsub.clear

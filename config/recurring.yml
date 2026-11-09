@@ -13,6 +13,9 @@ default: &default
   sweep_overdue_rooms:
     class: SweepOverdueRoomsJob
     schedule: every 15 seconds
+  expire_idle_rooms:
+    class: ExpireIdleRoomsJob
+    schedule: every 5 minutes
 
 development:
   <<: *default

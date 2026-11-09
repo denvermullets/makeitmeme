@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_09_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_10_084900) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -116,6 +116,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_09_130000) do
     t.datetime "joined_at", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "connections_count", default: 0, null: false
+    t.integer "presence_token", default: 0, null: false
+    t.datetime "away_at"
     t.index "room_id, lower((nickname)::text)", name: "index_players_on_room_id_and_lower_nickname", unique: true
     t.index ["room_id", "browser_token"], name: "index_players_on_room_id_and_browser_token", unique: true
     t.index ["room_id"], name: "index_players_on_room_id"
@@ -135,6 +138,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_09_130000) do
     t.integer "current_round_number"
     t.bigint "current_meme_id"
     t.bigint "off_pack_ids", default: [], null: false, array: true
+    t.boolean "upload_grace_used", default: false, null: false
     t.index ["code"], name: "index_rooms_on_code_live", unique: true, where: "(expired_at IS NULL)"
     t.index ["current_game_id"], name: "index_rooms_on_current_game_id"
     t.index ["current_meme_id"], name: "index_rooms_on_current_meme_id"
@@ -163,10 +167,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_09_130000) do
     t.jsonb "text_boxes", default: [], null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "pack_id", null: false
     t.string "source_kind", default: "memegen", null: false
     t.datetime "reviewed_at"
     t.datetime "hidden_at"
-    t.bigint "pack_id", null: false
     t.index ["memegen_id"], name: "index_templates_on_memegen_id", unique: true
     t.index ["pack_id"], name: "index_templates_on_pack_id"
   end

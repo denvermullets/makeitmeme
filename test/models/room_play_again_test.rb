@@ -10,6 +10,14 @@ class RoomPlayAgainTest < ActiveSupport::TestCase
     3.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
   end
 
+  test 'Play again needs 3 present Players' do
+    @room.player_for('bob').update!(away_at: Time.current)
+
+    error = assert_raises(ActiveRecord::RecordInvalid) { @room.play_again(by: @ada) }
+    assert_match(/Need 3 present Players, 2 here/, error.message)
+    assert @room.reload.scoreboard?
+  end
+
   test 'the Host sends the Room back to Waiting, forgetting the finished Game' do
     @room.play_again(by: @ada)
 

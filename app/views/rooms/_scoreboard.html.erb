@@ -6,7 +6,7 @@
     <% game_players.each do |game_player| %>
       <li>
         <span><%= game_players.count { |other| other.total > game_player.total } + 1 %></span>
-        <span><%= game_player.nickname %></span>
+        <span><%= game_player.nickname %><%= render 'players/away_marker', player: game_player.player if game_player.player %></span>
         <span><%= game_player.total %></span>
       </li>
     <% end %>
@@ -14,7 +14,7 @@
 
   <%= render 'rooms/pack_list', room:, player: %>
 
-  <% if player && room.host?(player) %>
-    <%= button_to 'Play again', play_again_room_path(room.code), class: 'border p-2 font-bold mt-4' %>
-  <% end %>
+  <%= render 'rooms/play_again_gate', room:, player: %>
+
+  <%= button_to 'Leave Room', leave_room_path(room.code), class: 'border p-2 mt-4' %>
 </div>

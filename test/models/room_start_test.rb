@@ -71,6 +71,28 @@ class RoomStartTest < ActiveSupport::TestCase
     assert_equal 1, @room.games.count
   end
 
+  test 'needs 3 present Players: Away ones do not count' do
+    Room.join(code: @room.code, nickname: 'Dee', browser_token: 'dee')
+    @room.player_for('dee').update!(away_at: Time.current)
+    @room.player_for('cy').update!(away_at: Time.current)
+
+    error = assert_raises(ActiveRecord::RecordInvalid) { @room.start(by: @host) }
+    assert_match(/Need 3 present Players, 2 here/, error.message)
+    assert @room.reload.waiting?
+  end
+
+  test 'starting with exactly 3 present deals Away Players in too, with Hands' do
+    Room.join(code: @room.code, nickname: 'Dee', browser_token: 'dee')
+    ghost = @room.player_for('dee')
+    ghost.update!(away_at: Time.current)
+
+    @room.start(by: @host)
+
+    assert_equal 4, @room.reload.current_game.game_players.count
+    assert @room.current_game.game_player_for(ghost)
+    assert_equal 10, @room.hand_for(ghost).template_ids.size
+  end
+
   test 'needs 3 or more Players' do
     room = Room.create_with_host(nickname: 'Dee', browser_token: 'dee')
     Room.join(code: room.code, nickname: 'Eve', browser_token: 'eve')

@@ -14,6 +14,12 @@ class Room < ApplicationRecord
   include Rejectable
   include PhaseEngine
   include Voting
+  include Activity
+  include Membership
+  include Presence
+  include HostHandoff
+  include EarlyFinish
+  include VoteEarlyClose
 
   after_update_commit :broadcast_packs!, if: :saved_change_to_off_pack_ids?
 
@@ -49,16 +55,25 @@ class Room < ApplicationRecord
     live.find_by(code: code.to_s.upcase)
   end
 
+  # An expired Room that once held this code (any letter case), or nil. Only meaningful when no live Room has it.
+  def self.expired_by_code(code)
+    where.not(expired_at: nil).find_by(code: code.to_s.upcase)
+  end
+
+  def self.missing_room_message(code)
+    expired_by_code(code) ? 'This Room has ended' : 'No live Room with that code'
+  end
+  private_class_method :missing_room_message
+
   # Room game operation: join a live Room by code. A browser that already has a Player in the
-  # Room gets that Player back. Raises ActiveRecord::RecordInvalid with a clear message otherwise.
+  # Room gets that Player back; a nickname held by an Away Player takes that Player over.
+  # Raises ActiveRecord::RecordInvalid with a clear message otherwise.
   def self.join(code:, nickname:, browser_token:)
-    room = live_by_code(code) || new.reject!('No live Room with that code')
+    room = live_by_code(code) || new.reject!(missing_room_message(code))
 
     room.with_lock do
       room.player_for(browser_token) || begin
-        room.reject!("Room is full (#{MAX_PLAYERS} Players)") if room.players.count >= MAX_PLAYERS
-
-        room.players.create!(nickname:, browser_token:, joined_at: Time.current)
+        room.take_over_away_player(nickname:, browser_token:) || room.add_player(nickname:, browser_token:)
       end
     end
   end
@@ -70,12 +85,13 @@ class Room < ApplicationRecord
     with_lock do
       reject!('Only the Host can start the Game') unless host?(by)
       reject!('A Game is already under way') unless waiting?
-      reject!("Need at least #{MIN_PLAYERS} Players to start") if players.count < MIN_PLAYERS
+      reject!(present_players_gate_reason) if present_players_gate_reason
       reject!(START_GATE_REASON) unless enough_dealable_templates?
 
       game = games.create!
       players.each { |player| game.game_players.create!(player:, nickname: player.nickname) }
       enter_captioning!(game:, number: 1)
+      touch_activity!
     end
     self
   end
@@ -94,6 +110,7 @@ class Room < ApplicationRecord
 
       on = pack_off?(pack) if on.nil?
       update!(off_pack_ids: on ? off_pack_ids - [pack.id] : (off_pack_ids | [pack.id]))
+      touch_activity!
     end
     self
   end
@@ -106,8 +123,10 @@ class Room < ApplicationRecord
     with_lock do
       reject!('Only the Host can play again') unless host?(by)
       reject!('The Game is not over yet') unless scoreboard?
+      reject!(present_players_gate_reason) if present_players_gate_reason
 
       advance!(from_seq: phase_seq)
+      touch_activity!
     end
     self
   end
@@ -121,7 +140,7 @@ class Room < ApplicationRecord
       reject!('Time is up') if closed?
 
       hand = hand_for(by) || reject!('You are not in this Game')
-      Meme.submit(hand:, template_id:, signed_id:, captions:)
+      Meme.submit(hand:, template_id:, signed_id:, captions:).tap { finish_early_if_done! }
     end
   end
 
@@ -152,6 +171,11 @@ class Room < ApplicationRecord
     end
   end
   private_class_method :insert_with_unique_code
+
+  # A Player with no seat in the Game under way: arrived mid-Game, dealt in on the next Game.
+  def spectator?(player)
+    !waiting? && current_game.present? && game_player_for(player).nil?
+  end
 
   def host?(player)
     player.present? && player.id == host_player_id

@@ -6,5 +6,7 @@
   <%= turbo_stream_from current_room %>
   <%= turbo_stream_from current_room, current_player %>
 
+  <div data-controller="presence" data-presence-code-value="<%= current_room.code %>"></div>
+
   <%= render 'rooms/screen', room: current_room, player: current_player, errors: @errors %>
 </main>

@@ -28,7 +28,7 @@ class AdminTextBoxActionsTest < ActionDispatch::IntegrationTest
     patch admin_template_text_boxes_path(@template), params: { text_boxes: STRIPS.reverse }, as: :json
 
     assert_response :success
-    assert_equal [0.8, 0.0], @template.reload.text_boxes.map { |box| box['y'] }
+    assert_equal([0.8, 0.0], @template.reload.text_boxes.map { |box| box['y'] })
   end
 
   test 'an empty list is still rejected and the stored boxes are kept' do

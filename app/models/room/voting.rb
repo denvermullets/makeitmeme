@@ -17,7 +17,7 @@ module Room::Voting
       reject!('You cannot vote on your own Meme') if current_meme.game_player_id == voter.id
       reject!('You already voted') if current_meme.vote_by(voter)
 
-      current_meme.votes.create!(game_player: voter, kind:)
+      record_vote(voter, kind)
     end
   end
 
@@ -59,6 +59,11 @@ module Room::Voting
   end
 
   private
+
+  # Stores the Vote, then closes the vote early when it was the last one awaited.
+  def record_vote(voter, kind)
+    current_meme.votes.create!(game_player: voter, kind:).tap { finish_early_if_done! }
+  end
 
   def current_round = current_game.rounds.find_by!(number: current_round_number)
 end

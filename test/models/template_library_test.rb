@@ -86,7 +86,7 @@ class TemplateLibraryTest < ActiveSupport::TestCase
       TemplateLibrary.import(MANIFEST, fetcher: @fetcher)
     end
 
-    assert_equal before, Template.order(:id).map { |t| t.reload.attributes }
+    assert_equal(before, Template.order(:id).map { |t| t.reload.attributes })
   end
 
   test 'deleting a Template tombstones its memegen id and a re-seed does not recreate it' do

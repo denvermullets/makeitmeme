@@ -2,6 +2,7 @@ import { Controller } from '@hotwired/stimulus'
 import { DirectUpload } from '@rails/activestorage'
 import { drawMeme, FONT_FAMILY } from 'meme_render'
 import { msUntilZero, memeBody, failureMessage } from 'meme_submit'
+import { saveDraft, loadDraft, clearDraft, clearOtherDrafts } from 'caption_draft'
 
 const MAX_CHARS = 80
 const images = {}
@@ -23,13 +24,15 @@ function loadImage(url) {
 export default class extends Controller {
   static targets = ['loading', 'body', 'canvas', 'fields', 'position', 'name', 'previousButton', 'nextButton',
     'error', 'submitButton', 'submitted', 'submittedImage']
-  static values = { hand: Array, submitUrl: String, directUploadUrl: String, deadline: String, serverNow: String }
+  static values = { hand: Array, submitUrl: String, directUploadUrl: String, deadline: String, serverNow: String,
+    roundKey: String }
 
   async connect() {
     this.connectedAt = Date.now()
     this.index = 0
     this.captions = []
     this.images = []
+    clearOtherDrafts(this.roundKeyValue)
     try {
       await document.fonts.load(`40px ${FONT_FAMILY}`, 'ABC')
     } catch (error) {
@@ -50,10 +53,11 @@ export default class extends Controller {
   previous() { this.go(-1) }
   next() { this.go(1) }
 
-  // Moving to another Template discards the caption.
+  // Moving to another Template discards the caption, and its draft.
   go(step) {
     const index = this.index + step
     if (index < 0 || index >= this.handValue.length) return
+    clearDraft(this.roundKeyValue, this.templateId)
     this.index = index
     this.captions = []
     this.show()
@@ -61,16 +65,21 @@ export default class extends Controller {
 
   input(event) {
     this.captions[Number(event.target.dataset.box)] = event.target.value
+    saveDraft(this.roundKeyValue, this.templateId, this.captions)
     this.schedule()
   }
 
   show() {
     const template = this.template
+    if (!this.captions.length) this.captions = loadDraft(this.roundKeyValue, template.id, template.boxes.length)
     this.positionTarget.textContent = `${this.index + 1} / ${this.handValue.length}`
     this.nameTarget.textContent = template.name
     this.previousButtonTarget.disabled = this.index === 0
     this.nextButtonTarget.disabled = this.index === this.handValue.length - 1
     this.fieldsTarget.replaceChildren(...template.boxes.map((_, n) => this.field(n)))
+    this.fieldsTarget.querySelectorAll('input').forEach((input) => {
+      input.value = this.captions[Number(input.dataset.box)] || ''
+    })
     this.redraw()
   }
 
@@ -163,6 +172,7 @@ export default class extends Controller {
 
   showSubmitted(blob) {
     this.submittedMeme = true
+    clearOtherDrafts()
     clearTimeout(this.autoTimer)
     this.submittedImageTarget.src = URL.createObjectURL(blob)
     this.bodyTarget.hidden = true
