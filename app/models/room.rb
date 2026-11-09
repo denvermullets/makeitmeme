@@ -14,6 +14,7 @@ class Room < ApplicationRecord
   include Rejectable
   include PhaseEngine
   include Voting
+  include Activity
 
   after_update_commit :broadcast_packs!, if: :saved_change_to_off_pack_ids?
 
@@ -58,7 +59,7 @@ class Room < ApplicationRecord
       room.player_for(browser_token) || begin
         room.reject!("Room is full (#{MAX_PLAYERS} Players)") if room.players.count >= MAX_PLAYERS
 
-        room.players.create!(nickname:, browser_token:, joined_at: Time.current)
+        room.players.create!(nickname:, browser_token:, joined_at: Time.current).tap { room.touch_activity! }
       end
     end
   end
@@ -76,6 +77,7 @@ class Room < ApplicationRecord
       game = games.create!
       players.each { |player| game.game_players.create!(player:, nickname: player.nickname) }
       enter_captioning!(game:, number: 1)
+      touch_activity!
     end
     self
   end
@@ -94,6 +96,7 @@ class Room < ApplicationRecord
 
       on = pack_off?(pack) if on.nil?
       update!(off_pack_ids: on ? off_pack_ids - [pack.id] : (off_pack_ids | [pack.id]))
+      touch_activity!
     end
     self
   end
@@ -108,6 +111,7 @@ class Room < ApplicationRecord
       reject!('The Game is not over yet') unless scoreboard?
 
       advance!(from_seq: phase_seq)
+      touch_activity!
     end
     self
   end

@@ -35,6 +35,7 @@ module Room::PhaseEngine
   # follow the commit (see `phase_changed`). New phases add a PHASES entry and an `enter_*!` step.
   def advance!(from_seq: nil, only_if_due: false)
     with_lock do
+      next false if expired?
       next false unless advance_wanted?(from_seq, only_if_due)
 
       step = phase_config[:next_step]
