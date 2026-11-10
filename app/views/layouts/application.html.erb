@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title><%= content_for(:title) || "Makeitmeme" %></title>
+    <title><%= content_for?(:title) ? "#{content_for(:title)} · Friday Games" : "Make It Meme · Friday Games" %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="application-name" content="Makeitmeme">
+    <meta name="application-name" content="Friday Games">
+    <meta name="apple-mobile-web-app-title" content="Friday Games">
+    <meta property="og:site_name" content="Friday Games">
     <meta name="mobile-web-app-capable" content="yes">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
