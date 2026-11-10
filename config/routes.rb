@@ -28,6 +28,12 @@ Rails.application.routes.draw do
   get 'recap/:token' => 'recaps#show', as: :recap
 
   root 'rooms#new'
+  get 'upload' => 'uploads#new', as: :upload
+  post 'upload' => 'uploads#create'
+  get 'upload/added' => 'uploads#added', as: :uploaded
+  resources :upload_drafts, only: %i[show update] do
+    post :add, on: :member
+  end
   resources :rooms, only: :create
   resources :joins, only: :create
   get 'rooms/:code' => 'rooms#show', as: :room

@@ -1,0 +1,11 @@
+<main class="p-4 max-w-sm mx-auto">
+  <h1 class="text-2xl font-bold mb-4">Added to the library</h1>
+  <p class="mb-4">Your Template is in the Custom Pack. Any Room with Custom on can deal it right away.</p>
+  <p>
+    <% if params[:code].present? %>
+      <%= link_to "Back to your Room", room_path(params[:code]), class: "underline" %>
+    <% else %>
+      <%= link_to "Back home", root_path, class: "underline" %>
+    <% end %>
+  </p>
+</main>

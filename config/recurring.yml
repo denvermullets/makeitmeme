@@ -16,6 +16,9 @@ default: &default
   expire_idle_rooms:
     class: ExpireIdleRoomsJob
     schedule: every 5 minutes
+  purge_abandoned_upload_drafts:
+    class: PurgeAbandonedUploadDraftsJob
+    schedule: every hour
 
 development:
   <<: *default

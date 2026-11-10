@@ -8,6 +8,11 @@ module TextBoxes
   COLORS = %w[white black].freeze
   FONTS = %w[thick thin].freeze
   EPSILON = 1e-6
+  # The top and bottom strips a new Upload draft starts with; mirrors CLASSIC_STRIPS in text_box_list.js.
+  TOP_AND_BOTTOM = [
+    { 'x' => 0.0, 'y' => 0.0, 'w' => 1.0, 'h' => 0.2, 'angle' => 0.0, 'color' => 'white', 'font' => 'thick' },
+    { 'x' => 0.0, 'y' => 0.8, 'w' => 1.0, 'h' => 0.2, 'angle' => 0.0, 'color' => 'white', 'font' => 'thick' }
+  ].freeze
   # Smallest width or height, as a fraction of the image (about 12px on a 600px stage).
   MIN_SIZE = 0.02
   GEOMETRY = %w[x y w h].freeze

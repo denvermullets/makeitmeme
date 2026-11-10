@@ -1,0 +1,30 @@
+<main class="p-4 max-w-sm mx-auto">
+  <h1 class="text-2xl font-bold mb-4">Upload a Template</h1>
+  <p class="mb-2">Pick a JPEG, PNG or WebP picture, then place its Text Boxes.</p>
+
+  <% if @errors&.any? %>
+    <ul class="text-red-600 mb-2">
+      <% @errors.each do |message| %><li><%= message %></li><% end %>
+    </ul>
+  <% end %>
+
+  <%= form_with url: upload_path, multipart: true, class: "flex flex-col gap-2" do |f| %>
+    <% if params[:code].present? %>
+      <%= f.hidden_field :code, value: params[:code] %>
+    <% else %>
+      <%= f.label :nickname, "Credit nickname" %>
+      <%= f.text_field :nickname, value: @nickname, maxlength: Player::NICKNAME_MAX, required: true, autofocus: true, class: "border p-2" %>
+    <% end %>
+    <%= f.label :image, "Picture" %>
+    <%= f.file_field :image, accept: "image/*", required: true, class: "border p-2" %>
+    <%= f.submit "Upload", class: "border p-2 font-bold" %>
+  <% end %>
+
+  <p class="mt-6">
+    <% if params[:code].present? %>
+      <%= link_to "Back to Room", room_path(params[:code]), class: "underline" %>
+    <% else %>
+      <%= link_to "Back home", root_path, class: "underline" %>
+    <% end %>
+  </p>
+</main>

@@ -19,6 +19,9 @@
 .tbe-rotate { left: 50%; top: -34px; width: 18px; height: 18px; margin-left: -9px; border-radius: 50%;
   background: #ffe14d; border: 2px solid #000; cursor: grab; }
 .tbe-rotate::after { content: ""; position: absolute; inset: -8px; }
+/* Phone: handles and the rotate control reach 44px touch targets (visible size unchanged). */
+[data-controls=phone] .tbe-handle::after { inset: -15px; }
+[data-controls=phone] .tbe-rotate::after { inset: -13px; }
 .text-box-row.selected { outline: 2px solid #ffe14d; }
 .tbe-actions { display: flex; flex-wrap: wrap; gap: .4rem; margin: .5rem 0; }
 .tbe-preview { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; }

@@ -50,7 +50,10 @@
   <%= turbo_frame_tag 'template_panel', data: { template_id: @selected&.id } do %>
     <% if @selected %>
       <%= render 'admin/templates/inspector', template: @selected, errors: @template_errors %>
-      <%= render 'admin/templates/text_box_editor', template: @selected %>
+      <%= render 'admin/templates/text_box_editor',
+                 save_url: admin_template_text_boxes_path(@selected),
+                 image_url: (@selected.image.attached? ? rails_storage_proxy_path(@selected.image) : ''),
+                 boxes: @selected.text_boxes, name: @selected.name, key: @selected.id %>
       <%= button_to 'Delete Template', admin_template_path(@selected, q: @query.presence, pack: @pack&.id), method: :delete,
                     form: { data: { turbo_frame: '_top' } },
                     data: { turbo_confirm: "Delete #{@selected.name}? It was used in #{pluralize(@selected.memes.count, 'Meme')}. Those Memes are kept." } %>
