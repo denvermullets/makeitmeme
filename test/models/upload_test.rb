@@ -172,4 +172,56 @@ class UploadTest < ActiveSupport::TestCase
 
     assert_predicate start_upload_draft(token: 'b', file: 'photo.jpg'), :persisted?
   end
+
+  test 'a JPEG with an EXIF orientation is stored upright with no orientation left' do
+    draft = start_upload_draft(file: 'rotated_gps.jpg')
+    stored = stored_image(draft)
+
+    assert_equal [400, 600], [stored.width, stored.height] # fixture is 600x400 flagged "rotate 90"
+    assert_includes [0, 1], stored.get('orientation') if stored.get_fields.include?('orientation')
+  end
+
+  test 'a JPEG with GPS and other EXIF metadata is stored with none of it' do
+    assert_includes stored_image(Vips::Image.new_from_file(file_fixture('rotated_gps.jpg').to_s)).get_fields, 'exif-ifd3-GPSLatitude'
+
+    stored = stored_image(start_upload_draft(file: 'rotated_gps.jpg'))
+
+    assert_empty stored.get_fields.grep(/\Aexif-|\Aicc-|\Axmp-|\Aiptc-|\Aphotoshop-/)
+  end
+
+  test 'an image over 2048px is shrunk to 2048 on its longest side keeping its aspect ratio and format' do
+    jpeg = stored_image(start_upload_draft(file: 'large.jpg'))
+    png = stored_image(start_upload_draft(file: 'large.png'))
+
+    assert_equal [2048, 1024], [jpeg.width, jpeg.height]
+    assert_equal [2048, 1024], [png.width, png.height]
+    assert_equal %w[image/jpeg image/png], UploadDraft.order(:id).map { |d| d.image.content_type }
+    assert_equal %w[jpegload_buffer pngload_buffer],
+                 UploadDraft.order(:id).map { |d| Vips::Image.new_from_buffer(d.image.download, '').get('vips-loader') }
+  end
+
+  test 'a smaller image keeps its size' do
+    stored = stored_image(start_upload_draft(file: 'drake.png'))
+    original = Vips::Image.new_from_file(file_fixture('drake.png').to_s)
+
+    assert_equal [original.width, original.height], [stored.width, stored.height]
+  end
+
+  test 'the Template made by Add to library carries the cleaned image unchanged' do
+    draft = start_upload_draft(file: 'large.jpg')
+    cleaned = draft.image.download
+    Upload.save_text_boxes(draft, TextBoxes::TOP_AND_BOTTOM, name: 'Big')
+
+    template = Upload.add_to_library(draft)
+
+    assert_equal cleaned, template.image.download
+  end
+
+  private
+
+  def stored_image(draft_or_image)
+    return draft_or_image if draft_or_image.is_a?(Vips::Image)
+
+    Vips::Image.new_from_buffer(draft_or_image.image.download, '')
+  end
 end

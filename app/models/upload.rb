@@ -68,8 +68,19 @@ module Upload
     draft.reject!(DUPLICATE) if Template.exists?(original_checksum: checksum)
   end
 
-  # Returns the bytes to store: normalisation (orient, strip metadata, cap size) goes here. Stored as uploaded for now.
-  def prepare_image(bytes, _file) = bytes
+  MAX_SIDE = 2048
+
+  # Returns the bytes to store: the image turned upright, stripped of all metadata, longest side capped at
+  # MAX_SIDE (never enlarged), in the format it was uploaded in. The original bytes are not kept.
+  def prepare_image(bytes, _file)
+    image = Vips::Image.new_from_buffer(bytes, '')
+    format = image.get('vips-loader')[/\A[a-z]+?(?=load)/] # e.g. "jpegload_buffer" -> "jpeg"
+    cleaned = ImageProcessing::Vips.source(image).autorot.resize_to_limit(MAX_SIDE, MAX_SIDE)
+                                   .saver(strip: true).convert(format).call
+    cleaned.binmode.read
+  ensure
+    cleaned&.close!
+  end
 
   def store_image(draft, bytes, file)
     draft.image.attach(io: StringIO.new(bytes), filename: file.original_filename, content_type: file.content_type)
