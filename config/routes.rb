@@ -17,6 +17,7 @@ Rails.application.routes.draw do
     delete 'sign_out' => 'sessions#destroy'
     resources :packs, only: %i[index create update destroy]
     resources :games, only: :index
+    resource :imgflip_import, only: :create
     root 'homes#show'
     resources :templates, only: %i[update destroy] do
       post :review, on: :member

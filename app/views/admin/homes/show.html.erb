@@ -1,5 +1,8 @@
 <% content_for :title, 'Template Library' %>
 <h1>Template Library</h1>
+<% if notice %><p class="notice"><%= notice %></p><% end %>
+<%= button_to 'Import from Imgflip', admin_imgflip_import_path,
+              data: { turbo_confirm: "Add Imgflip's current top memes to the Imgflip Pack? Ones already in the Library are skipped." } %>
 
 <div class="library">
   <%= turbo_frame_tag 'library_grid' do %>

@@ -5,7 +5,7 @@ class Template < ApplicationRecord
   has_many :deal_histories, dependent: :delete_all
   belongs_to :pack, default: -> { Pack.classics }
 
-  SOURCE_KINDS = %w[memegen upload].freeze
+  SOURCE_KINDS = %w[memegen upload imgflip].freeze
   FILTERS = %w[all review uploads hidden].freeze
 
   validates :memegen_id, :name, presence: true
@@ -67,6 +67,7 @@ class Template < ApplicationRecord
 
   # The Admin inspector's source line; the uploader is for the Admin only.
   def source_line
+    return 'Imgflip import' if source_kind == 'imgflip'
     return 'memegen import' unless upload?
 
     line = "Player upload by #{uploader_nickname}"
