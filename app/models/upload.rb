@@ -61,10 +61,15 @@ module Upload
 
   ACCEPTED_FORMATS = %w[jpeg png].freeze # WebP is added by its own ticket
   FORMAT_REFUSAL = 'Only JPEG, PNG and WebP images can be uploaded'
+  MAX_BYTES = 10.megabytes
+  MIN_SIDE = 300
 
   # Refuses unusable files (format, size, dimensions, duplicates) with draft.reject!(message).
   def screen(draft, bytes, _file)
+    draft.reject!('That file is over the 10 MB limit') if bytes.bytesize > MAX_BYTES
     draft.reject!(FORMAT_REFUSAL) unless ACCEPTED_FORMATS.include?(sniff_format(bytes))
+    side = ImageDimensions.of(bytes)&.min
+    draft.reject!("That image is too small: the shortest side must be at least #{MIN_SIDE}px") if side && side < MIN_SIDE
     refuse_duplicate(draft, Digest::SHA256.hexdigest(bytes)) # last: only for files that are otherwise usable
   end
 
