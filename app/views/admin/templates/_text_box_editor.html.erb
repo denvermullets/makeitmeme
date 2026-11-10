@@ -1,7 +1,12 @@
-<%# Text Box editor; locals: save_url (PATCH endpoint), image_url (path or '' if none), boxes (array of Text Box hashes),
-    name (image alt text), key (unique per page; namespaces the radio group), controls. Autosaves the whole ordered array. `controls: :full` (default) adds the sample-text preview switch,
-    the action toolbar and the numeric rows; `controls: :compact` is the stage alone; `controls: :phone` is one column:
-    stage, selected-box toolbar, add/reset, sample-text switch. %>
+<%# Text Box editor. Autosaves the whole ordered array. Locals:
+      save_url: PATCH endpoint
+      image_url: path, or '' if none
+      boxes: array of Text Box hashes
+      name: image alt text
+      key: unique per page; namespaces the radio group
+      controls: :full (default) adds the sample-text preview switch, the action toolbar and the numeric rows;
+                :compact is the stage alone;
+                :phone is one column: stage, selected-box toolbar, add/reset, sample-text switch %>
 <% variant = local_assigns.fetch(:controls, :full).to_sym %>
 <% full = variant == :full %>
 <% phone = variant == :phone %>

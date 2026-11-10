@@ -2,10 +2,11 @@ require 'test_helper'
 
 # A Player uploads from the home screen, edits the draft and adds it to the library.
 class PlayerUploadTest < ActionDispatch::IntegrationTest
-  VALID_BOX = { 'x' => 0.1, 'y' => 0.1, 'w' => 0.5, 'h' => 0.2, 'angle' => 5, 'color' => 'black', 'font' => 'thin' }.freeze
+  VALID_BOX = { 'x' => 0.1, 'y' => 0.1, 'w' => 0.5, 'h' => 0.2, 'angle' => 5, 'color' => 'black',
+                'font' => 'thin' }.freeze
 
   def upload(file: 'photo.jpg', nickname: 'Pat', session: self, type: nil)
-    type = type || (file.end_with?('.jpg') ? 'image/jpeg' : 'image/png')
+    type ||= (file.end_with?('.jpg') ? 'image/jpeg' : 'image/png')
     session.post upload_path, params: { nickname:, image: fixture_file_upload(file, type) }
   end
 
@@ -82,7 +83,8 @@ class PlayerUploadTest < ActionDispatch::IntegrationTest
   end
 
   test 'a GIF, an SVG and a PDF are refused naming the accepted formats, with no draft' do
-    { 'sample.gif' => 'image/gif', 'sample.svg' => 'image/svg+xml', 'sample.pdf' => 'application/pdf' }.each do |file, type|
+    { 'sample.gif' => 'image/gif', 'sample.svg' => 'image/svg+xml',
+      'sample.pdf' => 'application/pdf' }.each do |file, type|
       upload(file:, type:)
 
       assert_response :unprocessable_content
@@ -113,6 +115,26 @@ class PlayerUploadTest < ActionDispatch::IntegrationTest
 
     assert_response :redirect
     assert_equal 1, UploadDraft.count
+  end
+
+  test 'a JPEG uploaded as .txt with a text/plain type is stored as image/jpeg with a jpg filename' do
+    upload(file: 'mislabeled_jpeg.txt', type: 'text/plain')
+
+    assert_response :redirect
+    assert_equal 'image/jpeg', draft.image.content_type
+    assert_equal '.jpg', File.extname(draft.image.filename.to_s)
+  end
+
+  test 'a file with JPEG or PNG leading bytes but corrupt data is refused, not a 500' do
+    fixture = fixture_file_upload('truncated.jpg', 'image/jpeg')
+    post upload_path, params: { nickname: 'Pat', image: fixture }
+    assert_response :unprocessable_content
+
+    junk = Tempfile.new(['junk', '.png'])
+    File.binwrite(junk.path, "\x89PNG\r\n\x1A\n".b + ('garbage' * 50))
+    post upload_path, params: { nickname: 'Pat', image: Rack::Test::UploadedFile.new(junk.path, 'image/png') }
+    assert_response :unprocessable_content
+    assert_equal 0, UploadDraft.count
   end
 
   test 'a static WebP is accepted and stored as WebP' do
@@ -181,6 +203,33 @@ class PlayerUploadTest < ActionDispatch::IntegrationTest
     assert_select '[data-text-box-editor]'
     assert_equal 0, Template.count
     assert UploadDraft.exists?
+  end
+
+  test 'Add to library uses the name typed in the form even when nothing was autosaved' do
+    upload
+    post add_upload_draft_path(draft), params: { template: { name: '  Typed name ' } }
+
+    assert_redirected_to uploaded_path
+    assert_equal 'Typed name', Template.last.name
+  end
+
+  test 'a refused Add to library keeps the typed name on the page' do
+    upload
+    draft.update!(text_boxes: [])
+    post add_upload_draft_path(draft), params: { template: { name: 'Typed name' } }
+
+    assert_response :unprocessable_content
+    assert_select 'input[name="template[name]"][value=?]', 'Typed name'
+    assert_equal 0, Template.count
+  end
+
+  test 'Add to library with a blank typed name is refused' do
+    upload
+    draft.update!(name: 'Old')
+    post add_upload_draft_path(draft), params: { template: { name: '  ' } }
+
+    assert_response :unprocessable_content
+    assert_select '.text-red-600', /name/i
   end
 
   test 'Add to library is refused without Text Boxes' do
@@ -318,7 +367,9 @@ class PlayerUploadTest < ActionDispatch::IntegrationTest
     assert_redirected_to upload_draft_path(draft)
     follow_redirect!
     assert_select '[data-text-box-editor]' do |editor|
-      assert_equal [VALID_BOX], JSON.parse(editor.first['data-text-box-editor-boxes-value']).map { |b| b.slice(*VALID_BOX.keys) }
+      assert_equal([VALID_BOX], JSON.parse(editor.first['data-text-box-editor-boxes-value']).map do |b|
+        b.slice(*VALID_BOX.keys)
+      end)
     end
     assert_select 'input[name="template[name]"][value=?]', 'Saved name'
     assert_select 'a[href=?]', upload_path(new: 1), text: /new image/i
