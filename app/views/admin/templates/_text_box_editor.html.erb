@@ -1,8 +1,11 @@
 <%# Text Box editor; locals: save_url (PATCH endpoint), image_url (path or '' if none), boxes (array of Text Box hashes),
     name (image alt text), key (unique per page; namespaces the radio group), controls. Autosaves the whole ordered array. `controls: :full` (default) adds the sample-text preview switch,
-    the action toolbar and the numeric rows; `controls: :compact` is the stage alone (for the phone layout). %>
-<% full = local_assigns.fetch(:controls, :full).to_sym == :full %>
-<section class="text-box-editor" data-text-box-editor data-controls="<%= full ? 'full' : 'compact' %>"
+    the action toolbar and the numeric rows; `controls: :compact` is the stage alone; `controls: :phone` is one column:
+    stage, selected-box toolbar, add/reset, sample-text switch. %>
+<% variant = local_assigns.fetch(:controls, :full).to_sym %>
+<% full = variant == :full %>
+<% phone = variant == :phone %>
+<section class="text-box-editor" data-text-box-editor data-controls="<%= variant %>"
          data-controller="text-box-editor"
          data-text-box-editor-url-value="<%= save_url %>"
          data-text-box-editor-image-value="<%= image_url %>"
@@ -15,7 +18,21 @@
     <canvas class="tbe-preview" hidden data-text-box-editor-target="preview"></canvas>
     <div class="tbe-overlay" data-text-box-editor-target="overlay"></div>
   </div>
-  <% if full %>
+  <% if phone %>
+  <div class="tbe-selected-toolbar" role="toolbar" aria-label="Selected Text Box">
+    <select aria-label="Text style" data-text-box-editor-target="selectedStyle" data-action="change->text-box-editor#styleSelected">
+      <option value="white">White with outline</option>
+      <option value="black">Black, no outline</option>
+    </select>
+    <button type="button" data-text-box-editor-target="needsSelection" data-action="text-box-editor#duplicateBox">Duplicate</button>
+    <button type="button" data-text-box-editor-target="removeButton" data-action="text-box-editor#removeBox">Remove</button>
+  </div>
+  <div class="tbe-actions" role="toolbar" aria-label="Text Box actions">
+    <button type="button" data-action="text-box-editor#addBox">+ Text Box</button>
+    <button type="button" data-action="text-box-editor#resetBoxes">Reset to top &amp; bottom</button>
+  </div>
+  <% end %>
+  <% if full || phone %>
   <%# Sample-text preview: per-viewer UI only, never saved to the Template. %>
   <fieldset class="tbe-preview-switch">
     <legend>Sample text</legend>

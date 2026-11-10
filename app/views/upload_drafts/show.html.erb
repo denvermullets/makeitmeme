@@ -11,7 +11,7 @@
   <%= render 'admin/templates/text_box_editor',
              save_url: upload_draft_path(@draft),
              image_url: (@draft.image.attached? ? rails_storage_proxy_path(@draft.image) : ''),
-             boxes: @draft.text_boxes, name: @draft.name.to_s, key: "draft-#{@draft.id}" %>
+             boxes: @draft.text_boxes, name: @draft.name.to_s, key: "draft-#{@draft.id}", controls: :phone %>
 
   <%# data-inspector lets the editor's autosave send this name along with the boxes. %>
   <section data-inspector>
