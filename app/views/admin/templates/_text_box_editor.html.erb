@@ -1,16 +1,17 @@
-<%# Text Box editor; autosaves the whole ordered array. `controls: :full` (default) adds the sample-text preview switch,
+<%# Text Box editor; locals: save_url (PATCH endpoint), image_url (path or '' if none), boxes (array of Text Box hashes),
+    name (image alt text), key (unique per page; namespaces the radio group), controls. Autosaves the whole ordered array. `controls: :full` (default) adds the sample-text preview switch,
     the action toolbar and the numeric rows; `controls: :compact` is the stage alone (for the phone layout). %>
 <% full = local_assigns.fetch(:controls, :full).to_sym == :full %>
 <section class="text-box-editor" data-text-box-editor data-controls="<%= full ? 'full' : 'compact' %>"
          data-controller="text-box-editor"
-         data-text-box-editor-url-value="<%= admin_template_text_boxes_path(template) %>"
-         data-text-box-editor-image-value="<%= template.image.attached? ? rails_storage_proxy_path(template.image) : '' %>"
-         data-text-box-editor-boxes-value="<%= template.text_boxes.to_json %>">
+         data-text-box-editor-url-value="<%= save_url %>"
+         data-text-box-editor-image-value="<%= image_url %>"
+         data-text-box-editor-boxes-value="<%= boxes.to_json %>">
   <h2>Text Boxes</h2>
   <%# Stage: the image with every Text Box drawn over it (built by the controller's renderStage). %>
   <div class="tbe-stage" data-text-box-editor-target="stage"
        data-action="pointerdown->text-box-editor#pointerDown">
-    <img class="tbe-image" alt="<%= template.name %>" data-text-box-editor-target="image">
+    <img class="tbe-image" alt="<%= name %>" data-text-box-editor-target="image">
     <canvas class="tbe-preview" hidden data-text-box-editor-target="preview"></canvas>
     <div class="tbe-overlay" data-text-box-editor-target="overlay"></div>
   </div>
@@ -20,7 +21,7 @@
     <legend>Sample text</legend>
     <% %w[off short medium long].each do |level| %>
       <label>
-        <input type="radio" name="sample_level_<%= template.id %>" value="<%= level %>" data-sample-level="<%= level %>"
+        <input type="radio" name="sample_level_<%= key %>" value="<%= level %>" data-sample-level="<%= level %>"
                <%= 'checked' if level == 'off' %> data-action="change->text-box-editor#setSample">
         <%= level.capitalize %>
       </label>
