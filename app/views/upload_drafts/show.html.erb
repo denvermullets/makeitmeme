@@ -22,4 +22,8 @@
       <%= f.submit "Add to library", class: "border p-2 font-bold" %>
     <% end %>
   </section>
+
+  <% if @draft.room_code.present? %>
+    <p class="mt-4"><%= link_to "Back to Room", room_path(@draft.room_code), class: "underline" %></p>
+  <% end %>
 </main>
