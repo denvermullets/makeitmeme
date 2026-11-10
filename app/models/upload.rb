@@ -8,6 +8,8 @@
 module Upload
   module_function
 
+  DUPLICATE = 'This one\'s already in the library'.freeze
+
   # Sibling tickets plug into the marked steps below (screen, prepare_image, library refusals).
   def start(file:, browser_token:, nickname:, room_code: nil)
     draft = UploadDraft.new(browser_token:, credit_nickname: nickname.to_s.strip, room_code: room_code.presence,
@@ -36,13 +38,18 @@ module Upload
     draft.reject!('Give your Template a name') if draft.name.to_s.strip.empty?
     boxes = TextBoxes.check(draft.text_boxes)
     draft.reject!(boxes.errors.first) unless boxes.valid?
+    refuse_duplicate(draft, draft.original_checksum)
 
-    Template.transaction do
-      template = create_template(draft, boxes.boxes)
-      # Move the attachment row itself so the image is neither copied nor re-processed, nor purged with the draft.
-      draft.image_attachment.update!(record: template)
-      draft.reload.destroy!
-      template
+    begin
+      Template.transaction do
+        template = create_template(draft, boxes.boxes)
+        # Move the attachment row itself so the image is neither copied nor re-processed, nor purged with the draft.
+        draft.image_attachment.update!(record: template)
+        draft.reload.destroy!
+        template
+      end
+    rescue ActiveRecord::RecordNotUnique # a racing draft won; the unique index is the backstop
+      draft.reject!(DUPLICATE)
     end
   end
 
@@ -53,7 +60,13 @@ module Upload
   end
 
   # Refuses unusable files (format, size, dimensions, duplicates) with draft.reject!(message). None yet.
-  def screen(_draft, _bytes, _file); end
+  def screen(draft, bytes, _file)
+    refuse_duplicate(draft, Digest::SHA256.hexdigest(bytes))
+  end
+
+  def refuse_duplicate(draft, checksum)
+    draft.reject!(DUPLICATE) if Template.exists?(original_checksum: checksum)
+  end
 
   # Returns the bytes to store: normalisation (orient, strip metadata, cap size) goes here. Stored as uploaded for now.
   def prepare_image(bytes, _file) = bytes
@@ -70,5 +83,5 @@ module Upload
                      uploader_room_code: draft.room_code)
   end
 
-  private_class_method :read, :screen, :prepare_image, :store_image, :create_template
+  private_class_method :read, :screen, :refuse_duplicate, :prepare_image, :store_image, :create_template
 end

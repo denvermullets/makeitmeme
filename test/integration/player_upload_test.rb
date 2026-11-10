@@ -180,4 +180,40 @@ class PlayerUploadTest < ActionDispatch::IntegrationTest
 
     assert_select '[data-inspector-source]', 'Player upload by Pat in Room ABCD'
   end
+
+  test 'a byte-for-byte duplicate of a library image is refused with no draft; re-saved bytes are not' do
+    upload(file: 'drake.png')
+    patch_draft([VALID_BOX], name: 'Drake')
+    post add_upload_draft_path(draft)
+    assert_equal 1, Template.where(source_kind: 'upload').count
+
+    stranger = open_session
+    assert_no_difference 'UploadDraft.count' do
+      upload(file: 'drake.png', session: stranger)
+    end
+    assert_equal 422, stranger.response.status
+    assert_match(/This one(&#39;|')s already in the library/, stranger.response.body)
+
+    assert_difference 'UploadDraft.count', 1 do
+      upload(file: 'photo.jpg', session: open_session)
+    end
+  end
+
+  test 'the second of two drafts of one image is refused on Add to library and kept' do
+    upload(file: 'drake.png')
+    first = draft
+    other = open_session
+    upload(file: 'drake.png', session: other)
+    second = draft
+    patch_draft([VALID_BOX], name: 'One', record: first)
+    patch_draft([VALID_BOX], name: 'Two', session: other, record: second)
+
+    post add_upload_draft_path(first)
+    other.post add_upload_draft_path(second)
+
+    assert_equal 422, other.response.status
+    assert_match(/already in the library/, other.response.body)
+    assert UploadDraft.exists?(second.id)
+    assert_equal 1, Template.where(source_kind: 'upload').count
+  end
 end
