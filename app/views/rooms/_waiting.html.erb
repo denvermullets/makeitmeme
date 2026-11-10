@@ -9,7 +9,7 @@
   <%= render 'rooms/pack_list', room:, player: %>
 
   <% if errors&.any? %>
-    <ul class="text-red-600 mt-2">
+    <ul class="text-danger mt-2">
       <% errors.each do |message| %><li><%= message %></li><% end %>
     </ul>
   <% end %>

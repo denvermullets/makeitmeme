@@ -3,7 +3,7 @@
   <h1 class="text-2xl font-bold mb-4">Edit your Template</h1>
 
   <% if @errors&.any? %>
-    <ul class="text-red-600 mb-2">
+    <ul class="text-danger mb-2">
       <% @errors.each do |message| %><li><%= message %></li><% end %>
     </ul>
   <% end %>
@@ -19,7 +19,7 @@
                   data: { controller: "add-to-library", action: "submit->add-to-library#submit" } do |f| %>
       <%= f.label "template[name]", "Name" %>
       <%= f.text_field "template[name]", value: @draft.name, id: "template_name", required: true, class: "border p-2" %>
-      <%= f.submit "Add to library", class: "border p-2 font-bold" %>
+      <%= f.submit "Add to library", class: "btn-primary" %>
     <% end %>
   </section>
 

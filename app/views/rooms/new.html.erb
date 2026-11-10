@@ -2,7 +2,7 @@
   <h1 class="text-2xl font-bold mb-4">Make it meme</h1>
 
   <% if @errors&.any? %>
-    <ul class="text-red-600 mb-2">
+    <ul class="text-danger mb-2">
       <% @errors.each do |message| %><li><%= message %></li><% end %>
     </ul>
   <% end %>
@@ -10,7 +10,7 @@
   <%= form_with url: rooms_path, class: "flex flex-col gap-2" do |f| %>
     <%= f.label :nickname, "Nickname" %>
     <%= f.text_field :nickname, value: @nickname, maxlength: Player::NICKNAME_MAX, required: true, autofocus: true, class: "border p-2" %>
-    <%= f.submit "Create a Room", class: "border p-2 font-bold" %>
+    <%= f.submit "Create a Room", class: "btn-primary" %>
   <% end %>
 
   <h2 class="text-xl font-bold mt-6 mb-2">Join a Room</h2>
@@ -19,7 +19,7 @@
     <%= f.text_field :code, value: @code, maxlength: Room::CODE_LENGTH, required: true, autocapitalize: "characters", autocomplete: "off", class: "border p-2 uppercase" %>
     <%= f.label :nickname, "Nickname", for: "join_nickname" %>
     <%= f.text_field :nickname, id: "join_nickname", value: @nickname, maxlength: Player::NICKNAME_MAX, required: true, class: "border p-2" %>
-    <%= f.submit "Join", class: "border p-2 font-bold" %>
+    <%= f.submit "Join", class: "btn-primary" %>
   <% end %>
 
   <p class="mt-6"><%= link_to "Upload your own Template", upload_path, class: "underline" %></p>

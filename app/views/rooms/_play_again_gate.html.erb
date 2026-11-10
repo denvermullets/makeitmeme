@@ -2,7 +2,7 @@
 <div id="play_again_gate">
   <% if player && room.host?(player) %>
     <% gate_reason = room.present_players_gate_reason %>
-    <%= button_to 'Play again', play_again_room_path(room.code), class: 'border p-2 font-bold mt-4', disabled: !gate_reason.nil? %>
+    <%= button_to 'Play again', play_again_room_path(room.code), class: 'btn-primary w-full mt-4', disabled: !gate_reason.nil? %>
     <% if gate_reason %><p id="play-again-gate-reason" class="mt-2"><%= gate_reason %></p><% end %>
   <% end %>
 </div>

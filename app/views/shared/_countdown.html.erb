@@ -1,6 +1,6 @@
 <%# Countdown bar to an absolute deadline. Reusable by any timed phase; redrawn client-side from the deadline. %>
 <div data-controller="countdown" data-countdown-deadline-value="<%= deadline.iso8601(3) %>"
      data-countdown-server-now-value="<%= Time.current.iso8601(3) %>" class="mt-2">
-  <div class="h-2 bg-gray-200"><div data-countdown-target="bar" class="h-2 bg-blue-600 w-full"></div></div>
-  <p data-countdown-target="label" class="text-sm"></p>
+  <div class="h-2 rounded-full bg-track overflow-hidden"><div data-countdown-target="bar" class="h-2 bg-accent w-full"></div></div>
+  <p data-countdown-target="label" class="text-sm text-muted tabular-nums"></p>
 </div>

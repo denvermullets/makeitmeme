@@ -63,7 +63,7 @@ class PlayerUploadTest < ActionDispatch::IntegrationTest
     ['', 'x' * (Player::NICKNAME_MAX + 1)].each do |nickname|
       upload(nickname:)
       assert_response :unprocessable_content
-      assert_select '.text-red-600', /nickname/i
+      assert_select '.text-danger', /nickname/i
     end
     assert_equal 0, UploadDraft.count
   end
@@ -72,7 +72,7 @@ class PlayerUploadTest < ActionDispatch::IntegrationTest
     post upload_path, params: { nickname: 'Pat' }
 
     assert_response :unprocessable_content
-    assert_select '.text-red-600', /Choose/
+    assert_select '.text-danger', /Choose/
     assert_equal 0, UploadDraft.count
   end
 
@@ -88,7 +88,7 @@ class PlayerUploadTest < ActionDispatch::IntegrationTest
       upload(file:, type:)
 
       assert_response :unprocessable_content
-      assert_select '.text-red-600', /JPEG, PNG and WebP/
+      assert_select '.text-danger', /JPEG, PNG and WebP/
     end
     assert_equal 0, UploadDraft.count
   end
@@ -148,7 +148,7 @@ class PlayerUploadTest < ActionDispatch::IntegrationTest
     upload(file: 'animated.webp', type: 'image/webp')
 
     assert_response :unprocessable_content
-    assert_select '.text-red-600', /animated images aren't supported/i
+    assert_select '.text-danger', /animated images aren't supported/i
     assert_equal 0, UploadDraft.count
   end
 
@@ -199,7 +199,7 @@ class PlayerUploadTest < ActionDispatch::IntegrationTest
     post add_upload_draft_path(draft)
 
     assert_response :unprocessable_content
-    assert_select '.text-red-600', /name/i
+    assert_select '.text-danger', /name/i
     assert_select '[data-text-box-editor]'
     assert_equal 0, Template.count
     assert UploadDraft.exists?
@@ -229,7 +229,7 @@ class PlayerUploadTest < ActionDispatch::IntegrationTest
     post add_upload_draft_path(draft), params: { template: { name: '  ' } }
 
     assert_response :unprocessable_content
-    assert_select '.text-red-600', /name/i
+    assert_select '.text-danger', /name/i
   end
 
   test 'Add to library is refused without Text Boxes' do

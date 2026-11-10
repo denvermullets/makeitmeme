@@ -12,7 +12,7 @@
   </head>
 
   <body data-layout="admin">
-    <header>
+    <header class="flex flex-wrap items-center gap-4 px-4 py-3 border-b">
       <strong>Admin</strong>
       <%= link_to 'Library', admin_root_path %>
       <%= link_to 'Packs', admin_packs_path %>
@@ -21,6 +21,6 @@
         <%= button_to 'Sign out', admin_sign_out_path, method: :delete %>
       <% end %>
     </header>
-    <main><%= yield %></main>
+    <main class="p-4"><%= yield %></main>
   </body>
 </html>

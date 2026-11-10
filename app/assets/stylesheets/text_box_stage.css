@@ -1,13 +1,13 @@
 /* Text Box editor stage. Layout is plain CSS on the markup so other mounts (e.g. a phone column) can restyle it. */
 .tbe-stage { position: relative; width: min(100%, 560px); aspect-ratio: var(--ar, 4 / 3); margin: 0 auto 12px;
-  background: #000; user-select: none; -webkit-user-select: none; touch-action: none; }
+  background: var(--color-ink); user-select: none; -webkit-user-select: none; touch-action: none; }
 .tbe-image { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
 .tbe-overlay { position: absolute; inset: 0; }
 .tbe-box { position: absolute; border: 2px dashed #4dd2ff; transform-origin: center; cursor: move; box-sizing: border-box; }
-.tbe-box.selected { border-style: solid; border-color: #ffe14d; background: rgba(255, 225, 77, .08); }
+.tbe-box.selected { border-style: solid; border-color: var(--color-accent); background: rgba(255, 225, 77, .08); }
 .tbe-num { position: absolute; left: -2px; top: -2px; transform: translateY(-100%); background: #4dd2ff; color: #000;
   font: 700 11px system-ui, sans-serif; padding: 0 5px; border-radius: 4px 4px 0 0; pointer-events: none; }
-.tbe-box.selected .tbe-num { background: #ffe14d; }
+.tbe-box.selected .tbe-num { background: var(--color-accent); }
 .tbe-handle, .tbe-rotate { display: none; position: absolute; }
 .tbe-box.selected .tbe-handle, .tbe-box.selected .tbe-rotate { display: block; }
 .tbe-handle { width: 14px; height: 14px; margin: -7px 0 0 -7px; background: #fff; border: 2px solid #000; }
@@ -17,16 +17,16 @@
 .tbe-handle[data-handle=nw], .tbe-handle[data-handle=se] { cursor: nwse-resize; }
 .tbe-handle[data-handle=ne], .tbe-handle[data-handle=sw] { cursor: nesw-resize; }
 .tbe-rotate { left: 50%; top: -34px; width: 18px; height: 18px; margin-left: -9px; border-radius: 50%;
-  background: #ffe14d; border: 2px solid #000; cursor: grab; }
+  background: var(--color-accent); border: 2px solid #000; cursor: grab; }
 .tbe-rotate::after { content: ""; position: absolute; inset: -8px; }
 /* Phone: handles and the rotate control reach 44px touch targets (visible size unchanged). */
 [data-controls=phone] .tbe-handle::after { inset: -15px; }
 [data-controls=phone] .tbe-rotate::after { inset: -13px; }
-.text-box-row.selected { outline: 2px solid #ffe14d; }
+.text-box-row.selected { outline: 2px solid var(--color-accent); }
 .tbe-actions { display: flex; flex-wrap: wrap; gap: .4rem; margin: .5rem 0; }
 .tbe-preview { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
 .tbe-preview[hidden] { display: none; }
 .tbe-preview-switch { border: 0; padding: 0; margin: 0 0 8px; display: flex; gap: 12px; align-items: center; }
 .tbe-preview-switch legend { float: left; margin-right: 8px; font-size: .8rem; }
 .tbe-fits { list-style: none; padding: 0; margin: 0 0 8px; font-size: .8rem; }
-.tbe-fits .warning { color: #b00020; font-weight: 700; }
+.tbe-fits .warning { color: var(--color-danger); font-weight: 700; }

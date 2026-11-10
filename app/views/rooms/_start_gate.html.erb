@@ -3,7 +3,7 @@
   <% if player && room.host?(player) %>
     <% gate_reason = room.present_players_gate_reason || (Room::START_GATE_REASON unless room.enough_dealable_templates?) %>
     <% gate_open = gate_reason.nil? %>
-    <%= button_to 'Start', start_room_path(room.code), class: 'border p-2 font-bold mt-4', disabled: !gate_open %>
+    <%= button_to 'Start', start_room_path(room.code), class: 'btn-primary w-full mt-4', disabled: !gate_open %>
     <% unless gate_open %><p id="start-gate-reason" class="mt-2"><%= gate_reason %></p><% end %>
   <% elsif player %>
     <p class="mt-4">You are <%= player.nickname %>. Waiting for the Host to start.</p>

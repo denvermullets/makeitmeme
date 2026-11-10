@@ -1,1 +1,88 @@
 @import "tailwindcss";
+
+/* App theme: near-black with yellow accents, carried over from the MEME-5 Meme editor prototype.
+   Each token is a Tailwind utility (bg-surface, text-muted, border-line, text-accent, ...) and a CSS
+   variable (var(--color-accent)) that the plain stylesheets in app/assets/stylesheets use too. */
+@theme {
+  --color-ink: #08070b;      /* deepest backdrop: media wells behind images */
+  --color-surface: #14121a;  /* page background */
+  --color-raised: #201d28;   /* inputs, secondary buttons, cards */
+  --color-track: #2a2633;    /* progress tracks, subtle fills */
+  --color-line: #3a3546;     /* borders */
+  --color-fg: #f3f1f7;       /* body text */
+  --color-muted: #9a95a8;    /* secondary text */
+  --color-accent: #ffe14d;   /* primary actions, focus, selection */
+  --color-on-accent: #000;   /* text on accent */
+  --color-danger: #ff4d5e;   /* errors, urgency */
+
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+@layer base {
+  html { color-scheme: dark; }
+
+  body {
+    min-height: 100dvh;
+    background-color: var(--color-surface);
+    color: var(--color-fg);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  *, ::before, ::after, ::backdrop { border-color: var(--color-line); }
+
+  a { color: var(--color-accent); }
+
+  input:not([type=checkbox], [type=radio], [type=file], [type=submit], [type=button], [type=hidden]),
+  select, textarea {
+    background-color: var(--color-raised);
+    color: var(--color-fg);
+    border: 1px solid var(--color-line);
+    border-radius: 10px;
+    padding: .5rem .75rem;
+    font-size: 16px; /* 16px keeps iOS from zooming on focus */
+  }
+  input::placeholder, textarea::placeholder { color: var(--color-muted); }
+  input[type=checkbox], input[type=radio] { accent-color: var(--color-accent); }
+  input[type=file] { color: var(--color-muted); }
+  input[type=file]::file-selector-button {
+    margin-right: .75rem; padding: .5rem .875rem; border: 1px solid var(--color-line); border-radius: 10px;
+    background-color: var(--color-raised); color: var(--color-fg); font-weight: 600; cursor: pointer;
+  }
+
+  /* Buttons default to the dark secondary look; .btn-primary marks a screen's main action. */
+  button, input[type=submit], input[type=button] {
+    background-color: var(--color-raised);
+    color: var(--color-fg);
+    border: 1px solid var(--color-line);
+    border-radius: 10px;
+    padding: .5rem .875rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  button:disabled, input[type=submit]:disabled { opacity: .4; cursor: not-allowed; }
+
+  /* Selected toggles: captioning preset, vote cast, active tab. */
+  button[aria-current=true], button[aria-pressed=true], [role=tab][aria-selected=true] {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+  }
+
+  :focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+  input:focus-visible, select:focus-visible, textarea:focus-visible { outline-offset: 0; border-color: var(--color-accent); }
+
+  h1, h2, h3 { color: var(--color-fg); }
+  hr { border-color: var(--color-line); }
+}
+
+@layer components {
+  .btn-primary,
+  button.btn-primary, input[type=submit].btn-primary {
+    background-color: var(--color-accent);
+    color: var(--color-on-accent);
+    border-color: var(--color-accent);
+    border-radius: 12px;
+    padding: .875rem 1rem;
+    font-weight: 700;
+  }
+}
