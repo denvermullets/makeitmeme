@@ -1,18 +1,26 @@
-<%# Standings between Rounds: the same for every phone, Spectators included. Ties share a place. %>
+<%# The Round's results, after every Round: each Meme's score (hidden during voting), the Meme of the Round and
+    the running Standings with penalties. The same for every phone, Spectators included. Ties share a place. %>
 <div id="standings" data-round="<%= room.current_round_number %>">
-  <h2 class="mt-4 font-bold">Standings after Round <%= room.current_round_number %></h2>
+  <h2 class="mt-4 font-bold">Round <%= room.current_round_number %> results</h2>
   <%= render 'shared/countdown', deadline: room.phase_deadline_at %>
+  <% memes_of_the_round = room.memes_of_the_round.to_a %>
+  <ul id="round_results">
+    <% room.round_results.each do |meme| %>
+      <li data-meme-id="<%= meme.id %>" data-nickname="<%= meme.game_player.nickname %>">
+        <%= image_tag rails_storage_proxy_path(meme.image), alt: "Meme by #{meme.game_player.nickname}", class: 'w-full mt-2' if meme.image.attached? %>
+        <p class="mt-2">Made by <strong><%= meme.game_player.nickname %></strong>
+          <% if memes_of_the_round.include?(meme) %><span data-meme-badge>Meme of the Round</span><% end %></p>
+        <p data-meme-points class="text-3xl font-bold"><%= meme.points.positive? ? "+#{meme.points}" : meme.points %></p>
+        <p data-meme-counts>
+          <span><%= meme.up_count %> up</span>
+          <span><%= meme.meh_count %> meh</span>
+          <span><%= meme.down_count %> down</span>
+          <span><%= meme.buddy_count %> <%= 'Buddy'.pluralize(meme.buddy_count) %></span>
+          <% if meme.redux_count.positive? %><span data-redux-count><%= meme.redux_count %> Redux</span><% end %>
+        </p>
+      </li>
+    <% end %>
+  </ul>
+  <h3 class="mt-4 font-bold">Standings</h3>
   <%= render 'rooms/placed_list', placings: room.current_game.placed_game_players %>
-  <% memes_of_the_round = room.memes_of_the_round %>
-  <% if memes_of_the_round.present? %>
-    <div id="meme_of_the_round">
-      <h3 class="mt-4 font-bold">Meme of the Round</h3>
-      <% memes_of_the_round.each do |meme| %>
-        <div>
-          <%= image_tag rails_storage_proxy_path(meme.image), alt: 'Meme of the Round', class: 'w-full mt-2' %>
-          <p class="mt-2">Made by <strong><%= meme.game_player.nickname %></strong></p>
-        </div>
-      <% end %>
-    </div>
-  <% end %>
 </div>

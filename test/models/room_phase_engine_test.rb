@@ -28,7 +28,7 @@ class RoomPhaseEngineTest < ActiveSupport::TestCase
   end
 
   test 'phase durations live in one place and can be changed' do
-    assert_equal({ vote: 15, reveal: 4, standings: 10 }, Room.phase_seconds)
+    assert_equal({ vote: 15, standings: 60 }, Room.phase_seconds)
     Room.phase_seconds = Room.phase_seconds.merge(captioning: 5)
     freeze_time do
       2.times { @room.advance! } # through Standings
@@ -56,7 +56,7 @@ class RoomPhaseEngineTest < ActiveSupport::TestCase
   end
 
   test 'after Round 3 the Room goes to the Scoreboard with no deadline and the Game is finished' do
-    5.times do
+    6.times do
       travel_to(@room.reload.phase_deadline_at + 7.seconds) { run_deadline_job }
     end
 
@@ -70,6 +70,7 @@ class RoomPhaseEngineTest < ActiveSupport::TestCase
   test 'the Scoreboard schedules no further job' do
     4.times { travel_to(@room.reload.phase_deadline_at + 7.seconds) { run_deadline_job } }
     travel_to(@room.reload.phase_deadline_at + 1.second) { run_deadline_job_once } # the grace extension
+    travel_to(@room.reload.phase_deadline_at + 1.second) { run_deadline_job_once } # into Round 3 results
     clear_enqueued_jobs
     travel_to(@room.reload.phase_deadline_at + 1.second) { run_deadline_job_once }
 
@@ -147,7 +148,7 @@ class RoomPhaseEngineTest < ActiveSupport::TestCase
     12.times do
       break if room.reload.scoreboard?
 
-      travel 11.seconds
+      travel 61.seconds
       perform_enqueued_jobs(only: PhaseDeadlineJob)
     end
 

@@ -1,10 +1,13 @@
-<%# Game-players in order of place; ties share one. `placings` come from Game#placed_game_players. %>
+<%# Game-players in order of place; ties share one. `placings` come from Game#placed_game_players.
+    Penalties already taken off the total are listed beside it. %>
 <ol>
   <% placings.each do |placing| %>
-    <li>
+    <% seat = placing.game_player %>
+    <li data-nickname="<%= seat.nickname %>">
       <span><%= placing.place %></span>
-      <span><%= placing.game_player.nickname %><%= render 'players/away_marker', player: placing.game_player.player if placing.game_player.player %></span>
-      <span><%= placing.game_player.total %></span>
+      <span><%= seat.nickname %><%= render 'players/away_marker', player: seat.player if seat.player %></span>
+      <span data-total><%= seat.total %></span>
+      <%= render 'games/penalties', missed_votes: seat.missed_votes, unused_buddies: seat.unused_buddies %>
     </li>
   <% end %>
 </ol>

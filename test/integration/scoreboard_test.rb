@@ -24,9 +24,10 @@ class ScoreboardTest < ActionDispatch::IntegrationTest
 
   test 'the Scoreboard lists every Player with place and total, sorted by total, and no countdown' do
     game = @room.reload.current_game
-    game.game_players.find_by(nickname: 'Cy').update!(total: 7)
-    game.game_players.find_by(nickname: 'Ada').update!(total: 3)
-    5.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
+    game.game_players.find_by(nickname: 'Cy').update!(total: 7, buddies_left: 0)
+    game.game_players.find_by(nickname: 'Ada').update!(total: 3, buddies_left: 0)
+    game.game_players.find_by(nickname: 'Bob').update!(buddies_left: 0)
+    6.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
 
     @bob.get room_path(@room.code)
 
@@ -38,7 +39,7 @@ class ScoreboardTest < ActionDispatch::IntegrationTest
   end
 
   test 'the Scoreboard shows Buddies received, summed from the cached Buddy counts over the Game' do
-    5.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
+    6.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
     game = @room.reload.current_game
     ada = game.game_players.find_by!(nickname: 'Ada')
     bob = game.game_players.find_by!(nickname: 'Bob')
@@ -54,8 +55,22 @@ class ScoreboardTest < ActionDispatch::IntegrationTest
     @bob.assert_select "#scoreboard li[data-nickname='Cy'] [data-buddies-received]", text: '0'
   end
 
+  test 'the Scoreboard lists missed votes and unused Buddies beside the total, and nothing when there are none' do
+    game = @room.reload.current_game
+    game.game_players.find_by!(nickname: 'Ada').update!(missed_votes: 2)
+    game.game_players.find_by!(nickname: 'Cy').update!(buddies_left: 0)
+    6.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
+
+    @bob.get room_path(@room.code)
+
+    @bob.assert_select "#scoreboard li[data-nickname='Ada'] [data-missed-votes='2']", text: '2 missed votes (-2)'
+    @bob.assert_select "#scoreboard li[data-nickname='Ada'] [data-unused-buddies='2']", text: '2 unused Buddies (-6)'
+    @bob.assert_select "#scoreboard li[data-nickname='Cy'] [data-missed-votes]", 0
+    @bob.assert_select "#scoreboard li[data-nickname='Cy'] [data-unused-buddies]", 0
+  end
+
   def finish_game_with(memes)
-    5.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
+    6.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
     game = @room.reload.current_game
     rounds = game.rounds.order(:number).to_a
     memes.each do |round_index, nickname, points|
@@ -104,7 +119,7 @@ class ScoreboardTest < ActionDispatch::IntegrationTest
   end
 
   test 'the Scoreboard shows points per Round in Round order, none for a missing Meme, signed, summing to the total' do
-    5.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
+    6.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
     game = @room.reload.current_game
     ada = game.game_players.find_by!(nickname: 'Ada')
     bob = game.game_players.find_by!(nickname: 'Bob')
@@ -126,7 +141,7 @@ class ScoreboardTest < ActionDispatch::IntegrationTest
   end
 
   test 'tied totals share a place' do
-    5.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
+    6.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
 
     @bob.get room_path(@room.code)
 
@@ -135,9 +150,10 @@ class ScoreboardTest < ActionDispatch::IntegrationTest
 
   test 'the Scoreboard carries the reveal anchor and each places as data attributes and renders every row' do
     game = @room.reload.current_game
-    game.game_players.find_by(nickname: 'Cy').update!(total: 7)
-    game.game_players.find_by(nickname: 'Ada').update!(total: 3)
-    5.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
+    game.game_players.find_by(nickname: 'Cy').update!(total: 7, buddies_left: 0)
+    game.game_players.find_by(nickname: 'Ada').update!(total: 3, buddies_left: 0)
+    game.game_players.find_by(nickname: 'Bob').update!(buddies_left: 0)
+    6.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
     finished_at = @room.reload.current_game.finished_at
 
     @bob.get room_path(@room.code)
@@ -152,7 +168,7 @@ class ScoreboardTest < ActionDispatch::IntegrationTest
   end
 
   test 'the Host sees preset choices on the Scoreboard and others see it read-only' do
-    5.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
+    6.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
 
     @host.get room_path(@room.code)
     @host.assert_select "#captioning_preset[data-preset='normal']"
@@ -164,7 +180,7 @@ class ScoreboardTest < ActionDispatch::IntegrationTest
   end
 
   test 'a preset chosen on the Scoreboard shows in Waiting after Play again' do
-    5.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
+    6.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
 
     @host.post room_captioning_preset_path(@room.code, preset: 'chill')
     @host.assert_response :redirect
@@ -179,7 +195,7 @@ class ScoreboardTest < ActionDispatch::IntegrationTest
   end
 
   test 'a non-Host cannot change the preset on the Scoreboard' do
-    5.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
+    6.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
 
     @bob.post room_captioning_preset_path(@room.code, preset: 'quick')
     @bob.assert_response :unprocessable_content
@@ -193,7 +209,7 @@ class ScoreboardTest < ActionDispatch::IntegrationTest
   end
 
   test 'only the Host sees Play again on the Scoreboard' do
-    5.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
+    6.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
 
     @host.get room_path(@room.code)
     @host.assert_select 'form[action=?]', play_again_room_path(@room.code)
@@ -202,7 +218,7 @@ class ScoreboardTest < ActionDispatch::IntegrationTest
   end
 
   test 'the Host presses Play again and the Room is Waiting with the same Players' do
-    5.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
+    6.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
 
     @bob.post play_again_room_path(@room.code)
     @bob.assert_response :unprocessable_content
@@ -217,7 +233,7 @@ class ScoreboardTest < ActionDispatch::IntegrationTest
   end
 
   test 'Play again is disabled with the reason when fewer than 3 Players are present' do
-    5.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
+    6.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
     Player.find_by!(nickname: 'Cy').update!(away_at: Time.current)
 
     @host.get room_path(@room.code)
@@ -230,7 +246,7 @@ class ScoreboardTest < ActionDispatch::IntegrationTest
   end
 
   test 'a presence change on the Scoreboard re-sends each Players Play again gate' do
-    5.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
+    6.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
     @room.reload
     ActionCable.server.pubsub.clear
 

@@ -10,7 +10,7 @@ class ScoreboardMemesTabTest < ActionDispatch::IntegrationTest
     @bob.post joins_path, params: { code: @room.code, nickname: 'Bob' }
     open_session.post joins_path, params: { code: @room.code, nickname: 'Cy' }
     @host.post start_room_path(@room.code)
-    5.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
+    6.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
     @game = @room.reload.current_game
     @rounds = @game.rounds.order(:number).to_a
   end

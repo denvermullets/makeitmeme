@@ -15,9 +15,9 @@ class FullGameTest < ApplicationSystemTestCase
 
   setup do
     @original_phase_seconds = Room.phase_seconds
-    # Captioning must outlast the three sequential submits, vote the three clicks, and the reveal the three
-    # sessions checking it in turn.
-    Room.phase_seconds = { captioning: 20, vote: 6, reveal: 4 }
+    # Captioning must outlast the three sequential submits, vote the three clicks, and the Round results the three
+    # sessions checking them in turn.
+    Room.phase_seconds = { captioning: 20, vote: 6, standings: 6 }
     seed_templates(Hand::SIZE + 2).each { |template| template.update!(text_boxes: [BOX]) }
   end
 
@@ -34,12 +34,16 @@ class FullGameTest < ApplicationSystemTestCase
         round = index + 1
         each_player { assert_selector "#captioning[data-round='#{round}']" }
         each_player { caption_and_submit("Round #{round} from #{@current_name}") }
-        PLAYERS.size.times { vote_up_on_current_meme }
+        PLAYERS.size.times { |position| vote_up_on_meme(position) }
+        results = "#standings[data-round='#{round}'] #round_results [data-meme-points]"
+        each_player { assert_selector results, text: '+2', count: PLAYERS.size }
       end
 
       each_player { assert_selector '#scoreboard' }
       each_player do
-        PLAYERS.each { |name| assert_selector '#scoreboard li', text: "1 #{name} #{Room::ROUNDS_PER_GAME * 2}" }
+        # Two Up Votes a Round, less every Buddy left unspent.
+        total = (Room::ROUNDS_PER_GAME * 2) - (GamePlayer::BUDDIES_PER_GAME * GamePlayer::UNUSED_BUDDY_PENALTY)
+        PLAYERS.each { |name| assert_selector '#scoreboard li', text: "1 #{name} #{total}" }
       end
 
       play_again
@@ -93,17 +97,13 @@ class FullGameTest < ApplicationSystemTestCase
     assert_selector '.meme-submitted', text: 'Meme submitted', visible: :visible
   end
 
-  # Every Player but the maker taps Up on the Meme under vote; then everyone sees the reveal with its points.
-  def vote_up_on_current_meme
+  # Every Player but the maker taps Up on the Meme at this voting position. No score shows until the Round results.
+  def vote_up_on_meme(position)
     each_player do
-      assert_selector '#vote'
-      # Either the three buttons or "This one's yours." arrives on the Player's private stream.
+      assert_selector "#vote[data-position='#{position}']"
+      # Either the four buttons or "This one's yours." arrives on the Player's private stream.
       assert_selector '#vote_controls button, #vote_controls p'
       click_button 'Up' if has_button?('Up', wait: 0)
-    end
-    each_player do
-      assert_selector '#reveal'
-      assert_selector '#reveal_points', text: '+2'
     end
   end
 

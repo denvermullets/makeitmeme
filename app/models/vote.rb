@@ -1,6 +1,6 @@
 # One game-player's verdict on one Meme. The voter is stored only to enforce the rules; never shown.
 class Vote < ApplicationRecord
-  enum :kind, { up: 'up', meh: 'meh', down: 'down', buddy: 'buddy' }, validate: true
+  enum :kind, { up: 'up', meh: 'meh', down: 'down', buddy: 'buddy', redux: 'redux' }, validate: true
 
   belongs_to :meme
   belongs_to :game_player

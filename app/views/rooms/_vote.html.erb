@@ -1,6 +1,6 @@
 <%# Vote screen: the current Meme (no maker) with a countdown. The voter's buttons are Player-specific, so they
     are blank on the shared stream and filled in over the Player's own. %>
-<div id="vote" data-round="<%= room.current_round_number %>">
+<div id="vote" data-round="<%= room.current_round_number %>" data-position="<%= room.current_meme.position %>">
   <h2 class="mt-4 font-bold">Round <%= room.current_round_number %>: vote</h2>
   <%= render 'shared/countdown', deadline: room.phase_deadline_at %>
   <%= image_tag rails_storage_proxy_path(room.current_meme.image), alt: 'The Meme to vote on', class: 'w-full mt-2' %>

@@ -1,5 +1,6 @@
 <%# One Player's vote controls for the Meme under vote. Rendered only on their own stream or page load, so
-    nobody learns who voted what. `player` is nil on the shared stream: nothing to show. %>
+    nobody learns who voted what. `player` is nil on the shared stream: nothing to show. The fourth button is the
+    Buddy, or Meme Buddy Redux on the last Meme of the Game once the voter's Buddies are all spent. %>
 <div id="vote_controls" class="mt-4">
   <% game_player = player && room.game_player_for(player) %>
   <% if game_player.nil? || room.current_meme.nil? %>
@@ -8,15 +9,25 @@
   <% else %>
     <% cast = room.vote_by(player) %>
     <% buddies_left = game_player.buddies_left %>
+    <% special = if cast&.buddy? || cast&.redux? then cast.kind
+                 elsif room.redux_offered_to?(game_player) then 'redux'
+                 else 'buddy' end %>
     <%= form_with url: room_votes_path(room.code), class: 'flex gap-2' do %>
       <%= hidden_field_tag :meme_id, room.current_meme.id %>
-      <% Vote.kinds.each_key do |kind| %>
-        <% label = kind == 'buddy' ? "Buddy ×#{buddies_left}" : kind.capitalize %>
+      <% (%w[up meh down] << special).each do |kind| %>
+        <% label = case kind
+                   when 'buddy' then "Buddy ×#{buddies_left}"
+                   when 'redux' then 'Meme Buddy Redux'
+                   else kind.capitalize
+                   end %>
         <%= button_tag label, type: 'submit', name: 'kind', value: kind,
                        disabled: cast.present? || (kind == 'buddy' && buddies_left.zero?),
                        'aria-pressed': (cast&.kind == kind).to_s,
                        class: "border p-2 font-bold flex-1#{' bg-accent text-on-accent' if cast&.kind == kind}" %>
       <% end %>
+    <% end %>
+    <% if special == 'redux' && cast.nil? %>
+      <p id="redux_hint" class="mt-2">Out of Buddies and wish you had one for this? Meme Buddy Redux is on the house: +<%= Meme::REDUX_POINTS %>.</p>
     <% end %>
   <% end %>
 </div>

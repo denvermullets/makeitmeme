@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_10_150000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_10_160000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -68,6 +68,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_10_150000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "buddies_left", default: 2, null: false
+    t.integer "missed_votes", default: 0, null: false
+    t.integer "unused_buddies", default: 0, null: false
     t.index ["game_id"], name: "index_game_players_on_game_id"
     t.index ["player_id"], name: "index_game_players_on_player_id"
   end
@@ -107,6 +109,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_10_150000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "buddy_count", default: 0, null: false
+    t.integer "redux_count", default: 0, null: false
     t.index ["game_player_id"], name: "index_memes_on_game_player_id"
     t.index ["round_id", "game_player_id"], name: "index_memes_on_round_id_and_game_player_id", unique: true
     t.index ["round_id"], name: "index_memes_on_round_id"

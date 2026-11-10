@@ -63,17 +63,17 @@ class StandingsScreenTest < ActionDispatch::IntegrationTest
 
     @sessions.each_value do |session|
       session.get room_path(@room.code)
-      session.assert_select '#standings #meme_of_the_round img', 2
-      session.assert_select '#standings #meme_of_the_round', text: /Ada/
-      session.assert_select '#standings #meme_of_the_round', text: /Bob/
-      session.assert_select '#standings #meme_of_the_round', text: /Cy/, count: 0
+      session.assert_select '#round_results [data-meme-badge]', 2
+      session.assert_select "#round_results li[data-nickname='Ada'] [data-meme-badge]"
+      session.assert_select "#round_results li[data-nickname='Bob'] [data-meme-badge]"
+      session.assert_select "#round_results li[data-nickname='Cy'] [data-meme-badge]", 0
     end
   end
 
   test 'a Round with no Memes shows no Meme of the Round' do
     @sessions['Ada'].get room_path(@room.code)
 
-    @sessions['Ada'].assert_select '#meme_of_the_round', 0
+    @sessions['Ada'].assert_select '[data-meme-badge]', 0
   end
 
   private

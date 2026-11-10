@@ -32,18 +32,21 @@ class Meme < ApplicationRecord
   end
 
   BUDDY_POINTS = 3
+  # Meme Buddy Redux: offered only on the last Meme of the Game, only to voters with no Buddies left.
+  REDUX_POINTS = 2 * BUDDY_POINTS
 
-  # The maker's total moves by these points. Scoring (MEME-7): up +1, meh 0, down -1, each Buddy +3; a missing
-  # Vote is a meh, so `eligible_voters` (the Game's game-players minus the maker) fills the meh count.
+  # The maker's total moves by these points. Scoring: up +1, meh 0, down -1, each Buddy +3, each Redux +6; a
+  # missing Vote is a meh for the maker, so `eligible_voters` (the Game's game-players minus the maker) fills the
+  # meh count. Each eligible voter who cast nothing is charged a missed Vote (GamePlayer::MISSED_VOTE_PENALTY).
   # Caches the counts and points here. Call once, under the Room row lock, inside the phase_seq-guarded advance.
   def score!(eligible_voters:)
     tally = votes.group(:kind).count
-    up = tally.fetch('up', 0)
-    down = tally.fetch('down', 0)
-    buddy = tally.fetch('buddy', 0)
-    update!(up_count: up, down_count: down, buddy_count: buddy, meh_count: eligible_voters - up - down - buddy,
-            points: up - down + (BUDDY_POINTS * buddy))
+    up, down, buddy, redux = tally.values_at('up', 'down', 'buddy', 'redux').map(&:to_i)
+    update!(up_count: up, down_count: down, buddy_count: buddy, redux_count: redux,
+            meh_count: eligible_voters - up - down - buddy - redux,
+            points: up - down + (BUDDY_POINTS * buddy) + (REDUX_POINTS * redux))
     game_player.increment!(:total, points)
+    silent_voters.charge_missed_vote!
   end
 
   # The Vote this game-player cast on the Meme, or nil.
@@ -60,6 +63,11 @@ class Meme < ApplicationRecord
   end
 
   private
+
+  # The Game's game-players, other than the maker, with no Vote on this Meme.
+  def silent_voters
+    game_player.game.game_players.where.not(id: game_player_id).where.not(id: votes.select(:game_player_id))
+  end
 
   # The client names the type; the first bytes say what the file is.
   def png_content?(blob)

@@ -1,0 +1,7 @@
+<%# Penalties already in a total: locals `missed_votes:` and `unused_buddies:` (counts). Nothing when both are 0. %>
+<% if missed_votes.positive? %>
+  <span data-missed-votes="<%= missed_votes %>"><%= pluralize(missed_votes, 'missed vote') %> (-<%= missed_votes * GamePlayer::MISSED_VOTE_PENALTY %>)</span>
+<% end %>
+<% if unused_buddies.positive? %>
+  <span data-unused-buddies="<%= unused_buddies %>"><%= pluralize(unused_buddies, 'unused Buddy', plural: 'unused Buddies') %> (-<%= unused_buddies * GamePlayer::UNUSED_BUDDY_PENALTY %>)</span>
+<% end %>

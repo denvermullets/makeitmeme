@@ -93,10 +93,15 @@ class VoteScreenTest < ActionDispatch::IntegrationTest
     stranger.assert_response :unauthorized
   end
 
-  test 'the reveal shows the bare Meme' do
-    travel_to(@room.phase_deadline_at + 1.second) { @room.advance! }
+  test 'no score or maker is shown while voting, even after a Vote, and closing the vote reveals nothing' do
+    @sessions[@voter].post room_votes_path(@room.code), params: { meme_id: @meme.id, kind: 'up' }
     @sessions[@voter].get room_path(@room.code)
-    @sessions[@voter].assert_select '#reveal img'
-    @sessions[@voter].assert_select '#vote_controls', 0
+    @sessions[@voter].assert_select '[data-meme-points]', 0
+    @sessions[@voter].assert_select '#vote', text: /Made by/, count: 0
+
+    travel_to(@room.phase_deadline_at + 1.second) { @room.advance! }
+    assert @room.reload.vote? || @room.standings?
+    @sessions[@voter].get room_path(@room.code)
+    @sessions[@voter].assert_select '#reveal', 0
   end
 end

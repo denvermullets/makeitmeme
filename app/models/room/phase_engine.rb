@@ -1,5 +1,5 @@
 # The Room's phase engine: the one locked entry point (`advance!`), the entry step of each phase and the
-# after-commit deadline job and broadcast. Voting phases (vote, reveal) live in Room::Voting.
+# after-commit deadline job and broadcast. The vote phase lives in Room::Voting.
 module Room::PhaseEngine
   extend ActiveSupport::Concern
 
@@ -16,9 +16,8 @@ module Room::PhaseEngine
   PHASES = {
     waiting: { next_step: nil, grace: 0.seconds, screen: :per_player },
     captioning: { next_step: :finish_captioning!, grace: 0.seconds, screen: :per_player },
-    vote: { next_step: :enter_reveal!, grace: VOTE_GRACE, screen: :per_player },
-    reveal: { next_step: :finish_reveal!, grace: 0.seconds, screen: :shared },
-    standings: { next_step: :start_next_round!, grace: 0.seconds, screen: :shared },
+    vote: { next_step: :finish_vote!, grace: VOTE_GRACE, screen: :per_player },
+    standings: { next_step: :finish_standings!, grace: 0.seconds, screen: :shared },
     scoreboard: { next_step: :enter_waiting!, grace: 0.seconds, screen: :per_player }
   }.freeze
 
@@ -26,7 +25,7 @@ module Room::PhaseEngine
     # Seconds each timed phase lasts. One place to change them; tests shorten them.
     # Captioning is absent: its length is the Room's preset (`captioning_preset_seconds`). Tests may set
     # `captioning:` to override it.
-    class_attribute :phase_seconds, default: { vote: 15, reveal: 4, standings: 10 }
+    class_attribute :phase_seconds, default: { vote: 15, standings: 60 }
 
     # Every phase change reaches phones only after commit, and before any content for that phase.
     after_update_commit :phase_changed, if: :saved_change_to_phase_seq?
@@ -115,16 +114,17 @@ module Room::PhaseEngine
             last_activity_at: Time.current, **attrs)
   end
 
-  # After a Round: Standings after Rounds 1 and 2, the Scoreboard after the last.
-  def enter_next_round_or_scoreboard!
-    current_round_number < Room::ROUNDS_PER_GAME ? enter_standings! : enter_scoreboard!
+  # Entry step: the Round's results, after every Round including the last. Scores were hidden until now. After
+  # the last Round any Buddy still unspent is charged here, so the results already show it. Timers only.
+  def enter_standings!
+    current_game.game_players.each(&:charge_unused_buddies!) if current_round_number == Room::ROUNDS_PER_GAME
+    enter_phase!(:standings, current_meme: nil)
   end
 
-  # Entry step: between Rounds. Timers only.
-  def enter_standings! = enter_phase!(:standings, current_meme: nil)
+  # Standings' next step: the next Round's Captioning with fresh Hands, or the Scoreboard after the last Round.
+  def finish_standings!
+    return enter_scoreboard! if current_round_number >= Room::ROUNDS_PER_GAME
 
-  # Standings' next step: the next Round's Captioning, with fresh Hands.
-  def start_next_round!
     enter_captioning!(game: current_game, number: current_round_number + 1)
   end
 

@@ -1,7 +1,7 @@
 require 'test_helper'
 require 'turbo/broadcastable/test_helper'
 
-# Voting on Memes: after Captioning each Meme gets a vote and a reveal, one Meme at a time.
+# Voting on Memes: after Captioning each Meme gets a vote, one Meme at a time; the Round's results come after the last.
 class RoomVotingTest < ActiveSupport::TestCase
   include ActiveJob::TestHelper
   include Turbo::Broadcastable::TestHelper
@@ -51,33 +51,31 @@ class RoomVotingTest < ActiveSupport::TestCase
     assert_equal %w[ada cy], memes.map { |m| maker_token(m) }.sort
   end
 
-  test 'a Round with no Memes skips to the next Round, or to the Scoreboard after Round 3' do
+  test 'a Round with no Memes goes to its results, then the next Round, or the Scoreboard after Round 3' do
     end_phase
     assert @room.standings?
     end_phase
     assert @room.captioning?
     assert_equal 2, @room.current_round_number
 
-    3.times { end_phase }
+    4.times { end_phase }
     assert @room.scoreboard?
     assert_nil @room.current_meme_id
   end
 
-  test 'each Meme gets a vote then a reveal, then the next Round starts' do
+  test 'each Meme gets a vote straight after the one before, then the Round results, then the next Round' do
     memes = submit_memes(@room, 'ada', 'bob', 'cy')
     seen = []
-    3.times do
-      seen << @room.current_meme_id
+    3.times do |index|
       assert @room.vote?
-      end_phase
-      assert @room.reveal?
-      assert_equal seen.last, @room.current_meme_id
-      assert_in_delta 4, @room.phase_deadline_at - @room.updated_at, 0.5
+      assert_equal index, @room.current_meme.position
+      seen << @room.current_meme_id
       end_phase
     end
 
     assert_equal memes.map(&:id).sort, seen.sort
     assert @room.standings?
+    assert_nil @room.current_meme_id
     end_phase
     assert @room.captioning?
     assert_equal 2, @room.current_round_number
@@ -109,7 +107,8 @@ class RoomVotingTest < ActiveSupport::TestCase
     assert_enqueued_with(job: PhaseDeadlineJob, args: [@room.id, 2])
     travel_to(@room.phase_deadline_at + 2.seconds) { PhaseDeadlineJob.perform_now(@room.id, 2) }
 
-    assert @room.reload.reveal?
+    assert @room.reload.vote?
+    assert_equal 1, @room.current_meme.position
   end
 
   test 'a Player votes on someone elses Meme' do
@@ -136,11 +135,14 @@ class RoomVotingTest < ActiveSupport::TestCase
     assert_equal 1, meme.votes.count
   end
 
-  test 'a Vote is rejected outside the vote phase' do
+  test 'a Vote on a Meme whose vote has closed is rejected, and so is any Vote in the Round results' do
     submit_memes(@room, 'ada', 'bob', 'cy')
     meme = current_meme
     voter = voter_other_than(meme)
     end_phase
+    rejected_with('That is not the Meme being voted on') { vote(voter, meme:) }
+    2.times { end_phase }
+    assert @room.standings?
     rejected_with('Voting is closed') { vote(voter, meme:) }
   end
 
@@ -201,7 +203,7 @@ class RoomVotingTest < ActiveSupport::TestCase
 
     end_phase
     late = (%w[ada bob cy] - [maker_token(meme), voter]).first
-    rejected_with('Voting is closed') { vote(late, 'buddy', meme:) }
+    rejected_with('That is not the Meme being voted on') { vote(late, 'buddy', meme:) }
     assert_equal 1, meme.votes.count
   end
 
@@ -253,7 +255,7 @@ class RoomVotingTest < ActiveSupport::TestCase
     spender = voter_other_than(meme)
     idle = (%w[ada bob cy] - [maker_token(meme), spender]).first
     vote(spender, 'buddy')
-    end_phase while @room.vote? || @room.reveal? || @room.standings?
+    end_phase while @room.vote? || @room.standings?
 
     assert @room.captioning?
     assert_equal 1, buddies_left(spender)
@@ -288,5 +290,68 @@ class RoomVotingTest < ActiveSupport::TestCase
     assert_includes buddy.text, 'Buddy ×1'
     assert_equal 'true', buddy['aria-pressed']
     assert(controls.css('button').all? { |b| b['disabled'] })
+  end
+
+  # Plays Rounds 1 and 2 with no Memes and starts Round 3's vote with every Player's Meme.
+  def reach_round_three_vote
+    4.times { end_phase }
+    submit_memes(@room, 'ada', 'bob', 'cy')
+    assert @room.reload.vote?
+    assert_equal 3, @room.current_round_number
+  end
+
+  def controls_for(player)
+    html = ApplicationController.render(partial: 'votes/controls', locals: { room: @room.reload, player: })
+    Nokogiri::HTML.fragment(html)
+  end
+
+  def spend_all_buddies(token) = @room.game_player_for(@room.player_for(token)).update!(buddies_left: 0)
+
+  test 'Meme Buddy Redux is on offer only on the last Meme of the Game, and only once a voter has no Buddies' do
+    reach_round_three_vote
+    2.times do
+      voter = voter_other_than(current_meme)
+      spend_all_buddies(voter)
+      assert_not @room.final_meme?
+      rejected_with('Meme Buddy Redux is not on offer') { vote(voter, 'redux') }
+      end_phase
+    end
+
+    assert @room.final_meme?
+    voter, rich = %w[ada bob cy] - [maker_token(current_meme)]
+    spend_all_buddies(voter)
+    @room.game_player_for(@room.player_for(rich)).update!(buddies_left: 1)
+    rejected_with('Meme Buddy Redux is not on offer') { vote(rich, 'redux') }
+    assert vote(voter, 'redux')
+    assert_equal 'redux', @room.vote_by(@room.player_for(voter)).kind
+  end
+
+  test 'Meme Buddy Redux is never offered before Round 3' do
+    submit_memes(@room, 'ada', 'bob', 'cy')
+    2.times { end_phase }
+    assert_equal 2, current_meme.position
+    voter = voter_other_than(current_meme)
+    spend_all_buddies(voter)
+
+    assert_not @room.final_meme?
+    rejected_with('Meme Buddy Redux is not on offer') { vote(voter, 'redux') }
+  end
+
+  test 'the last Meme shows a Redux button instead of the Buddy to a voter out of Buddies, and a Buddy otherwise' do
+    reach_round_three_vote
+    2.times { end_phase }
+    voter, rich = (%w[ada bob cy] - [maker_token(current_meme)]).map { |t| @room.player_for(t) }
+    spend_all_buddies(voter.browser_token)
+
+    assert controls_for(voter).at_css("button[value='redux']")
+    assert_nil controls_for(voter).at_css("button[value='buddy']")
+    assert controls_for(voter).at_css('#redux_hint')
+    assert_nil controls_for(rich).at_css("button[value='redux']")
+    assert controls_for(rich).at_css("button[value='buddy']")
+
+    vote(voter.browser_token, 'redux')
+    pressed = controls_for(voter).at_css("button[value='redux']")
+    assert_equal 'true', pressed['aria-pressed']
+    assert_nil controls_for(voter).at_css('#redux_hint')
   end
 end

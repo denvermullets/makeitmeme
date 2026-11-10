@@ -85,7 +85,7 @@ class RoomUploadTest < ActionDispatch::IntegrationTest
   end
 
   # MEME-110: mid-Round the Upload page and new uploads send the Player back to the Room.
-  %w[captioning vote reveal standings].each do |phase|
+  %w[captioning vote standings].each do |phase|
     test "in #{phase} the Upload page redirects to the Room" do
       @room.update!(phase:)
       @bob.get upload_path(code: @room.code)

@@ -44,7 +44,6 @@ class PhaseBroadcastTest < ActiveSupport::TestCase
     change_phase('play again') { @room.play_again(by: @host) }
 
     assert_includes seen, 'vote'
-    assert_includes seen, 'reveal'
     assert_includes seen, 'standings'
     assert_includes seen, 'scoreboard'
   end

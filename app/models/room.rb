@@ -8,7 +8,7 @@ class Room < ApplicationRecord
   MIN_DEALABLE_TEMPLATES = 10
   START_GATE_REASON = "Turn on Packs with at least #{MIN_DEALABLE_TEMPLATES} Templates".freeze
 
-  enum :phase, { waiting: 'waiting', captioning: 'captioning', vote: 'vote', reveal: 'reveal',
+  enum :phase, { waiting: 'waiting', captioning: 'captioning', vote: 'vote',
                  standings: 'standings', scoreboard: 'scoreboard' }, default: :waiting
 
   include Rejectable

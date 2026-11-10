@@ -91,8 +91,16 @@ One Player's verdict on another Player's Meme: up, meh, or down.
 _Avoid_: Rating, score, reaction
 
 **Buddy**:
-A limited token a Player spends instead of an up Vote to mark a Meme as exceptional, worth more points.
+A limited token a Player spends instead of an up Vote to mark a Meme as exceptional, worth more points. Each one still unspent when the Game's last Meme has been voted on costs its holder points.
 _Avoid_: Meme Buddy, super-vote, boost, star
+
+**Meme Buddy Redux**:
+A free Buddy worth double, offered only on the last Meme of the Game and only to a Player with no Buddies left, for when that Meme deserved the Buddy they had already spent.
+_Avoid_: Redux Buddy, mega Buddy, bonus vote
+
+**Missed Vote**:
+A Meme a Player could vote on but didn't when its vote closed; it counts as a meh for the maker and costs the Player who missed it a point, Away or not.
+_Avoid_: Skip, abstain, no-vote
 
 **Meme of the Round**:
 The highest-scoring Meme of a Round, highlighted for honour only; ties share the title.
@@ -103,8 +111,8 @@ How long Captioning lasts: Quick 60s, Normal 90s (the default) or Chill 150s. Th
 _Avoid_: Timer, difficulty, speed
 
 **Standings**:
-Every Player's running total shown between Rounds, before the Game has ended.
-_Avoid_: Scoreboard (that is the final one), leaderboard
+The results screen at the end of every Round: each of the Round's Memes with its score (hidden until then), the Meme of the Round, and every Player's running total with their penalties. After the third Round it leads to the Scoreboard.
+_Avoid_: Scoreboard (that is the final one), leaderboard, reveal
 
 **Scoreboard**:
 The final standings of every Player once a Game's third Round ends.

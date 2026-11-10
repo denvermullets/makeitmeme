@@ -1,6 +1,7 @@
 require 'test_helper'
 
-# Standings: a 10s shared screen between Rounds 1-2 and the next Captioning, even after a Round with no Memes.
+# Standings: the Round's 60s shared results screen after every Round, even one with no Memes; after Round 3 it
+# leads to the Scoreboard.
 class RoomStandingsTest < ActiveSupport::TestCase
   include ActiveJob::TestHelper
 
@@ -18,15 +19,15 @@ class RoomStandingsTest < ActiveSupport::TestCase
 
   def play_round_with_memes
     submit_memes(@room, 'ada', 'bob', 'cy')
-    6.times { end_phase }
+    3.times { end_phase }
   end
 
-  test 'after the last reveal of Round 1 the Room is in Standings for 10s, then Round 2 starts with fresh Hands' do
+  test 'after the last vote of Round 1 the Room is in Standings for 60s, then Round 2 starts with fresh Hands' do
     play_round_with_memes
 
     assert @room.standings?
     assert_equal 1, @room.current_round_number
-    assert_in_delta 10, @room.phase_deadline_at - @room.updated_at, 0.5
+    assert_in_delta 60, @room.phase_deadline_at - @room.updated_at, 0.5
 
     end_phase
     assert @room.captioning?
@@ -34,15 +35,14 @@ class RoomStandingsTest < ActiveSupport::TestCase
     assert_equal 10, @room.current_game.rounds.find_by!(number: 2).hands.first.template_ids.size
   end
 
-  test 'the same happens after Round 2, and Round 3 goes straight to the Scoreboard' do
-    2.times do
+  test 'the same happens after Rounds 2 and 3, and Round 3 results lead to the Scoreboard' do
+    3.times do |index|
       play_round_with_memes
       assert @room.standings?
+      assert_equal index + 1, @room.current_round_number
       end_phase
     end
-    assert_equal 3, @room.current_round_number
 
-    play_round_with_memes
     assert @room.scoreboard?
   end
 

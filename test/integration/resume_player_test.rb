@@ -66,12 +66,12 @@ class ResumePlayerTest < ActionDispatch::IntegrationTest
     session.assert_select "#vote_controls button[value='down'][aria-pressed='true']"
   end
 
-  test 'Reveal: the resumed page shows the Meme and its score' do
+  test 'Standings: the resumed page shows the Round results with each Memes score' do
     start_game
     submit_memes(@room, *tokens_by_nickname.values)
-    travel_to(@room.reload.phase_deadline_at + 2.seconds) { @room.advance! }
-    assert @room.reload.reveal?
-    resume('Cy').assert_select '#reveal #reveal_points'
+    3.times { travel_to(@room.reload.phase_deadline_at + 2.seconds) { @room.advance! } }
+    assert @room.reload.standings?
+    resume('Cy').assert_select '#standings #round_results [data-meme-points]', 3
   end
 
   test 'Scoreboard: the resumed page shows the final totals' do

@@ -13,9 +13,10 @@ class RecapTest < ActionDispatch::IntegrationTest
   end
 
   def finish_game
-    @game.game_players.find_by(nickname: 'Cy').update!(total: 7)
-    @game.game_players.find_by(nickname: 'Ada').update!(total: 3)
-    5.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
+    @game.game_players.find_by(nickname: 'Cy').update!(total: 7, buddies_left: 0)
+    @game.game_players.find_by(nickname: 'Ada').update!(total: 3, buddies_left: 0)
+    @game.game_players.find_by(nickname: 'Bob').update!(buddies_left: 0)
+    6.times { travel_to(@room.reload.phase_deadline_at + 1.second) { @room.advance! } }
     @game.reload
   end
 

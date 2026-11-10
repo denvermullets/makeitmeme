@@ -6,8 +6,6 @@
     <%= render 'rooms/captioning', room: room, player: player %>
   <% elsif room.vote? %>
     <%= render 'rooms/vote', room: room, player: player %>
-  <% elsif room.reveal? %>
-    <%= render 'rooms/reveal', room: room %>
   <% elsif room.standings? %>
     <%= render 'rooms/standings', room: room %>
   <% elsif room.scoreboard? %>
