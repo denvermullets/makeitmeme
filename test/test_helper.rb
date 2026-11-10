@@ -33,7 +33,8 @@ module ActiveSupport
 
     # Start an Upload draft through the Upload operation from a test fixture image (`file: nil` sends no file).
     def start_upload_draft(token: 'tok', nickname: 'Pat', file: 'drake.png', room_code: nil)
-      upload = file && Rack::Test::UploadedFile.new(file_fixture(file), { '.jpg' => 'image/jpeg', '.webp' => 'image/webp' }.fetch(File.extname(file), 'image/png'))
+      types = { '.jpg' => 'image/jpeg', '.webp' => 'image/webp' }
+      upload = file && Rack::Test::UploadedFile.new(file_fixture(file), types.fetch(File.extname(file), 'image/png'))
       Upload.start(file: upload, browser_token: token, nickname:, room_code:)
     end
 

@@ -203,7 +203,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_10_150000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["browser_token"], name: "index_upload_drafts_on_browser_token"
-    t.index ["created_at"], name: "index_upload_drafts_on_created_at"
+    t.index ["updated_at"], name: "index_upload_drafts_on_updated_at"
   end
 
   create_table "votes", force: :cascade do |t|

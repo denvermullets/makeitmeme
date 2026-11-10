@@ -12,7 +12,7 @@ class UploadTest < ActiveSupport::TestCase
     assert_predicate draft.image, :attached?
     assert_equal 'image/jpeg', draft.image.content_type
     assert_equal 2, draft.text_boxes.size
-    assert_equal [0.0, 0.8], draft.text_boxes.map { |box| box['y'] }
+    assert_equal([0.0, 0.8], draft.text_boxes.map { |box| box['y'] })
     assert_equal TextBoxes.check(draft.text_boxes).boxes, draft.text_boxes
   end
 
@@ -182,7 +182,8 @@ class UploadTest < ActiveSupport::TestCase
   end
 
   test 'a JPEG with GPS and other EXIF metadata is stored with none of it' do
-    assert_includes stored_image(Vips::Image.new_from_file(file_fixture('rotated_gps.jpg').to_s)).get_fields, 'exif-ifd3-GPSLatitude'
+    assert_includes stored_image(Vips::Image.new_from_file(file_fixture('rotated_gps.jpg').to_s)).get_fields,
+                    'exif-ifd3-GPSLatitude'
 
     stored = stored_image(start_upload_draft(file: 'rotated_gps.jpg'))
 
@@ -195,9 +196,11 @@ class UploadTest < ActiveSupport::TestCase
 
     assert_equal [2048, 1024], [jpeg.width, jpeg.height]
     assert_equal [2048, 1024], [png.width, png.height]
-    assert_equal %w[image/jpeg image/png], UploadDraft.order(:id).map { |d| d.image.content_type }
-    assert_equal %w[jpegload_buffer pngload_buffer],
-                 UploadDraft.order(:id).map { |d| Vips::Image.new_from_buffer(d.image.download, '').get('vips-loader') }
+    assert_equal(%w[image/jpeg image/png], UploadDraft.order(:id).map { |d| d.image.content_type })
+    assert_equal(%w[jpegload_buffer pngload_buffer],
+                 UploadDraft.order(:id).map do |d|
+                   Vips::Image.new_from_buffer(d.image.download, '').get('vips-loader')
+                 end)
   end
 
   test 'a smaller image keeps its size' do

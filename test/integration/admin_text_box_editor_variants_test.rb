@@ -6,8 +6,9 @@ class AdminTextBoxEditorVariantsTest < ActiveSupport::TestCase
 
   def render_editor(**locals)
     html = ApplicationController.render(partial: 'admin/templates/text_box_editor',
-                                        locals: { save_url: '/save/here', image_url: '/img/here.png', boxes: @template.text_boxes,
-                                                  name: @template.name, key: @template.id, **locals })
+                                        locals: { save_url: '/save/here', image_url: '/img/here.png',
+                                                  boxes: @template.text_boxes, name: @template.name,
+                                                  key: @template.id, **locals })
     Nokogiri::HTML.fragment(html)
   end
 
@@ -40,10 +41,11 @@ class AdminTextBoxEditorVariantsTest < ActiveSupport::TestCase
     assert_nil editor.at_css('[data-text-box-editor-target=rowTemplate]')
   end
 
-  test 'phone is one column: stage, selected-box toolbar, add and reset, sample switch, in that order, with no move buttons' do
+  test 'phone is one column: stage, selected-box toolbar, add and reset, sample switch, in order, no move buttons' do
     editor = render_editor(controls: :phone)
     assert_equal 'phone', editor.at_css('[data-controller=text-box-editor]')['data-controls']
-    order = ['[data-text-box-editor-target=stage]', '.tbe-selected-toolbar', '.tbe-actions', '.tbe-preview-switch'].map do |css|
+    parts = ['[data-text-box-editor-target=stage]', '.tbe-selected-toolbar', '.tbe-actions', '.tbe-preview-switch']
+    order = parts.map do |css|
       node = editor.at_css(css)
       assert node, "missing #{css}"
       editor.to_html.index(node.to_html)
@@ -66,7 +68,8 @@ class AdminTextBoxEditorVariantsTest < ActiveSupport::TestCase
     assert_equal 'Exact values', details.at_css('summary').text.strip
     assert details.at_css('[data-text-box-editor-target=rows]')
     assert editor.at_css('template[data-text-box-editor-target=rowTemplate] [data-field=angle]')
-    assert_operator editor.to_html.index(details.to_html), :>, editor.to_html.index(editor.at_css('.tbe-preview-switch').to_html)
+    switch = editor.at_css('.tbe-preview-switch')
+    assert_operator editor.to_html.index(details.to_html), :>, editor.to_html.index(switch.to_html)
   end
 
   test 'full and compact have no Exact values disclosure' do

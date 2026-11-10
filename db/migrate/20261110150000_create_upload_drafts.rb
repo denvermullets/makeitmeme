@@ -10,7 +10,7 @@ class CreateUploadDrafts < ActiveRecord::Migration[8.1]
       t.timestamps
     end
     add_index :upload_drafts, :browser_token
-    add_index :upload_drafts, :created_at
+    add_index :upload_drafts, :updated_at
 
     add_column :templates, :original_checksum, :string
     add_column :templates, :uploader_nickname, :string

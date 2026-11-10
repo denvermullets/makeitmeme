@@ -19,7 +19,7 @@ class UploadDraftsController < ApplicationController
   end
 
   def add
-    Upload.add_to_library(@draft)
+    Upload.add_to_library(@draft, name: params.dig(:template, :name))
     redirect_to uploaded_path(code: @draft.room_code.presence)
   rescue ActiveRecord::RecordInvalid => e
     @errors = e.record.errors.full_messages
