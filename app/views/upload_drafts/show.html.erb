@@ -26,4 +26,5 @@
   <% if @draft.room_code.present? %>
     <p class="mt-4"><%= link_to "Back to Room", room_path(@draft.room_code), class: "underline" %></p>
   <% end %>
+  <p class="mt-4"><%= link_to "Start over with a new image", upload_path(new: 1, code: @draft.room_code.presence), class: "underline" %></p>
 </main>

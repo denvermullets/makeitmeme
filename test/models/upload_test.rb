@@ -190,8 +190,8 @@ class UploadTest < ActiveSupport::TestCase
   end
 
   test 'an image over 2048px is shrunk to 2048 on its longest side keeping its aspect ratio and format' do
-    jpeg = stored_image(start_upload_draft(file: 'large.jpg'))
-    png = stored_image(start_upload_draft(file: 'large.png'))
+    jpeg = stored_image(start_upload_draft(token: 'a', file: 'large.jpg'))
+    png = stored_image(start_upload_draft(token: 'b', file: 'large.png'))
 
     assert_equal [2048, 1024], [jpeg.width, jpeg.height]
     assert_equal [2048, 1024], [png.width, png.height]

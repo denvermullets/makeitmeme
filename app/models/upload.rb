@@ -20,6 +20,7 @@ module Upload
     screen(draft, bytes, file)
     draft.original_checksum = Digest::SHA256.hexdigest(bytes)
     store_image(draft, prepare_image(bytes, file), file)
+    UploadDraft.where(browser_token:).where.not(id: draft.id).find_each(&:destroy) # one open draft per browser
     draft
   end
 
