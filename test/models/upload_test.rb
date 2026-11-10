@@ -135,4 +135,41 @@ class UploadTest < ActiveSupport::TestCase
     assert_empty Template.player_uploads
     assert_empty Pack.dealable_counts
   end
+
+  def library_ready(draft, name: 'Drake')
+    Upload.save_text_boxes(draft, TextBoxes::TOP_AND_BOTTOM, name:)
+    draft.reload
+  end
+
+  test 'starting a draft of bytes already in the library is refused and no draft is created' do
+    Upload.add_to_library(library_ready(start_upload_draft(token: 'a')))
+
+    error = assert_raises(ActiveRecord::RecordInvalid) { start_upload_draft(token: 'b') }
+    assert_includes error.record.errors.full_messages, 'This one\'s already in the library'
+    assert_equal 0, UploadDraft.count
+  end
+
+  test 'of two drafts of the same image the second Add to library is refused and its draft is kept' do
+    first = library_ready(start_upload_draft(token: 'a'))
+    second = library_ready(start_upload_draft(token: 'b'))
+    Upload.add_to_library(first)
+
+    error = assert_raises(ActiveRecord::RecordInvalid) { Upload.add_to_library(second) }
+    assert_includes error.record.errors.full_messages, 'This one\'s already in the library'
+    assert UploadDraft.exists?(second.id)
+    assert_equal 1, Template.where(source_kind: 'upload').count
+  end
+
+  test 'deleting the Template frees the image to be uploaded and added again' do
+    Upload.add_to_library(library_ready(start_upload_draft(token: 'a'))).destroy!
+
+    template = Upload.add_to_library(library_ready(start_upload_draft(token: 'b')))
+    assert_predicate template, :persisted?
+  end
+
+  test 'the same picture with different bytes is not blocked' do
+    Upload.add_to_library(library_ready(start_upload_draft(token: 'a', file: 'drake.png')))
+
+    assert_predicate start_upload_draft(token: 'b', file: 'photo.jpg'), :persisted?
+  end
 end
