@@ -6,6 +6,7 @@ export const MAX_SIDE = 2048
 export const MIN_FONT = 8
 export const LINE_HEIGHT = 1.1
 export const FONT_FAMILY = 'Anton'
+export const FONT_STACK = `${FONT_FAMILY}, Impact, 'Arial Black', sans-serif`
 
 export function canvasSize(naturalWidth, naturalHeight, maxSide = MAX_SIDE) {
   const scale = Math.min(1, maxSide / Math.max(naturalWidth, naturalHeight))
@@ -86,18 +87,18 @@ export function render(ctx, template, boxes, captions, { outlines = false } = {}
       ctx.strokeStyle = 'rgba(255,230,0,.9)'
       ctx.strokeRect(-g.w / 2, -g.h / 2, g.w, g.h)
       ctx.fillStyle = 'rgba(255,230,0,.9)'
-      ctx.font = `${Math.min(g.h * 0.6, 48)}px ${FONT_FAMILY}`
+      ctx.font = `${Math.min(g.h * 0.6, 48)}px ${FONT_STACK}`
       ctx.fillText(String(i + 1), 0, 0)
     }
     if (text) {
       const stroked = box.font === 'thick'
       const measure = (s, size) => {
-        ctx.font = `${size}px ${FONT_FAMILY}`
+        ctx.font = `${size}px ${FONT_STACK}`
         return ctx.measureText(s).width
       }
       const { size, lines, overflow = false } = fitText(measure, text, g.w, g.h, stroked)
       fit = { size, overflow, atMinimum: size <= MIN_FONT }
-      ctx.font = `${size}px ${FONT_FAMILY}`
+      ctx.font = `${size}px ${FONT_STACK}`
       ctx.lineJoin = 'round'
       ctx.lineWidth = size / 8
       ctx.strokeStyle = box.color === 'black' ? '#fff' : '#000'
