@@ -18,7 +18,7 @@
 
   <dl class="inspector-meta">
     <dt>Source</dt>
-    <dd data-inspector-source><%= template.upload? ? 'Player upload' : 'memegen import' %></dd>
+    <dd data-inspector-source><%= template.source_line %></dd>
     <dt>Used in</dt>
     <dd data-inspector-uses><%= pluralize(template.memes.count, 'Meme') %></dd>
     <dt>Reviewed</dt>

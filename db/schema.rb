@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_10_140000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_10_150000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -181,12 +181,29 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_10_140000) do
     t.jsonb "text_boxes", default: [], null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "pack_id", null: false
     t.string "source_kind", default: "memegen", null: false
     t.datetime "reviewed_at"
     t.datetime "hidden_at"
-    t.bigint "pack_id", null: false
+    t.string "original_checksum"
+    t.string "uploader_nickname"
+    t.string "uploader_room_code"
     t.index ["memegen_id"], name: "index_templates_on_memegen_id", unique: true
+    t.index ["original_checksum"], name: "index_templates_on_original_checksum", unique: true, where: "(original_checksum IS NOT NULL)"
     t.index ["pack_id"], name: "index_templates_on_pack_id"
+  end
+
+  create_table "upload_drafts", force: :cascade do |t|
+    t.string "browser_token", null: false
+    t.string "credit_nickname", null: false
+    t.string "room_code"
+    t.string "original_checksum", null: false
+    t.string "name"
+    t.jsonb "text_boxes", default: [], null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["browser_token"], name: "index_upload_drafts_on_browser_token"
+    t.index ["created_at"], name: "index_upload_drafts_on_created_at"
   end
 
   create_table "votes", force: :cascade do |t|
