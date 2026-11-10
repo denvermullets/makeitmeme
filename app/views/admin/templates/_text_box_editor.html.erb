@@ -63,6 +63,9 @@
     <button type="button" data-action="text-box-editor#resetBoxes">Reset to top &amp; bottom</button>
   </div>
 
+  <% end %>
+
+  <% if full || phone %>
   <%# Rows are built from the controller's boxes (renderRows) using this template. %>
   <% fields = [['x', 'X', 'percent'], ['y', 'Y', 'percent'], ['w', 'Width', 'percent'], ['h', 'Height', 'percent'], ['angle', 'Angle', 'degrees']] %>
   <template data-text-box-editor-target="rowTemplate">
@@ -85,6 +88,13 @@
       </label>
     </fieldset>
   </template>
+  <% if phone %>
+  <details class="tbe-exact">
+    <summary>Exact values</summary>
+    <div class="tbe-rows" data-text-box-editor-target="rows"></div>
+  </details>
+  <% else %>
   <div class="tbe-rows" data-text-box-editor-target="rows"></div>
+  <% end %>
   <% end %>
 </section>
