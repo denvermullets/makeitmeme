@@ -20,7 +20,7 @@ class UploadDraftsController < ApplicationController
 
   def add
     Upload.add_to_library(@draft)
-    redirect_to uploaded_path
+    redirect_to uploaded_path(code: @draft.room_code.presence)
   rescue ActiveRecord::RecordInvalid => e
     @errors = e.record.errors.full_messages
     render :show, status: :unprocessable_content

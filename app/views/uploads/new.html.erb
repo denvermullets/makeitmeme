@@ -9,12 +9,22 @@
   <% end %>
 
   <%= form_with url: upload_path, multipart: true, class: "flex flex-col gap-2" do |f| %>
-    <%= f.label :nickname, "Credit nickname" %>
-    <%= f.text_field :nickname, value: @nickname, maxlength: Player::NICKNAME_MAX, required: true, autofocus: true, class: "border p-2" %>
+    <% if params[:code].present? %>
+      <%= f.hidden_field :code, value: params[:code] %>
+    <% else %>
+      <%= f.label :nickname, "Credit nickname" %>
+      <%= f.text_field :nickname, value: @nickname, maxlength: Player::NICKNAME_MAX, required: true, autofocus: true, class: "border p-2" %>
+    <% end %>
     <%= f.label :image, "Picture" %>
     <%= f.file_field :image, accept: "image/jpeg,image/png", required: true, class: "border p-2" %>
     <%= f.submit "Upload", class: "border p-2 font-bold" %>
   <% end %>
 
-  <p class="mt-6"><%= link_to "Back home", root_path, class: "underline" %></p>
+  <p class="mt-6">
+    <% if params[:code].present? %>
+      <%= link_to "Back to Room", room_path(params[:code]), class: "underline" %>
+    <% else %>
+      <%= link_to "Back home", root_path, class: "underline" %>
+    <% end %>
+  </p>
 </main>

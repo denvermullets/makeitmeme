@@ -26,5 +26,7 @@
 
   <%= render 'rooms/play_again_gate', room:, player: %>
 
+  <p class="mt-4"><%= link_to 'Upload a Template', upload_path(code: room.code), class: 'underline' %></p>
+
   <%= button_to 'Leave Room', leave_room_path(room.code), class: 'border p-2 mt-4' %>
 </div>
