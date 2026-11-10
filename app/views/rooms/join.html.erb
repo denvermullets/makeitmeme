@@ -1,0 +1,21 @@
+<%# Reached through a shared Room link: the code comes from the URL, so only a nickname is asked for. %>
+<main class="p-4 max-w-sm mx-auto">
+  <h1 class="text-2xl font-bold mb-4">Make it meme</h1>
+  <p>Joining Room</p>
+  <p class="text-5xl font-bold tracking-widest mb-4" data-room-code><%= current_room.code %></p>
+
+  <% if @errors&.any? %>
+    <ul class="text-danger mb-2">
+      <% @errors.each do |message| %><li><%= message %></li><% end %>
+    </ul>
+  <% end %>
+
+  <%= form_with url: joins_path, class: "flex flex-col gap-2" do |f| %>
+    <%= f.hidden_field :code, value: current_room.code %>
+    <%= f.label :nickname, "Nickname" %>
+    <%= f.text_field :nickname, value: @nickname, maxlength: Player::NICKNAME_MAX, required: true, autofocus: true, class: "border p-2" %>
+    <%= f.submit "Join", class: "btn-primary" %>
+  <% end %>
+
+  <p class="mt-6"><%= link_to "Back to home", root_path, class: "underline" %></p>
+</main>

@@ -23,7 +23,7 @@ class KickPlayerTest < ActionDispatch::IntegrationTest
     @host.assert_redirected_to room_path(@room.code)
 
     @bob.get room_path(@room.code)
-    @bob.assert_redirected_to root_path
+    @bob.assert_select "form[action='#{joins_path}'] input[name=code][value='#{@room.code}']"
     @bob.post joins_path, params: { code: @room.code, nickname: 'Bob' }
     @bob.assert_redirected_to room_path(@room.code)
   end

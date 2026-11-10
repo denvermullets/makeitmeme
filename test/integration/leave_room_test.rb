@@ -20,7 +20,7 @@ class LeaveRoomTest < ActionDispatch::IntegrationTest
     @bob.assert_redirected_to root_path
     assert_equal ['Ada'], @room.players.pluck(:nickname)
     @bob.get room_path(@room.code)
-    @bob.assert_redirected_to root_path
+    @bob.assert_select "form[action='#{joins_path}'] input[name=code][value='#{@room.code}']"
   end
 
   test 'the server rejects Leave mid-Game and no Leave is shown' do

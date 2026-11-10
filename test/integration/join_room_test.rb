@@ -54,6 +54,34 @@ class JoinRoomTest < ActionDispatch::IntegrationTest
     assert_select 'li', text: /Nickname can't be blank/
   end
 
+  test 'the Room page offers its shareable link' do
+    post joins_path, params: { code: @room.code, nickname: 'Bob' }
+    follow_redirect!
+
+    assert_select "#invite_link[data-share-url-value='#{room_path(@room.code)}']"
+  end
+
+  test 'opening the shared link asks only for a nickname, then joins' do
+    get room_path(@room.code)
+
+    assert_response :success
+    assert_select "form[action='#{joins_path}'] input[name=code][type=hidden][value='#{@room.code}']"
+    assert_select "form[action='#{joins_path}'] input[name=nickname]"
+
+    post joins_path, params: { code: @room.code, nickname: 'Bob' }
+    assert_redirected_to room_path(@room.code)
+    follow_redirect!
+    assert_select '#players li', text: /Bob/
+  end
+
+  test 'a rejected nickname from the shared link stays on that Room\'s form' do
+    post joins_path, params: { code: @room.code, nickname: 'ada' }
+
+    assert_response :unprocessable_content
+    assert_select 'li', text: /That nickname is taken/
+    assert_select "form[action='#{joins_path}'] input[name=code][type=hidden][value='#{@room.code}']"
+  end
+
   test 'the Waiting page subscribes to the Room stream' do
     post joins_path, params: { code: @room.code, nickname: 'Bob' }
     follow_redirect!

@@ -1,0 +1,8 @@
+<%# The Room's shareable link: opening it asks only for a nickname, then joins. share_controller.js makes the path absolute. %>
+<% path = room_path(room.code) %>
+<div id="invite_link" data-controller="share" data-share-url-value="<%= path %>" data-share-title-value="Join my Make It Meme room">
+  <p class="mt-2">Invite link</p>
+  <a href="<%= path %>" data-share-target="link" class="underline break-all"><%= path %></a>
+  <button type="button" data-action="share#share" data-share-target="button" class="border p-2">Share</button>
+  <span data-share-target="status" role="status"></span>
+</div>

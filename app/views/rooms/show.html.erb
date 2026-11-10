@@ -1,6 +1,7 @@
 <main class="p-4 max-w-sm mx-auto">
   <p>Room code</p>
   <p class="text-5xl font-bold tracking-widest" data-room-code><%= current_room.code %></p>
+  <%= render 'rooms/invite_link', room: current_room %>
 
   <%# Shared state for everyone in the Room, and a private stream that only this Player is given. %>
   <%= turbo_stream_from current_room %>

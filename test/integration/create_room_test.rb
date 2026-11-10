@@ -34,7 +34,8 @@ class CreateRoomTest < ActionDispatch::IntegrationTest
     reset! # a fresh browser: no cookie
     get room_path(code)
 
-    assert_redirected_to root_path
+    assert_select '#players', count: 0
+    assert_select "form[action='#{joins_path}'] input[name=code][type=hidden][value='#{code}']"
   end
 
   test 'a cookie from one Room does not give a seat in another' do
@@ -43,7 +44,8 @@ class CreateRoomTest < ActionDispatch::IntegrationTest
 
     get room_path(other.code)
 
-    assert_redirected_to root_path
+    assert_select '#players', count: 0
+    assert_select "form[action='#{joins_path}'] input[name=code][value='#{other.code}']"
   end
 
   test 'a bad nickname re-shows the form with an error and makes no Room' do

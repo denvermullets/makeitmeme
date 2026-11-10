@@ -20,6 +20,7 @@ class JoinsController < ApplicationController
     @code = params[:code]
     @nickname = params[:nickname]
     @errors = errors
-    render 'rooms/new', status: :unprocessable_content
+    # Came from a live Room's link: stay on its nickname form rather than the home page.
+    render(current_room ? 'rooms/join' : 'rooms/new', status: :unprocessable_content)
   end
 end

@@ -25,5 +25,6 @@ class RoomsController < ApplicationController
     render :ended, status: :gone if !current_room && Room.expired_by_code(params[:code])
   end
 
-  def deny_player = deny_player_with_redirect
+  # A browser without a seat followed the Room's shared link: ask for a nickname, then join.
+  def deny_player = render(:join)
 end
