@@ -3,7 +3,8 @@
 class UploadsController < ApplicationController
   include RoomSession
 
-  before_action :render_ended, :require_room, :require_player, if: :room_context?, only: %i[new create]
+  before_action :render_ended, :require_room, :require_player, :require_between_games,
+                if: :room_context?, only: %i[new create]
 
   def new; end
 
@@ -29,6 +30,11 @@ class UploadsController < ApplicationController
 
   def render_ended
     render 'rooms/ended', status: :gone if !current_room && Room.expired_by_code(params[:code])
+  end
+
+  # Mid-Round the Player belongs in the Room; only Waiting and Scoreboard allow a new upload.
+  def require_between_games
+    redirect_to room_path(current_room.code) unless current_room.waiting? || current_room.scoreboard?
   end
 
   def deny_player = deny_player_with_redirect

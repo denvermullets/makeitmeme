@@ -83,4 +83,39 @@ class RoomUploadTest < ActionDispatch::IntegrationTest
     get admin_root_path(selected: Template.last.id)
     assert_select '[data-inspector-source]', "Player upload by Bob in Room #{@room.code}"
   end
+
+  # MEME-110: mid-Round the Upload page and new uploads send the Player back to the Room.
+  %w[captioning vote reveal standings].each do |phase|
+    test "in #{phase} the Upload page redirects to the Room" do
+      @room.update!(phase:)
+      @bob.get upload_path(code: @room.code)
+      @bob.assert_redirected_to room_path(@room.code)
+    end
+
+    test "in #{phase} a new upload is refused with a redirect and creates no draft" do
+      @room.update!(phase:)
+      upload_from_room(@bob)
+      @bob.assert_redirected_to room_path(@room.code)
+      assert_equal 0, UploadDraft.count
+    end
+  end
+
+  test 'in Waiting and Scoreboard the Upload page opens' do
+    %w[waiting scoreboard].each do |phase|
+      @room.update!(phase:)
+      @bob.get upload_path(code: @room.code)
+      @bob.assert_response :success
+    end
+  end
+
+  test 'an existing draft can still autosave and Add to library mid-Round' do
+    upload_from_room(@bob)
+    draft = UploadDraft.last
+    @room.update!(phase: :captioning)
+
+    @bob.patch upload_draft_path(draft), params: { text_boxes: TextBoxes::TOP_AND_BOTTOM, name: 'Mine' }, as: :json
+    @bob.assert_response :success
+    @bob.post add_upload_draft_path(draft)
+    assert_equal 'Mine', Template.last.name
+  end
 end
