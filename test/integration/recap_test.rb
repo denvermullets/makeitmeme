@@ -103,7 +103,8 @@ class RecapTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select '#recap #memes_by_round section[data-round]', 2
-    assert_select '#memes_by_round section[data-round="1"] li:nth-child(1)[data-nickname="Ada"] [data-meme-points]', '-1'
+    assert_select '#memes_by_round section[data-round="1"] li:nth-child(1)[data-nickname="Ada"] [data-meme-points]',
+                  '-1'
     assert_select '#memes_by_round section[data-round="1"] li:nth-child(2)[data-nickname="Bob"] [data-meme-points]', '5'
     assert_select '#memes_by_round section[data-round="2"] li[data-nickname="Cy"] img[src*="/rails/active_storage/"]'
   end

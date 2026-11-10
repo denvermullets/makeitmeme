@@ -8,6 +8,7 @@ AllCops:
     - "node_modules/**/**"
     - "vendor/**/**"
     - "config/sorbet/*"
+    - "storage/**/*"
 
 # disable class/module comment descriptions
 Style/Documentation:

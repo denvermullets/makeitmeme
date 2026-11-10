@@ -32,8 +32,8 @@ class GameScoreboardTest < ActiveSupport::TestCase
 
     rows = @game.scoreboard.rows
 
-    assert_equal [[1, 'Ada', 5, 3], [1, 'Bob', 5, 0], [3, 'Cy', 0, 4]],
-                 rows.map { |r| [r.place, r.nickname, r.total, r.buddies_received] }
+    assert_equal([[1, 'Ada', 5, 3], [1, 'Bob', 5, 0], [3, 'Cy', 0, 4]],
+                 rows.map { |r| [r.place, r.nickname, r.total, r.buddies_received] })
   end
 
   test 'loads in a fixed number of queries and never reads Players or Templates' do

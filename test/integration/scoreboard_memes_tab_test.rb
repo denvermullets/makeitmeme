@@ -79,7 +79,8 @@ class ScoreboardMemesTabTest < ActionDispatch::IntegrationTest
 
     @bob.get room_path(@room.code)
 
-    @bob.assert_select '#memes_by_round li[data-nickname="Ada"] a[data-meme-save][download="round-2-ada.png"][href*="/rails/active_storage/blobs/proxy/"][data-controller="meme-save"][data-action="click->meme-save#save"]', text: /Save/
+    @bob.assert_select '#memes_by_round li[data-nickname="Ada"] a[data-meme-save][download="round-2-ada.png"][href*="/rails/active_storage/blobs/proxy/"][data-controller="meme-save"][data-action="click->meme-save#save"]',
+                       text: /Save/
   end
 
   test 'the download file name uses a filename-safe nickname' do
@@ -101,7 +102,9 @@ class ScoreboardMemesTabTest < ActionDispatch::IntegrationTest
   end
 
   test 'a Meme with no image has no save link' do
-    @game.game_players.find_by!(nickname: 'Ada').then { |seat| Meme.create!(round: @rounds[0], game_player: seat, position: 0, points: 0) }
+    @game.game_players.find_by!(nickname: 'Ada').then do |seat|
+      Meme.create!(round: @rounds[0], game_player: seat, position: 0, points: 0)
+    end
 
     @bob.get room_path(@room.code)
 
