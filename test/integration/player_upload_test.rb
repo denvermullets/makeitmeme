@@ -180,4 +180,57 @@ class PlayerUploadTest < ActionDispatch::IntegrationTest
 
     assert_select '[data-inspector-source]', 'Player upload by Pat in Room ABCD'
   end
+
+  test 'reopening the Upload page with an open draft shows the editor with its saved boxes and name' do
+    upload
+    patch_draft([VALID_BOX], name: 'Saved name')
+
+    get upload_path
+    assert_redirected_to upload_draft_path(draft)
+    follow_redirect!
+    assert_select '[data-text-box-editor]' do |editor|
+      assert_equal [VALID_BOX], JSON.parse(editor.first['data-text-box-editor-boxes-value']).map { |b| b.slice(*VALID_BOX.keys) }
+    end
+    assert_select 'input[name="template[name]"][value=?]', 'Saved name'
+    assert_select 'a[href=?]', upload_path(new: 1), text: /new image/i
+  end
+
+  test 'the start-over link shows the upload form even with an open draft' do
+    upload
+    get upload_path(new: 1)
+    assert_response :success
+    assert_select 'input[type=file][name=image]'
+  end
+
+  test 'a new upload replaces the existing draft and its image' do
+    upload
+    old = draft
+    old_blob_id = old.image.blob.id
+
+    perform_enqueued_jobs { upload(file: 'drake.png') }
+
+    assert_equal 1, UploadDraft.count
+    assert_not UploadDraft.exists?(old.id)
+    assert_not ActiveStorage::Blob.exists?(old_blob_id)
+  end
+
+  test 'a refused new upload leaves the existing draft untouched' do
+    upload
+    old = draft
+
+    post upload_path, params: { nickname: 'Pat' }
+
+    assert_response :unprocessable_content
+    assert_equal [old.id], UploadDraft.pluck(:id)
+    assert old.reload.image.attached?
+  end
+
+  test 'another browser opening the Upload page does not see the draft' do
+    upload
+    other = open_session
+    other.get upload_path
+
+    other.assert_response :success
+    other.assert_select 'input[type=file][name=image]'
+  end
 end

@@ -2,7 +2,10 @@
 class UploadsController < ApplicationController
   include RoomSession
 
-  def new; end
+  def new
+    open_draft = browser_token && params[:new].blank? && UploadDraft.where(browser_token:).order(:id).last
+    redirect_to upload_draft_path(open_draft) if open_draft
+  end
 
   def create
     token = browser_token || Player.new_browser_token
