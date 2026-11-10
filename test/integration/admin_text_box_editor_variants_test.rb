@@ -39,4 +39,23 @@ class AdminTextBoxEditorVariantsTest < ActiveSupport::TestCase
     assert_nil editor.at_css('[data-text-box-editor-target=rows]')
     assert_nil editor.at_css('[data-text-box-editor-target=rowTemplate]')
   end
+
+  test 'phone is one column: stage, selected-box toolbar, add and reset, sample switch, in that order, with no move or numeric rows' do
+    editor = render_editor(controls: :phone)
+    assert_equal 'phone', editor.at_css('[data-controller=text-box-editor]')['data-controls']
+    order = ['[data-text-box-editor-target=stage]', '.tbe-selected-toolbar', '.tbe-actions', '.tbe-preview-switch'].map do |css|
+      node = editor.at_css(css)
+      assert node, "missing #{css}"
+      editor.to_html.index(node.to_html)
+    end
+    assert_equal order.sort, order
+    toolbar = editor.at_css('.tbe-selected-toolbar')
+    assert toolbar.at_css('select[data-text-box-editor-target=selectedStyle]')
+    assert_includes toolbar.text, 'Duplicate'
+    assert_includes toolbar.text, 'Remove'
+    assert_includes editor.at_css('.tbe-actions').text, '+ Text Box'
+    assert_includes editor.at_css('.tbe-actions').text, 'Reset to top & bottom'
+    assert_no_match(/Move earlier|Move later/, editor.text)
+    assert_nil editor.at_css('[data-text-box-editor-target=rows]')
+  end
 end

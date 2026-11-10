@@ -12,7 +12,7 @@ const LABELS = { saving: "Saving…", saved: "Saved", error: "Couldn't save" }
 
 export default class extends Controller {
   static targets = ["row", "status", "retry", "errors", "stage", "image", "overlay", "preview", "fits",
-    "rows", "rowTemplate", "needsSelection", "removeButton", "earlierButton", "laterButton"]
+    "rows", "rowTemplate", "needsSelection", "removeButton", "selectedStyle", "earlierButton", "laterButton"]
   static values = { url: String, boxes: Array, image: String }
 
   connect() {
@@ -164,6 +164,15 @@ export default class extends Controller {
     this.changed()
   }
 
+  // Phone toolbar: the style of the selected box.
+  styleSelected(event) {
+    if (this.selected === null) return
+    this.boxes[this.selected] = applyStyle(this.boxes[this.selected], event.target.value)
+    this.renderRows()
+    this.renderStage()
+    this.changed()
+  }
+
   // ---- Rows (MEME-39) ----
   // Rows are built here from this.boxes, never by the server. Call after the box count or order changes (not while
   // dragging; use syncFields for that).
@@ -205,6 +214,10 @@ export default class extends Controller {
   renderActions() {
     const has = this.selected !== null && this.selected !== undefined
     if (this.hasNeedsSelectionTarget) this.needsSelectionTargets.forEach((b) => (b.disabled = !has))
+    if (this.hasSelectedStyleTarget) {
+      this.selectedStyleTarget.disabled = !has
+      if (has) this.selectedStyleTarget.value = styleKey(this.boxes[this.selected])
+    }
     if (this.hasRemoveButtonTarget) this.removeButtonTarget.disabled = !has || !canRemove(this.boxes)
     if (this.hasEarlierButtonTarget) this.earlierButtonTarget.disabled = !has || !canMove(this.boxes, this.selected, -1)
     if (this.hasLaterButtonTarget) this.laterButtonTarget.disabled = !has || !canMove(this.boxes, this.selected, 1)

@@ -40,7 +40,7 @@ class PlayerUploadTest < ActionDispatch::IntegrationTest
 
     follow_redirect!
     assert_response :success
-    assert_select '[data-text-box-editor][data-controls=full]' do |editor|
+    assert_select '[data-text-box-editor][data-controls=phone]' do |editor|
       assert_equal upload_draft_path(draft), editor.first['data-text-box-editor-url-value']
       assert_equal 2, JSON.parse(editor.first['data-text-box-editor-boxes-value']).size
     end
