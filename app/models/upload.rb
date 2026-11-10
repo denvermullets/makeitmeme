@@ -16,7 +16,7 @@ module Upload
                             text_boxes: TextBoxes::TOP_AND_BOTTOM.map(&:dup))
     raise ActiveRecord::RecordInvalid, draft unless draft.valid? # the nickname is checked before the file
 
-    bytes = read(file) || draft.reject!('Choose a JPEG or PNG image')
+    bytes = read(file) || draft.reject!('Choose a JPEG, PNG or WebP image')
     screen(draft, bytes, file)
     draft.original_checksum = Digest::SHA256.hexdigest(bytes)
     store_image(draft, prepare_image(bytes, file), file)
@@ -59,9 +59,22 @@ module Upload
     file.read if file.respond_to?(:read)
   end
 
-  # Refuses unusable files (format, size, dimensions, duplicates) with draft.reject!(message). None yet.
+  ACCEPTED_FORMATS = %w[jpeg png].freeze # WebP is added by its own ticket
+  FORMAT_REFUSAL = 'Only JPEG, PNG and WebP images can be uploaded'
+
+  # Refuses unusable files (format, size, dimensions, duplicates) with draft.reject!(message).
   def screen(draft, bytes, _file)
-    refuse_duplicate(draft, Digest::SHA256.hexdigest(bytes))
+    draft.reject!(FORMAT_REFUSAL) unless ACCEPTED_FORMATS.include?(sniff_format(bytes))
+    refuse_duplicate(draft, Digest::SHA256.hexdigest(bytes)) # last: only for files that are otherwise usable
+  end
+
+  # The real format, from the leading bytes only; never the filename or declared content type.
+  def sniff_format(bytes)
+    head = bytes.byteslice(0, 12).to_s.b
+    return 'jpeg' if head.start_with?("\xFF\xD8\xFF".b)
+    return 'png' if head.start_with?("\x89PNG\r\n\x1A\n".b)
+
+    nil
   end
 
   def refuse_duplicate(draft, checksum)
@@ -94,5 +107,6 @@ module Upload
                      uploader_room_code: draft.room_code)
   end
 
-  private_class_method :read, :screen, :refuse_duplicate, :prepare_image, :store_image, :create_template
+  private_class_method :read, :screen, :sniff_format, :refuse_duplicate, :prepare_image, :store_image,
+                       :create_template
 end

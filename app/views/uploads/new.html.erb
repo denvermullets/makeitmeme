@@ -1,6 +1,6 @@
 <main class="p-4 max-w-sm mx-auto">
   <h1 class="text-2xl font-bold mb-4">Upload a Template</h1>
-  <p class="mb-2">Pick a JPEG or PNG picture, then place its Text Boxes.</p>
+  <p class="mb-2">Pick a JPEG, PNG or WebP picture, then place its Text Boxes.</p>
 
   <% if @errors&.any? %>
     <ul class="text-red-600 mb-2">
@@ -16,7 +16,7 @@
       <%= f.text_field :nickname, value: @nickname, maxlength: Player::NICKNAME_MAX, required: true, autofocus: true, class: "border p-2" %>
     <% end %>
     <%= f.label :image, "Picture" %>
-    <%= f.file_field :image, accept: "image/jpeg,image/png", required: true, class: "border p-2" %>
+    <%= f.file_field :image, accept: "image/*", required: true, class: "border p-2" %>
     <%= f.submit "Upload", class: "border p-2 font-bold" %>
   <% end %>
 

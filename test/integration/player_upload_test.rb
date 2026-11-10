@@ -4,8 +4,8 @@ require 'test_helper'
 class PlayerUploadTest < ActionDispatch::IntegrationTest
   VALID_BOX = { 'x' => 0.1, 'y' => 0.1, 'w' => 0.5, 'h' => 0.2, 'angle' => 5, 'color' => 'black', 'font' => 'thin' }.freeze
 
-  def upload(file: 'photo.jpg', nickname: 'Pat', session: self)
-    type = file.end_with?('.jpg') ? 'image/jpeg' : 'image/png'
+  def upload(file: 'photo.jpg', nickname: 'Pat', session: self, type: nil)
+    type = type || (file.end_with?('.jpg') ? 'image/jpeg' : 'image/png')
     session.post upload_path, params: { nickname:, image: fixture_file_upload(file, type) }
   end
 
@@ -73,6 +73,46 @@ class PlayerUploadTest < ActionDispatch::IntegrationTest
     assert_response :unprocessable_content
     assert_select '.text-red-600', /Choose/
     assert_equal 0, UploadDraft.count
+  end
+
+  test 'the file input accepts any image so iPhone Safari converts HEIC to JPEG' do
+    get upload_path
+
+    assert_select 'input[type=file][accept="image/*"]'
+  end
+
+  test 'a GIF, an SVG and a PDF are refused naming the accepted formats, with no draft' do
+    { 'sample.gif' => 'image/gif', 'sample.svg' => 'image/svg+xml', 'sample.pdf' => 'application/pdf' }.each do |file, type|
+      upload(file:, type:)
+
+      assert_response :unprocessable_content
+      assert_select '.text-red-600', /JPEG, PNG and WebP/
+    end
+    assert_equal 0, UploadDraft.count
+  end
+
+  test 'a non-image renamed to png or sent with an image content type is refused' do
+    upload(file: 'not_an_image.png')
+    assert_response :unprocessable_content
+    upload(file: 'sample.pdf', type: 'image/jpeg')
+    assert_response :unprocessable_content
+    assert_equal 0, UploadDraft.count
+  end
+
+  test 'a refused upload leaves an existing draft alone' do
+    upload
+    existing = draft
+    upload(file: 'sample.gif', type: 'image/gif')
+
+    assert_response :unprocessable_content
+    assert_equal [existing.id], UploadDraft.pluck(:id)
+  end
+
+  test 'a JPEG with a misleading filename and content type is still accepted' do
+    upload(file: 'mislabeled_jpeg.txt', type: 'image/gif')
+
+    assert_response :redirect
+    assert_equal 1, UploadDraft.count
   end
 
   test 'autosave replaces the boxes and name and never marks anything reviewed' do
