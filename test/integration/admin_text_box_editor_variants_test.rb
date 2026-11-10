@@ -40,7 +40,7 @@ class AdminTextBoxEditorVariantsTest < ActiveSupport::TestCase
     assert_nil editor.at_css('[data-text-box-editor-target=rowTemplate]')
   end
 
-  test 'phone is one column: stage, selected-box toolbar, add and reset, sample switch, in that order, with no move or numeric rows' do
+  test 'phone is one column: stage, selected-box toolbar, add and reset, sample switch, in that order, with no move buttons' do
     editor = render_editor(controls: :phone)
     assert_equal 'phone', editor.at_css('[data-controller=text-box-editor]')['data-controls']
     order = ['[data-text-box-editor-target=stage]', '.tbe-selected-toolbar', '.tbe-actions', '.tbe-preview-switch'].map do |css|
@@ -56,6 +56,27 @@ class AdminTextBoxEditorVariantsTest < ActiveSupport::TestCase
     assert_includes editor.at_css('.tbe-actions').text, '+ Text Box'
     assert_includes editor.at_css('.tbe-actions').text, 'Reset to top & bottom'
     assert_no_match(/Move earlier|Move later/, editor.text)
-    assert_nil editor.at_css('[data-text-box-editor-target=rows]')
+  end
+
+  test 'phone puts the numeric rows in an Exact values disclosure, closed by default, after the sample switch' do
+    editor = render_editor(controls: :phone)
+    details = editor.at_css('details.tbe-exact')
+    assert details
+    assert_nil details['open']
+    assert_equal 'Exact values', details.at_css('summary').text.strip
+    assert details.at_css('[data-text-box-editor-target=rows]')
+    assert editor.at_css('template[data-text-box-editor-target=rowTemplate] [data-field=angle]')
+    assert_operator editor.to_html.index(details.to_html), :>, editor.to_html.index(editor.at_css('.tbe-preview-switch').to_html)
+  end
+
+  test 'full and compact have no Exact values disclosure' do
+    assert_nil render_editor.at_css('details.tbe-exact')
+    assert_nil render_editor(controls: :compact).at_css('details.tbe-exact')
+  end
+
+  test 'phone handles are at least 44px touch targets' do
+    css = Rails.root.join('app/assets/stylesheets/text_box_stage.css').read
+    assert_match(/\[data-controls=phone\] \.tbe-handle::after \{ inset: -15px; \}/, css) # 14px + 2*15
+    assert_match(/\[data-controls=phone\] \.tbe-rotate::after \{ inset: -13px; \}/, css) # 18px + 2*13
   end
 end
