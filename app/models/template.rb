@@ -64,4 +64,12 @@ class Template < ApplicationRecord
   def hidden? = hidden_at.present?
   def needs_review? = reviewed_at.nil? && hidden_at.nil?
   def upload? = source_kind == 'upload'
+
+  # The Admin inspector's source line; the uploader is for the Admin only.
+  def source_line
+    return 'memegen import' unless upload?
+
+    line = "Player upload by #{uploader_nickname}"
+    uploader_room_code.present? ? "#{line} in Room #{uploader_room_code}" : line
+  end
 end

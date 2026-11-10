@@ -52,6 +52,14 @@ _Avoid_: Theme, category, collection, set
 The Pack that every Player-uploaded Template joins.
 _Avoid_: User pack, uploads
 
+**Upload page**:
+The one page where a Player uploads a picture and edits it into a Template; reached from the home screen (and, between Games, from a Room). Never available during a Round.
+_Avoid_: Uploader, upload form
+
+**Upload draft**:
+A Player's unfinished upload: the picture and its Text Boxes, owned by one browser and not yet in the Template Library, so it is never dealt. Adding it to the library turns it into a Template in the Custom Pack; abandoned drafts are cleaned up.
+_Avoid_: Pending Template, unpublished Template
+
 **Hide from Hands**:
 An Admin action that keeps a Template in the Template Library but stops it being dealt into any new Hand; Hands already dealt are untouched, and the Admin can undo it.
 _Avoid_: Disable, archive, soft delete, ban

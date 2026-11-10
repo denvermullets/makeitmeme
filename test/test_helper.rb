@@ -31,6 +31,12 @@ module ActiveSupport
       end
     end
 
+    # Start an Upload draft through the Upload operation from a test fixture image (`file: nil` sends no file).
+    def start_upload_draft(token: 'tok', nickname: 'Pat', file: 'drake.png', room_code: nil)
+      upload = file && Rack::Test::UploadedFile.new(file_fixture(file), file.end_with?('.jpg') ? 'image/jpeg' : 'image/png')
+      Upload.start(file: upload, browser_token: token, nickname:, room_code:)
+    end
+
     # A Room whose Host (Ada) is joined by Bob and Cy.
     def room_with_players
       room = Room.create_with_host(nickname: 'Ada', browser_token: 'ada')

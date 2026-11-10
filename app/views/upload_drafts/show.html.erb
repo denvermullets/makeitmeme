@@ -1,0 +1,25 @@
+<% content_for :title, 'Edit your Template' %>
+<main class="p-4 max-w-3xl mx-auto">
+  <h1 class="text-2xl font-bold mb-4">Edit your Template</h1>
+
+  <% if @errors&.any? %>
+    <ul class="text-red-600 mb-2">
+      <% @errors.each do |message| %><li><%= message %></li><% end %>
+    </ul>
+  <% end %>
+
+  <%= render 'admin/templates/text_box_editor',
+             save_url: upload_draft_path(@draft),
+             image_url: (@draft.image.attached? ? rails_storage_proxy_path(@draft.image) : ''),
+             boxes: @draft.text_boxes, name: @draft.name.to_s, key: "draft-#{@draft.id}" %>
+
+  <%# data-inspector lets the editor's autosave send this name along with the boxes. %>
+  <section data-inspector>
+    <%= form_with url: add_upload_draft_path(@draft), class: "flex flex-col gap-2 mt-4",
+                  data: { controller: "add-to-library", action: "submit->add-to-library#submit" } do |f| %>
+      <%= f.label "template[name]", "Name" %>
+      <%= f.text_field "template[name]", value: @draft.name, id: "template_name", required: true, class: "border p-2" %>
+      <%= f.submit "Add to library", class: "border p-2 font-bold" %>
+    <% end %>
+  </section>
+</main>

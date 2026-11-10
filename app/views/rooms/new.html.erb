@@ -21,4 +21,6 @@
     <%= f.text_field :nickname, id: "join_nickname", value: @nickname, maxlength: Player::NICKNAME_MAX, required: true, class: "border p-2" %>
     <%= f.submit "Join", class: "border p-2 font-bold" %>
   <% end %>
+
+  <p class="mt-6"><%= link_to "Upload your own Template", upload_path, class: "underline" %></p>
 </main>
