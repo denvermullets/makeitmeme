@@ -18,7 +18,7 @@ WORKDIR /rails
 RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y curl libjemalloc2 libvips libvips-tools postgresql-client && \
     ln -s /usr/lib/$(uname -m)-linux-gnu/libjemalloc.so.2 /usr/local/lib/libjemalloc.so && \
-    (vips -l | grep -q VipsForeignLoadJpeg && vips -l | grep -q VipsForeignLoadPng) && \
+    (vips -l | grep -q VipsForeignLoadJpeg && vips -l | grep -q VipsForeignLoadPng && vips -l | grep -q VipsForeignLoadWebp) && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
 # Set production environment variables and enable jemalloc for reduced memory usage and latency.

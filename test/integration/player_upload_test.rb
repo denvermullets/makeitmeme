@@ -115,6 +115,21 @@ class PlayerUploadTest < ActionDispatch::IntegrationTest
     assert_equal 1, UploadDraft.count
   end
 
+  test 'a static WebP is accepted and stored as WebP' do
+    upload(file: 'static.webp', type: 'image/webp')
+
+    assert_response :redirect
+    assert_equal 'image/webp', draft.image.content_type
+  end
+
+  test 'an animated WebP is refused with a clear message and no draft' do
+    upload(file: 'animated.webp', type: 'image/webp')
+
+    assert_response :unprocessable_content
+    assert_select '.text-red-600', /animated images aren't supported/i
+    assert_equal 0, UploadDraft.count
+  end
+
   test 'autosave replaces the boxes and name and never marks anything reviewed' do
     upload
     patch_draft([VALID_BOX], name: 'Cool cat')
