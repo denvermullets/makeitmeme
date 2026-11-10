@@ -52,8 +52,15 @@ module Upload
     file.read if file.respond_to?(:read)
   end
 
-  # Refuses unusable files (format, size, dimensions, duplicates) with draft.reject!(message). None yet.
-  def screen(_draft, _bytes, _file); end
+  MAX_BYTES = 10.megabytes
+  MIN_SIDE = 300
+
+  # Refuses unusable files (format, size, dimensions, duplicates) with draft.reject!(message).
+  def screen(draft, bytes, _file)
+    draft.reject!('That file is over the 10 MB limit') if bytes.bytesize > MAX_BYTES
+    side = ImageDimensions.of(bytes)&.min
+    draft.reject!("That image is too small: the shortest side must be at least #{MIN_SIDE}px") if side && side < MIN_SIDE
+  end
 
   # Returns the bytes to store: normalisation (orient, strip metadata, cap size) goes here. Stored as uploaded for now.
   def prepare_image(bytes, _file) = bytes

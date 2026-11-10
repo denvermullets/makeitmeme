@@ -180,4 +180,42 @@ class PlayerUploadTest < ActionDispatch::IntegrationTest
 
     assert_select '[data-inspector-source]', 'Player upload by Pat in Room ABCD'
   end
+
+  # A valid PNG of the given size, optionally padded with trailing bytes (ignored by decoders) up to a byte count.
+  def png_upload(width: 400, height: 400, bytes: nil)
+    src = Tempfile.new(['src', '.png'])
+    out = Tempfile.new(['out', '.png'])
+    system('vips', 'black', src.path, width.to_s, height.to_s, exception: true)
+    system('vips', 'copy', src.path, out.path, exception: true)
+    File.binwrite(out.path, File.binread(out.path) + ("\0" * (bytes - File.size(out.path)))) if bytes
+    Rack::Test::UploadedFile.new(out.path, 'image/png')
+  end
+
+  test 'a file over 10 MB is refused with the limit and creates no draft' do
+    post upload_path, params: { nickname: 'Pat', image: png_upload(bytes: 10.megabytes + 1) }
+
+    assert_response :unprocessable_entity
+    assert_match '10 MB', response.body
+    assert_equal 0, UploadDraft.count
+  end
+
+  test 'a file of exactly 10 MB is accepted' do
+    post upload_path, params: { nickname: 'Pat', image: png_upload(bytes: 10.megabytes) }
+
+    assert_redirected_to upload_draft_path(draft)
+  end
+
+  test 'an image with a shortest side under 300px is refused with the minimum and creates no draft' do
+    post upload_path, params: { nickname: 'Pat', image: png_upload(width: 1000, height: 299) }
+
+    assert_response :unprocessable_entity
+    assert_match '300px', response.body
+    assert_equal 0, UploadDraft.count
+  end
+
+  test 'an image whose shortest side is exactly 300px is accepted' do
+    post upload_path, params: { nickname: 'Pat', image: png_upload(width: 1000, height: 300) }
+
+    assert_redirected_to upload_draft_path(draft)
+  end
 end
