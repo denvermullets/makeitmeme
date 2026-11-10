@@ -36,6 +36,13 @@ export default class extends Controller {
   }
 
   showStatus(message) {
-    if (this.hasStatusTarget) this.statusTarget.textContent = message
+    if (!this.hasStatusTarget) return
+    this.statusTarget.textContent = message
+    clearTimeout(this.statusTimer)
+    this.statusTimer = setTimeout(() => { this.statusTarget.textContent = "" }, 2000)
+  }
+
+  disconnect() {
+    clearTimeout(this.statusTimer)
   }
 }

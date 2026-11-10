@@ -1,19 +1,21 @@
-<%# Every Pack with its dealable Template count; the Host turns each on or off. Off Packs are stored on the Room. %>
+<%# Every Pack that has dealable Templates, with its count; the Host turns each on or off. Off Packs are stored on the Room. %>
 <div id="pack_list">
-  <h2 class="mt-4 font-bold">Packs</h2>
+  <h2 class="mt-6 mb-2 font-bold">Packs</h2>
   <% counts = Pack.dealable_counts %>
-  <div id="packs">
-    <% Pack.alphabetical.each do |pack| %>
+  <div id="packs" class="flex flex-col gap-2">
+    <% Pack.alphabetical.where(id: counts.keys).each do |pack| %>
       <% on = !room.pack_off?(pack) %>
-      <div data-pack="<%= pack.id %>" data-pack-on="<%= on %>">
-        <span><%= pack.name %></span>
-        <span class="pack-count"><%= counts.fetch(pack.id, 0) %></span>
+      <div data-pack="<%= pack.id %>" data-pack-on="<%= on %>" class="flex items-center gap-3">
         <% if player && room.host?(player) %>
           <%= button_to (on ? 'On' : 'Off'), toggle_room_pack_path(room.code, pack, on: on ? 0 : 1),
-                        class: 'border px-2' %>
+                        class: 'w-16 py-1', aria: { pressed: on.to_s } %>
         <% else %>
-          <span><%= on ? 'On' : 'Off' %></span>
+          <span class="w-16 text-sm text-center <%= on ? 'text-accent' : 'text-muted' %>"><%= on ? 'On' : 'Off' %></span>
         <% end %>
+        <span class="min-w-0">
+          <%= pack.name %>
+          <span class="pack-count ml-1 text-sm text-muted"><%= counts.fetch(pack.id, 0) %></span>
+        </span>
       </div>
     <% end %>
   </div>

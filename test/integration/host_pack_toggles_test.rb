@@ -4,6 +4,8 @@ class HostPackTogglesTest < ActionDispatch::IntegrationTest
   setup do
     seed_templates(12)
     @pack = Pack.create!(name: 'Spicy')
+    seed_templates(1).first.update!(pack: @pack)
+    @empty = Pack.create!(name: 'Empty')
     @host = open_session
     @host.post rooms_path, params: { nickname: 'Ada' }
     @room = Room.live.last
@@ -12,10 +14,11 @@ class HostPackTogglesTest < ActionDispatch::IntegrationTest
     open_session.post joins_path, params: { code: @room.code, nickname: 'Cy' }
   end
 
-  test 'Waiting lists every Pack with its dealable count' do
+  test 'Waiting lists every Pack with its dealable count, hiding empty Packs' do
     @host.get room_path(@room.code)
-    @host.assert_select "#packs [data-pack='#{@pack.id}'] .pack-count", '0'
+    @host.assert_select "#packs [data-pack='#{@pack.id}'] .pack-count", '1'
     @host.assert_select "#packs [data-pack='#{Pack.classics.id}'] .pack-count", '12'
+    @host.assert_select "#packs [data-pack='#{@empty.id}']", 0
   end
 
   test 'the Host toggles a Pack off and on' do

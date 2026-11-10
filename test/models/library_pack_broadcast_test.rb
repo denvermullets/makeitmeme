@@ -26,14 +26,15 @@ class LibraryPackBroadcastTest < ActiveSupport::TestCase
     list_for(@ada).at_css("[data-pack='#{pack.id}'] .pack-count").text.strip
   end
 
-  test 'creating a Pack re-broadcasts the list with the new Pack, after commit' do
+  test 'creating a Pack re-broadcasts the list, which hides it until it has Templates' do
     pack = nil
     assert_broadcast_to_room { pack = Pack.create!(name: 'Fresh') }
-    assert list_for(@ada).at_css("[data-pack='#{pack.id}']")
+    assert_nil list_for(@ada).at_css("[data-pack='#{pack.id}']")
   end
 
   test 'renaming a Pack re-broadcasts' do
     pack = Pack.create!(name: 'Old')
+    Template.create!(memegen_id: 'old1', name: 'Old 1', text_boxes: [], pack:)
     ActionCable.server.pubsub.clear
     assert_broadcast_to_room { pack.update!(name: 'New') }
     assert_includes list_for(@ada).text, 'New'

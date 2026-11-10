@@ -1,5 +1,5 @@
 <div id="waiting">
-  <h2 class="mt-4 font-bold">Players</h2>
+  <h2 class="mt-6 mb-2 font-bold">Players</h2>
   <ul id="players">
     <%= render partial: 'players/player', collection: room.players.includes(:room).order(:joined_at, :id),
                       locals: { viewer: player } %>
@@ -16,7 +16,8 @@
 
   <%= render 'rooms/start_gate', room:, player: %>
 
-  <p class="mt-4"><%= link_to 'Upload a Template', upload_path(code: room.code), class: 'underline' %></p>
-
-  <%= button_to 'Leave Room', leave_room_path(room.code), class: 'border p-2 mt-4' %>
+  <div class="mt-6 flex items-center justify-between gap-3">
+    <%= link_to 'Upload a Template', upload_path(code: room.code), class: 'underline' %>
+    <%= button_to 'Leave Room', leave_room_path(room.code) %>
+  </div>
 </div>
