@@ -59,8 +59,9 @@ module Upload
     file.read if file.respond_to?(:read)
   end
 
-  ACCEPTED_FORMATS = %w[jpeg png].freeze # WebP is added by its own ticket
+  ACCEPTED_FORMATS = %w[jpeg png webp].freeze
   FORMAT_REFUSAL = 'Only JPEG, PNG and WebP images can be uploaded'
+  ANIMATED_REFUSAL = 'Animated images aren\'t supported: upload a still JPEG, PNG or WebP image'
   MAX_BYTES = 10.megabytes
   MIN_SIDE = 300
 
@@ -68,6 +69,7 @@ module Upload
   def screen(draft, bytes, _file)
     draft.reject!('That file is over the 10 MB limit') if bytes.bytesize > MAX_BYTES
     draft.reject!(FORMAT_REFUSAL) unless ACCEPTED_FORMATS.include?(sniff_format(bytes))
+    draft.reject!(ANIMATED_REFUSAL) if animated?(bytes)
     side = ImageDimensions.of(bytes)&.min
     draft.reject!("That image is too small: the shortest side must be at least #{MIN_SIDE}px") if side && side < MIN_SIDE
     refuse_duplicate(draft, Digest::SHA256.hexdigest(bytes)) # last: only for files that are otherwise usable
@@ -78,8 +80,17 @@ module Upload
     head = bytes.byteslice(0, 12).to_s.b
     return 'jpeg' if head.start_with?("\xFF\xD8\xFF".b)
     return 'png' if head.start_with?("\x89PNG\r\n\x1A\n".b)
+    return 'webp' if head.start_with?('RIFF'.b) && head.byteslice(8, 4) == 'WEBP'.b
 
     nil
+  end
+
+  # More than one frame (animated WebP, or APNG where libvips detects it). Unreadable files aren't "animated".
+  def animated?(bytes)
+    image = Vips::Image.new_from_buffer(bytes, '')
+    image.get_typeof('n-pages').positive? && image.get('n-pages') > 1
+  rescue Vips::Error
+    false
   end
 
   def refuse_duplicate(draft, checksum)
@@ -112,6 +123,6 @@ module Upload
                      uploader_room_code: draft.room_code)
   end
 
-  private_class_method :read, :screen, :sniff_format, :refuse_duplicate, :prepare_image, :store_image,
+  private_class_method :read, :screen, :sniff_format, :animated?, :refuse_duplicate, :prepare_image, :store_image,
                        :create_template
 end

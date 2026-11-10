@@ -217,6 +217,31 @@ class UploadTest < ActiveSupport::TestCase
     assert_equal cleaned, template.image.download
   end
 
+  test 'a static WebP is accepted, normalised and stored as WebP' do
+    draft = start_upload_draft(file: 'static.webp')
+    stored = stored_image(draft)
+
+    assert_equal 'image/webp', draft.image.content_type
+    assert_equal 'webpload_buffer', stored.get('vips-loader')
+    assert_equal [400, 400], [stored.width, stored.height]
+  end
+
+  test 'a static WebP can be added to the library' do
+    draft = start_upload_draft(file: 'static.webp')
+    Upload.save_text_boxes(draft, TextBoxes::TOP_AND_BOTTOM, name: 'Orange')
+
+    template = Upload.add_to_library(draft)
+
+    assert_equal 'webpload_buffer', Vips::Image.new_from_buffer(template.image.download, '').get('vips-loader')
+  end
+
+  test 'an animated WebP is refused as animated and no draft is created' do
+    error = assert_raises(ActiveRecord::RecordInvalid) { start_upload_draft(file: 'animated.webp') }
+
+    assert_match(/animated images aren't supported/i, error.record.errors.full_messages.to_sentence)
+    assert_equal 0, UploadDraft.count
+  end
+
   private
 
   def stored_image(draft_or_image)
