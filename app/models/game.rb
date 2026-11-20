@@ -28,10 +28,12 @@ class Game < ApplicationRecord
   # The Game's final Scoreboard read model (see Game::Scoreboard).
   def scoreboard = Game::Scoreboard.new(self)
 
-  # RoundMemes (Round, its Memes, and the Memes of the Round among them) for Rounds that have Memes: Rounds in number order, Memes in voting position. Reads the Memes'
-  # baked images and cached fields and the maker's nickname snapshot only, never Templates or Players. 3 queries.
+  # RoundMemes (Round, its Memes, and the Memes of the Round among them) for Rounds that have Memes: Rounds in number
+  # order, Memes by points high to low (ties in voting position). Reads the Memes' baked images and cached fields and
+  # the maker's nickname snapshot only, never Templates or Players. 3 queries.
   def memes_by_round
-    memes = Meme.where(round: rounds).includes(:game_player, image_attachment: :blob).order(:position, :id)
+    memes = Meme.where(round: rounds).includes(:game_player, image_attachment: :blob)
+                .order(points: :desc, position: :asc, id: :asc)
     memes = memes.group_by(&:round_id)
     rounds.order(:number).filter_map do |round|
       next unless memes[round.id]

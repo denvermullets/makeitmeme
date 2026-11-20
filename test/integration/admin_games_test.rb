@@ -78,7 +78,7 @@ class AdminGamesTest < ActionDispatch::IntegrationTest
     assert_select 'main button, main input[type=submit]', 0
   end
 
-  test 'pages Games newest first, a fixed page size at a time, with next and previous links only when there is somewhere to go' do
+  test 'pages Games newest first, a page at a time, linking next and previous only when there is somewhere to go' do
     size = Admin::GamesController::PER_PAGE
     games = (size + 1).times.map { |n| make_game([['Ada', n]], finished_at: (n + 1).hours.ago) }
     sign_in_as_admin

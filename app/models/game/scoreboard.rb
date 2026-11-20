@@ -17,25 +17,32 @@ class Game::Scoreboard
 
   # Rows in order of place (ties share one, via Game#placed_game_players).
   def rows
-    @rows ||= begin
-      memes = Meme.joins(:round).where(rounds: { game_id: @game.id })
-                  .pluck(:game_player_id, :round_id, 'rounds.number', :points, :buddy_count, :redux_count)
-                  .map { |*values, buddy, redux| MemeFact.new(*values, buddy + redux) }
-      buddies = memes.group_by(&:game_player_id).transform_values { |own| own.sum(&:buddy_count) }
-      honours = memes_of_the_round_counts(memes)
-      points = memes.to_h { |meme| [[meme.game_player_id, meme.round_number], meme.points] }
-      numbers = @game.rounds.order(:number).pluck(:number)
-      @game.placed_game_players.map do |placing|
-        seat = placing.game_player
-        Row.new(game_player_id: seat.id, place: placing.place, nickname: seat.nickname, total: seat.total,
-                buddies_received: buddies.fetch(seat.id, 0), memes_of_the_round: honours.fetch(seat.id, 0),
-                round_points: numbers.map { |n| [n, points[[seat.id, n]]] }, missed_votes: seat.missed_votes,
-                unused_buddies: seat.unused_buddies)
-      end
-    end
+    @rows ||= build_rows(meme_facts)
   end
 
   private
+
+  def meme_facts
+    Meme.joins(:round).where(rounds: { game_id: @game.id })
+        .pluck(:game_player_id, :round_id, 'rounds.number', :points, :buddy_count, :redux_count)
+        .map { |*values, buddy, redux| MemeFact.new(*values, buddy + redux) }
+  end
+
+  def build_rows(memes)
+    buddies = memes.group_by(&:game_player_id).transform_values { |own| own.sum(&:buddy_count) }
+    honours = memes_of_the_round_counts(memes)
+    points = memes.to_h { |meme| [[meme.game_player_id, meme.round_number], meme.points] }
+    numbers = @game.rounds.order(:number).pluck(:number)
+    @game.placed_game_players.map { |placing| row_for(placing, buddies:, honours:, points:, numbers:) }
+  end
+
+  def row_for(placing, buddies:, honours:, points:, numbers:)
+    seat = placing.game_player
+    Row.new(game_player_id: seat.id, place: placing.place, nickname: seat.nickname, total: seat.total,
+            buddies_received: buddies.fetch(seat.id, 0), memes_of_the_round: honours.fetch(seat.id, 0),
+            round_points: numbers.map { |n| [n, points[[seat.id, n]]] }, missed_votes: seat.missed_votes,
+            unused_buddies: seat.unused_buddies)
+  end
 
   # Per game-player, the Rounds where one of their Memes was a Meme of the Round (Round.top_scoring).
   def memes_of_the_round_counts(memes)

@@ -32,6 +32,14 @@ class RoomScoringTest < ActiveSupport::TestCase
 
   def counts(meme) = [meme.up_count, meme.meh_count, meme.down_count, meme.points]
 
+  # kinds is one entry per other Player in name order; nil means that Player misses the Vote.
+  def cast_scripted_votes(meme, maker, kinds)
+    voters = %w[ada bob cy] - [maker]
+    kinds.each_with_index do |kind, i|
+      @room.cast_vote(by: @room.player_for(voters[i]), meme_id: meme.id, kind:) if kind
+    end
+  end
+
   test 'each Buddy adds 3 to the Meme and its maker, and is neither an up nor a meh' do
     submit_memes(@room, 'ada', 'bob', 'cy')
     meme = @room.current_meme
@@ -72,12 +80,7 @@ class RoomScoringTest < ActiveSupport::TestCase
       3.times do
         meme = @room.current_meme
         maker = meme.game_player.player.browser_token
-        voters = %w[ada bob cy] - [maker]
-        round_votes.fetch(maker).each_with_index do |kind, i|
-          next unless kind
-
-          @room.cast_vote(by: @room.player_for(voters[i]), meme_id: meme.id, kind:)
-        end
+        cast_scripted_votes(meme, maker, round_votes.fetch(maker))
         if @room.reload.current_meme_id == meme.id
           assert_equal [0, 0, 0, 0], counts(meme.reload), 'nothing is cached before the vote closes'
           end_phase

@@ -93,7 +93,7 @@ class RecapTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test 'the Recap shows every Meme grouped by Round in voting order with maker and points' do
+  test 'the Recap shows every Meme grouped by Round, highest points first, with maker and points' do
     finish_game
     rounds = @game.rounds.order(:number).to_a
     make_meme(rounds[1], 'Cy', position: 0, points: 2)
@@ -104,9 +104,9 @@ class RecapTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select '#recap #memes_by_round section[data-round]', 2
-    assert_select '#memes_by_round section[data-round="1"] li:nth-child(1)[data-nickname="Ada"] [data-meme-points]',
+    assert_select '#memes_by_round section[data-round="1"] li:nth-child(1)[data-nickname="Bob"] [data-meme-points]', '5'
+    assert_select '#memes_by_round section[data-round="1"] li:nth-child(2)[data-nickname="Ada"] [data-meme-points]',
                   '-1'
-    assert_select '#memes_by_round section[data-round="1"] li:nth-child(2)[data-nickname="Bob"] [data-meme-points]', '5'
     assert_select '#memes_by_round section[data-round="2"] li[data-nickname="Cy"] img[src*="/rails/active_storage/"]'
   end
 

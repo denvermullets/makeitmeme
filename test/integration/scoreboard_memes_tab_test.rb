@@ -38,7 +38,7 @@ class ScoreboardMemesTabTest < ActionDispatch::IntegrationTest
     @bob.assert_select "#scoreboard button[data-reveal-target='memesTab'][hidden]", false
   end
 
-  test 'the Memes tab groups Memes by Round in Round order and by voting position within a Round' do
+  test 'the Memes tab groups Memes by Round in Round order and by points high to low within a Round' do
     make_meme(@rounds[1], 'Cy', position: 0, points: 2)
     make_meme(@rounds[0], 'Bob', position: 1, points: 5)
     make_meme(@rounds[0], 'Ada', position: 0, points: -1)
@@ -47,8 +47,8 @@ class ScoreboardMemesTabTest < ActionDispatch::IntegrationTest
 
     @bob.assert_select '#memes_by_round section[data-round]', 2
     @bob.assert_select '#memes_by_round section[data-round="1"] li', 2
-    @bob.assert_select '#memes_by_round section[data-round="1"] li:nth-child(1)[data-nickname="Ada"]'
-    @bob.assert_select '#memes_by_round section[data-round="1"] li:nth-child(2)[data-nickname="Bob"]'
+    @bob.assert_select '#memes_by_round section[data-round="1"] li:nth-child(1)[data-nickname="Bob"]'
+    @bob.assert_select '#memes_by_round section[data-round="1"] li:nth-child(2)[data-nickname="Ada"]'
     @bob.assert_select '#memes_by_round section[data-round="2"] li[data-nickname="Cy"]'
     sections = @bob.css_select('#memes_by_round section').map { |node| node['data-round'] }
     assert_equal %w[1 2], sections
@@ -79,8 +79,9 @@ class ScoreboardMemesTabTest < ActionDispatch::IntegrationTest
 
     @bob.get room_path(@room.code)
 
-    @bob.assert_select '#memes_by_round li[data-nickname="Ada"] a[data-meme-save][download="round-2-ada.png"][href*="/rails/active_storage/blobs/proxy/"][data-controller="meme-save"][data-action="click->meme-save#save"]',
-                       text: /Save/
+    link = 'a[data-meme-save][download="round-2-ada.png"][href*="/rails/active_storage/blobs/proxy/"]' \
+           '[data-controller="meme-save"][data-action="click->meme-save#save"]'
+    @bob.assert_select "#memes_by_round li[data-nickname=\"Ada\"] #{link}", text: /Save/
   end
 
   test 'the download file name uses a filename-safe nickname' do

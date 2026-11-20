@@ -36,12 +36,7 @@ module Upload
   end
 
   def add_to_library(draft, name: nil)
-    draft.name = name.to_s.strip unless name.nil? # kept in memory so a refusal re-renders what the Player typed
-    draft.reject!('Give your Template a name') if draft.name.to_s.strip.empty?
-    draft.save! if draft.name_changed?
-    boxes = TextBoxes.check(draft.text_boxes)
-    draft.reject!(boxes.errors.first) unless boxes.valid?
-    refuse_duplicate(draft, draft.original_checksum)
+    boxes = check_ready(draft, name)
 
     begin
       Template.transaction do
@@ -57,6 +52,17 @@ module Upload
   end
 
   # --- steps ---
+
+  # Refuses a draft that can't become a Template yet; returns its checked Text Boxes.
+  def check_ready(draft, name)
+    draft.name = name.to_s.strip unless name.nil? # kept in memory so a refusal re-renders what the Player typed
+    draft.reject!('Give your Template a name') if draft.name.to_s.strip.empty?
+    draft.save! if draft.name_changed?
+    boxes = TextBoxes.check(draft.text_boxes)
+    draft.reject!(boxes.errors.first) unless boxes.valid?
+    refuse_duplicate(draft, draft.original_checksum)
+    boxes
+  end
 
   def read(file)
     file.read if file.respond_to?(:read)
@@ -133,6 +139,6 @@ module Upload
                      uploader_room_code: draft.room_code)
   end
 
-  private_class_method :read, :screen, :decode, :format_of, :pages_of, :refuse_duplicate, :prepare_image,
+  private_class_method :check_ready, :read, :screen, :decode, :format_of, :pages_of, :refuse_duplicate, :prepare_image,
                        :store_image, :create_template
 end

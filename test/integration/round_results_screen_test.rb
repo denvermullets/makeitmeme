@@ -65,6 +65,16 @@ class RoundResultsScreenTest < ActionDispatch::IntegrationTest
     @sessions['Ada'].assert_select '#round_results [data-meme-points]', text: '+4'
   end
 
+  test 'the Round results list Memes by points high to low, ties in voting order' do
+    low, mid, high = @meme.round.memes.order(:position).to_a
+    low.update!(points: -1)
+    mid.update!(points: 3)
+    high.update!(points: 3)
+    @sessions['Ada'].get room_path(@room.code)
+    ids = @sessions['Ada'].css_select('#round_results li').map { |node| node['data-meme-id'].to_i }
+    assert_equal [mid.id, high.id, low.id], ids
+  end
+
   test 'the Standings list each missed vote beside the total' do
     @sessions['Ada'].get room_path(@room.code)
     @sessions['Ada'].assert_select "#standings ol li[data-nickname='#{@maker}'] [data-missed-votes='2']",

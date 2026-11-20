@@ -64,11 +64,12 @@ module Room::Voting
   # Meme Buddy Redux is on offer to this voter: the last Meme of the Game and their Buddies are all spent.
   def redux_offered_to?(voter) = voter.buddies_left.zero? && final_meme?
 
-  # The current Round's Memes in voting order, with their makers and images, for the Round's results.
+  # The current Round's Memes by points high to low (ties in voting order), with their makers and images, for the
+  # Round's results.
   def round_results
     return Meme.none unless current_game && current_round_number
 
-    current_round.memes.includes(:game_player, image_attachment: :blob).order(:position, :id)
+    current_round.memes.includes(:game_player, image_attachment: :blob).order(points: :desc, position: :asc, id: :asc)
   end
 
   # The current Round's Meme(s) of the Round, with their makers, or none outside a Game.

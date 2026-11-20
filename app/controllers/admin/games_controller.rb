@@ -16,7 +16,11 @@ module Admin
       fetched = finished.offset((@page - 1) * PER_PAGE).limit(PER_PAGE + 1).to_a
       @next_page = @page + 1 if fetched.size > PER_PAGE
       @games = fetched.first(PER_PAGE)
-      @meme_counts = Meme.joins(:round).where(rounds: { game_id: @games.map(&:id) }).group('rounds.game_id').count
+      @meme_counts = meme_counts(@games)
+    end
+
+    def meme_counts(games)
+      Meme.joins(:round).where(rounds: { game_id: games.map(&:id) }).group('rounds.game_id').count
     end
   end
 end

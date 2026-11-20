@@ -36,6 +36,10 @@ Metrics/ClassLength:
     - "test/**/*"
     - "spec/**/*.rb"
 
+# Same ceiling as classes: module_function operations (e.g. Upload) are classes in all but name.
+Metrics/ModuleLength:
+  Max: 150
+
 Metrics/MethodLength:
   Max: 20
 
