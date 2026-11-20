@@ -7,7 +7,7 @@
   <ul id="round_results">
     <% room.round_results.each do |meme| %>
       <li data-meme-id="<%= meme.id %>" data-nickname="<%= meme.game_player.nickname %>">
-        <%= image_tag rails_storage_proxy_path(meme.image), alt: "Meme by #{meme.game_player.nickname}", class: 'w-full mt-2' if meme.image.attached? %>
+        <%= image_tag rails_storage_proxy_path(meme.image), alt: "Meme by #{meme.game_player.nickname}", class: 'meme-image mt-2' if meme.image.attached? %>
         <p class="mt-2">Made by <strong><%= meme.game_player.nickname %></strong>
           <% if memes_of_the_round.include?(meme) %><span data-meme-badge>Meme of the Round</span><% end %></p>
         <p data-meme-points class="text-3xl font-bold"><%= meme.points.positive? ? "+#{meme.points}" : meme.points %></p>

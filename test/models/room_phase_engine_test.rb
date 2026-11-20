@@ -28,7 +28,7 @@ class RoomPhaseEngineTest < ActiveSupport::TestCase
   end
 
   test 'phase durations live in one place and can be changed' do
-    assert_equal({ vote: 15, standings: 60 }, Room.phase_seconds)
+    assert_equal({ vote: 15, standings: 20 }, Room.phase_seconds)
     Room.phase_seconds = Room.phase_seconds.merge(captioning: 5)
     freeze_time do
       2.times { @room.advance! } # through Standings

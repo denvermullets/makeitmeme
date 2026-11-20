@@ -6,7 +6,7 @@
   src: url('Anton-Regular.woff2') format('woff2');
 }
 
-.meme-editor { max-width: 480px; margin: 0 auto; }
+.meme-editor { max-width: 640px; margin: 0 auto; }
 .meme-editor-loading { padding: 40px 0; text-align: center; color: var(--color-muted); }
 .meme-editor-canvas { width: 100%; height: auto; max-height: 45dvh; object-fit: contain; display: block; background: var(--color-ink); border-radius: 6px; }
 .meme-editor-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
@@ -18,7 +18,7 @@
 .meme-editor-submit { display: block; width: 100%; margin-top: 16px; padding: 16px; border: 0; border-radius: 12px; background: var(--color-accent); color: var(--color-on-accent); font-weight: 700; font-size: 1.05rem; }
 .meme-editor-submit:disabled { opacity: .5; }
 .meme-editor-error { margin-top: 12px; padding: 10px; border-radius: 8px; background: color-mix(in srgb, var(--color-danger) 15%, transparent); color: var(--color-danger); font-size: .9rem; }
-.meme-submitted { max-width: 480px; margin: 0 auto; text-align: center; }
+.meme-submitted { max-width: 640px; margin: 0 auto; text-align: center; }
 .meme-submitted-title { font-weight: 700; font-size: 1.1rem; margin-bottom: 8px; }
-.meme-submitted-image { width: 100%; height: auto; max-height: 55dvh; object-fit: contain; border-radius: 6px; }
+.meme-submitted-image { width: 100%; height: auto; max-height: 70dvh; object-fit: contain; border-radius: 6px; }
 .meme-submitted-note { margin-top: 8px; font-size: .85rem; color: var(--color-muted); }

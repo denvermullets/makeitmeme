@@ -77,6 +77,6 @@ class ResumePlayerTest < ActionDispatch::IntegrationTest
   test 'Scoreboard: the resumed page shows the final totals' do
     start_game
     @room.update!(phase: :scoreboard)
-    resume('Cy').assert_select '#scoreboard li', count: 3
+    resume('Cy').assert_select '#scoreboard tbody tr', count: 3
   end
 end

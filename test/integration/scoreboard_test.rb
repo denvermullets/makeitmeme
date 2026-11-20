@@ -31,10 +31,10 @@ class ScoreboardTest < ActionDispatch::IntegrationTest
 
     @bob.get room_path(@room.code)
 
-    @bob.assert_select '#scoreboard li', 3
-    @bob.assert_select '#scoreboard li:nth-child(1)', /1.*Cy.*7/m
-    @bob.assert_select '#scoreboard li:nth-child(2)', /2.*Ada.*3/m
-    @bob.assert_select '#scoreboard li:nth-child(3)', /3.*Bob.*0/m
+    @bob.assert_select '#scoreboard tbody tr', 3
+    @bob.assert_select '#scoreboard tbody tr:nth-child(1)', /1.*Cy.*7/m
+    @bob.assert_select '#scoreboard tbody tr:nth-child(2)', /2.*Ada.*3/m
+    @bob.assert_select '#scoreboard tbody tr:nth-child(3)', /3.*Bob.*0/m
     @bob.assert_select '[data-controller=countdown]', false
   end
 
@@ -50,9 +50,9 @@ class ScoreboardTest < ActionDispatch::IntegrationTest
 
     @bob.get room_path(@room.code)
 
-    @bob.assert_select "#scoreboard li[data-nickname='Ada'] [data-buddies-received]", text: '3'
-    @bob.assert_select "#scoreboard li[data-nickname='Bob'] [data-buddies-received]", text: '4'
-    @bob.assert_select "#scoreboard li[data-nickname='Cy'] [data-buddies-received]", text: '0'
+    @bob.assert_select "#scoreboard tr[data-nickname='Ada'] [data-buddies-received]", text: '3'
+    @bob.assert_select "#scoreboard tr[data-nickname='Bob'] [data-buddies-received]", text: '4'
+    @bob.assert_select "#scoreboard tr[data-nickname='Cy'] [data-buddies-received]", text: '0'
   end
 
   test 'the Scoreboard lists missed votes and unused Buddies beside the total, and nothing when there are none' do
@@ -63,10 +63,10 @@ class ScoreboardTest < ActionDispatch::IntegrationTest
 
     @bob.get room_path(@room.code)
 
-    @bob.assert_select "#scoreboard li[data-nickname='Ada'] [data-missed-votes='2']", text: '2 missed votes (-2)'
-    @bob.assert_select "#scoreboard li[data-nickname='Ada'] [data-unused-buddies='2']", text: '2 unused Buddies (-6)'
-    @bob.assert_select "#scoreboard li[data-nickname='Cy'] [data-missed-votes]", 0
-    @bob.assert_select "#scoreboard li[data-nickname='Cy'] [data-unused-buddies]", 0
+    @bob.assert_select "#scoreboard tr[data-nickname='Ada'] [data-missed-votes='2']", text: '2 missed votes (-2)'
+    @bob.assert_select "#scoreboard tr[data-nickname='Ada'] [data-unused-buddies='2']", text: '2 unused Buddies (-6)'
+    @bob.assert_select "#scoreboard tr[data-nickname='Cy'] [data-missed-votes]", 0
+    @bob.assert_select "#scoreboard tr[data-nickname='Cy'] [data-unused-buddies]", 0
   end
 
   def finish_game_with(memes)
@@ -79,7 +79,7 @@ class ScoreboardTest < ActionDispatch::IntegrationTest
     @bob.get room_path(@room.code)
   end
 
-  def badge(nickname) = "#scoreboard li[data-nickname='#{nickname}'] [data-meme-of-the-round]"
+  def badge(nickname) = "#scoreboard tr[data-nickname='#{nickname}'] [data-meme-of-the-round]"
 
   test 'a Player with one Meme of the Round shows the badge without a count' do
     finish_game_with([[0, 'Ada', 5], [0, 'Bob', 2]])
@@ -131,13 +131,13 @@ class ScoreboardTest < ActionDispatch::IntegrationTest
 
     @bob.get room_path(@room.code)
 
-    @bob.assert_select "#scoreboard li[data-nickname='Ada'] [data-round-points]", 3
-    @bob.assert_select "#scoreboard li[data-nickname='Ada'] [data-round-points='1']", text: '3'
-    @bob.assert_select "#scoreboard li[data-nickname='Ada'] [data-round-points='2']", text: 'none'
-    @bob.assert_select "#scoreboard li[data-nickname='Ada'] [data-round-points='3']", text: '-1'
-    @bob.assert_select "#scoreboard li[data-nickname='Bob'] [data-round-points='1']", text: 'none'
-    @bob.assert_select "#scoreboard li[data-nickname='Bob'] [data-round-points='2']", text: '0'
-    @bob.assert_select "#scoreboard li[data-nickname='Cy'] [data-round-points]", text: 'none', count: 3
+    @bob.assert_select "#scoreboard tr[data-nickname='Ada'] [data-round-points]", 3
+    @bob.assert_select "#scoreboard tr[data-nickname='Ada'] [data-round-points='1']", text: '3'
+    @bob.assert_select "#scoreboard tr[data-nickname='Ada'] [data-round-points='2']", text: 'none'
+    @bob.assert_select "#scoreboard tr[data-nickname='Ada'] [data-round-points='3']", text: '-1'
+    @bob.assert_select "#scoreboard tr[data-nickname='Bob'] [data-round-points='1']", text: 'none'
+    @bob.assert_select "#scoreboard tr[data-nickname='Bob'] [data-round-points='2']", text: '0'
+    @bob.assert_select "#scoreboard tr[data-nickname='Cy'] [data-round-points]", text: 'none', count: 3
   end
 
   test 'tied totals share a place' do
@@ -145,7 +145,7 @@ class ScoreboardTest < ActionDispatch::IntegrationTest
 
     @bob.get room_path(@room.code)
 
-    @bob.assert_select '#scoreboard li', text: /^\s*1\b/, count: 3
+    @bob.assert_select '#scoreboard tbody tr', text: /^\s*1\b/, count: 3
   end
 
   test 'the Scoreboard carries the reveal anchor and each places as data attributes and renders every row' do
@@ -160,11 +160,11 @@ class ScoreboardTest < ActionDispatch::IntegrationTest
 
     @bob.assert_select "#scoreboard[data-controller='reveal'][data-reveal-finished-at-value=?]", finished_at.iso8601(3)
     @bob.assert_select '#scoreboard[data-reveal-server-now-value]'
-    @bob.assert_select '#scoreboard li', 3
-    @bob.assert_select "#scoreboard li[data-reveal-target='row'][data-place='1'][data-nickname='Cy']"
-    @bob.assert_select "#scoreboard li[data-reveal-target='row'][data-place='2'][data-nickname='Ada']"
-    @bob.assert_select "#scoreboard li[data-reveal-target='row'][data-place='3'][data-nickname='Bob']"
-    @bob.assert_select '#scoreboard li[hidden]', false
+    @bob.assert_select '#scoreboard tbody tr', 3
+    @bob.assert_select "#scoreboard tr[data-reveal-target='row'][data-place='1'][data-nickname='Cy']"
+    @bob.assert_select "#scoreboard tr[data-reveal-target='row'][data-place='2'][data-nickname='Ada']"
+    @bob.assert_select "#scoreboard tr[data-reveal-target='row'][data-place='3'][data-nickname='Bob']"
+    @bob.assert_select '#scoreboard tr[hidden]', false
   end
 
   test 'the Host sees preset choices on the Scoreboard and others see it read-only' do

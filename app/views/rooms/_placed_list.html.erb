@@ -1,13 +1,28 @@
 <%# Game-players in order of place; ties share one. `placings` come from Game#placed_game_players.
-    Penalties already taken off the total are listed beside it. %>
-<ol>
-  <% placings.each do |placing| %>
-    <% seat = placing.game_player %>
-    <li data-nickname="<%= seat.nickname %>">
-      <span><%= placing.place %></span>
-      <span><%= seat.nickname %><%= render 'players/away_marker', player: seat.player if seat.player %></span>
-      <span data-total><%= seat.total %></span>
-      <%= render 'games/penalties', missed_votes: seat.missed_votes, unused_buddies: seat.unused_buddies %>
-    </li>
-  <% end %>
-</ol>
+    Penalties already taken off the total are listed under the nickname. %>
+<div class="score-table-wrap">
+  <table class="score-table">
+    <thead>
+      <tr>
+        <th scope="col">#</th>
+        <th scope="col" class="score-player">Player</th>
+        <th scope="col">Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% placings.each do |placing| %>
+        <% seat = placing.game_player %>
+        <tr data-nickname="<%= seat.nickname %>" data-place="<%= placing.place %>">
+          <td class="score-place"><%= placing.place %></td>
+          <td class="score-player">
+            <div class="score-name"><%= seat.nickname %><%= render 'players/away_marker', player: seat.player if seat.player %></div>
+            <% if seat.missed_votes.positive? || seat.unused_buddies.positive? %>
+              <div class="score-notes"><%= render 'games/penalties', missed_votes: seat.missed_votes, unused_buddies: seat.unused_buddies %></div>
+            <% end %>
+          </td>
+          <td class="score-total" data-total><%= seat.total %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

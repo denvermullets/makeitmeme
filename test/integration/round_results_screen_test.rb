@@ -24,9 +24,9 @@ class RoundResultsScreenTest < ActionDispatch::IntegrationTest
 
   def entry(meme = @meme) = "#round_results li[data-meme-id='#{meme.id}']"
 
-  test 'after the last vote of the Round the results stay up for 60s' do
+  test 'after the last vote of the Round the results stay up for 20s' do
     assert @room.reload.standings?
-    assert_in_delta 60, @room.phase_deadline_at - @room.updated_at, 0.5
+    assert_in_delta 20, @room.phase_deadline_at - @room.updated_at, 0.5
   end
 
   test 'every phone, the maker included, sees every Meme with maker, points and counts; a reload is the same' do
@@ -77,7 +77,7 @@ class RoundResultsScreenTest < ActionDispatch::IntegrationTest
 
   test 'the Standings list each missed vote beside the total' do
     @sessions['Ada'].get room_path(@room.code)
-    @sessions['Ada'].assert_select "#standings ol li[data-nickname='#{@maker}'] [data-missed-votes='2']",
+    @sessions['Ada'].assert_select "#standings tbody tr[data-nickname='#{@maker}'] [data-missed-votes='2']",
                                    text: /2 missed votes \(-2\)/
   end
 end

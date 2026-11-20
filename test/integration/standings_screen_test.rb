@@ -32,10 +32,10 @@ class StandingsScreenTest < ActionDispatch::IntegrationTest
 
     @sessions['Bob'].get room_path(@room.code)
 
-    @sessions['Bob'].assert_select '#standings li', 3
-    @sessions['Bob'].assert_select '#standings li:nth-child(1)', /1.*Cy.*7/m
-    @sessions['Bob'].assert_select '#standings li:nth-child(2)', /2.*Ada.*-2/m
-    @sessions['Bob'].assert_select '#standings li:nth-child(3)', /2.*Bob.*-2/m
+    @sessions['Bob'].assert_select '#standings tbody tr', 3
+    @sessions['Bob'].assert_select '#standings tbody tr:nth-child(1)', /1.*Cy.*7/m
+    @sessions['Bob'].assert_select '#standings tbody tr:nth-child(2)', /2.*Ada.*-2/m
+    @sessions['Bob'].assert_select '#standings tbody tr:nth-child(3)', /2.*Bob.*-2/m
   end
 
   test 'an Away Player is still listed with the Away marker' do
@@ -43,9 +43,9 @@ class StandingsScreenTest < ActionDispatch::IntegrationTest
 
     @sessions['Ada'].get room_path(@room.code)
 
-    @sessions['Ada'].assert_select '#standings li', 3
-    @sessions['Ada'].assert_select '#standings li', text: /Cy.*Away/mi
-    @sessions['Ada'].assert_select '#standings li', text: /Away/i, count: 1
+    @sessions['Ada'].assert_select '#standings tbody tr', 3
+    @sessions['Ada'].assert_select '#standings tbody tr', text: /Cy.*Away/mi
+    @sessions['Ada'].assert_select '#standings tbody tr', text: /Away/i, count: 1
   end
 
   test 'a Spectator sees the Standings screen, not the spectator screen' do
@@ -54,7 +54,7 @@ class StandingsScreenTest < ActionDispatch::IntegrationTest
 
     spectator.get room_path(@room.code)
 
-    spectator.assert_select '#standings li', 3
+    spectator.assert_select '#standings tbody tr', 3
   end
 
   test 'every phone sees the Meme of the Round with its maker, ties sharing it' do

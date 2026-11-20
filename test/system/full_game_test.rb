@@ -43,7 +43,7 @@ class FullGameTest < ApplicationSystemTestCase
       each_player do
         # Two Up Votes a Round, less every Buddy left unspent.
         total = (Room::ROUNDS_PER_GAME * 2) - (GamePlayer::BUDDIES_PER_GAME * GamePlayer::UNUSED_BUDDY_PENALTY)
-        PLAYERS.each { |name| assert_selector '#scoreboard li', text: "1 #{name} #{total}" }
+        PLAYERS.each { |name| assert_selector '#scoreboard tbody tr', text: /\A1 #{name}\b.* #{total} / }
       end
 
       play_again

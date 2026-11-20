@@ -25,7 +25,7 @@ module Room::PhaseEngine
     # Seconds each timed phase lasts. One place to change them; tests shorten them.
     # Captioning is absent: its length is the Room's preset (`captioning_preset_seconds`). Tests may set
     # `captioning:` to override it.
-    class_attribute :phase_seconds, default: { vote: 15, standings: 60 }
+    class_attribute :phase_seconds, default: { vote: 15, standings: 20 }
 
     # Every phase change reaches phones only after commit, and before any content for that phase.
     after_update_commit :phase_changed, if: :saved_change_to_phase_seq?

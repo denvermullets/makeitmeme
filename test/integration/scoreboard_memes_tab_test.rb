@@ -146,7 +146,7 @@ class ScoreboardMemesTabTest < ActionDispatch::IntegrationTest
 
     %w[Ada Bob Cy].each do |nick|
       @bob.assert_select "#memes_by_round li[data-nickname='#{nick}'] [data-meme-badge]", 1
-      @bob.assert_select "#scoreboard ol li[data-nickname='#{nick}'] [data-meme-of-the-round]", 1
+      @bob.assert_select "#scoreboard tr[data-nickname='#{nick}'] [data-meme-of-the-round]", 1
     end
   end
 end

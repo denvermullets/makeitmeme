@@ -1,18 +1,39 @@
-<%# Shared Scoreboard list, rendered from a Game::Scoreboard (the live Scoreboard and the Recap). Reads the snapshot only, never Players. %>
-<ol>
-  <% scoreboard.rows.each do |row| %>
-    <li data-nickname="<%= row.nickname %>" data-place="<%= row.place %>" data-reveal-target="row">
-      <span><%= row.place %></span>
-      <span><%= row.nickname %></span>
-      <span><%= row.total %></span>
-      <span data-buddies-received><%= row.buddies_received %></span>
-      <%= render 'games/penalties', missed_votes: row.missed_votes, unused_buddies: row.unused_buddies %>
-      <% if row.memes_of_the_round.positive? %>
-        <span data-meme-of-the-round>Meme of the Round<% if row.memes_of_the_round > 1 %> x<span data-count><%= row.memes_of_the_round %></span><% end %></span>
+<%# Shared Scoreboard table, rendered from a Game::Scoreboard (the live Scoreboard and the Recap). Reads the snapshot only, never Players. %>
+<% rows = scoreboard.rows %>
+<% round_numbers = rows.first&.round_points&.map(&:first) || [] %>
+<div class="score-table-wrap">
+  <table class="score-table">
+    <thead>
+      <tr>
+        <th scope="col">#</th>
+        <th scope="col" class="score-player">Player</th>
+        <th scope="col">Total</th>
+        <% round_numbers.each do |number| %><th scope="col">R<%= number %></th><% end %>
+        <th scope="col">Buddies</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% rows.each do |row| %>
+        <tr data-nickname="<%= row.nickname %>" data-place="<%= row.place %>" data-reveal-target="row">
+          <td class="score-place"><%= row.place %></td>
+          <td class="score-player">
+            <div class="score-name"><%= row.nickname %></div>
+            <% if row.memes_of_the_round.positive? || row.missed_votes.positive? || row.unused_buddies.positive? %>
+              <div class="score-notes">
+                <% if row.memes_of_the_round.positive? %>
+                  <span data-meme-of-the-round class="score-badge">Meme of the Round<% if row.memes_of_the_round > 1 %> x<span data-count><%= row.memes_of_the_round %></span><% end %></span>
+                <% end %>
+                <%= render 'games/penalties', missed_votes: row.missed_votes, unused_buddies: row.unused_buddies %>
+              </div>
+            <% end %>
+          </td>
+          <td class="score-total"><%= row.total %></td>
+          <% row.round_points.each do |number, pts| %>
+            <td class="score-round" data-round-points="<%= number %>"><%= pts.nil? ? 'none' : pts %></td>
+          <% end %>
+          <td class="score-round" data-buddies-received><%= row.buddies_received %></td>
+        </tr>
       <% end %>
-      <% row.round_points.each do |number, pts| %>
-        <span data-round-points="<%= number %>"><%= pts.nil? ? 'none' : pts %></span>
-      <% end %>
-    </li>
-  <% end %>
-</ol>
+    </tbody>
+  </table>
+</div>

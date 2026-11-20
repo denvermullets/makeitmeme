@@ -26,9 +26,9 @@ class RecapTest < ActionDispatch::IntegrationTest
     get recap_path(@game.recap_token)
 
     assert_response :success
-    assert_select 'li', 3
-    assert_select 'li:nth-child(1)', /1.*Cy.*7/m
-    assert_select 'li:nth-child(2)', /2.*Ada.*3/m
+    assert_select 'tbody tr', 3
+    assert_select 'tbody tr:nth-child(1)', /1.*Cy.*7/m
+    assert_select 'tbody tr:nth-child(2)', /2.*Ada.*3/m
   end
 
   test 'the Recap has no Host controls, reveal, or Room stream subscription' do

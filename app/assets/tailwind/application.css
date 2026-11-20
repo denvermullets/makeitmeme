@@ -85,4 +85,59 @@
     padding: .875rem 1rem;
     font-weight: 700;
   }
+
+  /* A finished Meme on screen: as big as the column allows, never taller than most of the viewport.
+     On phones it bleeds through the page's 1rem side padding so it uses the full screen width. */
+  .meme-image {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: 80dvh;
+    object-fit: contain;
+    background-color: var(--color-ink);
+    border-radius: 10px;
+  }
+  @media (width < 40rem) {
+    .meme-image { width: calc(100% + 2rem); max-width: none; margin-inline: -1rem; border-radius: 0; }
+  }
+
+  /* Score tables: the between-Round Standings and the final Scoreboard. */
+  .score-table-wrap {
+    margin-top: .5rem;
+    overflow-x: auto;
+    border: 1px solid var(--color-line);
+    border-radius: 12px;
+    background-color: var(--color-raised);
+  }
+  .score-table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  .score-table th {
+    padding: .5rem .625rem;
+    background-color: var(--color-track);
+    color: var(--color-muted);
+    font-size: .6875rem;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    text-align: center;
+    white-space: nowrap;
+  }
+  .score-table td { padding: .625rem; border-top: 1px solid var(--color-line); text-align: center; vertical-align: middle; }
+  .score-table th.score-player, .score-table td.score-player { text-align: left; width: 100%; }
+  .score-table tbody tr:nth-child(even) { background-color: color-mix(in srgb, var(--color-surface) 35%, transparent); }
+  .score-table tr[data-place="1"] { background-color: color-mix(in srgb, var(--color-accent) 12%, transparent); }
+  .score-table tr[data-place="1"] .score-place { color: var(--color-accent); }
+  .score-place { width: 2.5rem; font-weight: 800; font-size: 1.125rem; }
+  .score-name { font-weight: 700; overflow-wrap: anywhere; }
+  .score-total { font-weight: 800; font-size: 1.25rem; white-space: nowrap; }
+  .score-round { color: var(--color-muted); white-space: nowrap; }
+  .score-notes { display: flex; flex-wrap: wrap; gap: .25rem .5rem; margin-top: .25rem; font-size: .75rem; }
+  .score-notes [data-missed-votes], .score-notes [data-unused-buddies] { color: var(--color-danger); }
+  .score-badge {
+    padding: .0625rem .5rem;
+    border-radius: 999px;
+    background-color: var(--color-accent);
+    color: var(--color-on-accent);
+    font-weight: 700;
+    white-space: nowrap;
+  }
 }
