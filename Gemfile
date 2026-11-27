@@ -2,7 +2,7 @@ source "https://rubygems.org"
 
 gem "active_storage_db"
 gem "bootsnap", require: false
-gem "image_processing", "~> 2.2.0"
+gem "image_processing", "~> 2.2.2"
 gem "importmap-rails"
 gem "pg", "~> 1.7.0"
 gem "propshaft"
